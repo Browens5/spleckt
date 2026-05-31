@@ -31,6 +31,14 @@ const sampleSplats: Splat[] = [
     lat: 41.5912,
     lng: -93.6037,
     viewerUrl: 'https://superspl.at/scene/b11e45d1', // Replace with real URLs
+    },
+    {
+    id: '2',
+    title: 'Hilton Garden Inn Downtown Milwaukee',
+    description: 'Historic Loyalty Building - Downtown Milwaukee',
+    lat: 43.03756,
+    lng: -87.90817,
+    viewerUrl: 'https://superspl.at/s?id=07537ddd',
   },
   // Add more of your captures here...
 ];
