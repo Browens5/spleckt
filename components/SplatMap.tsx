@@ -27,7 +27,7 @@ const sampleSplats: Splat[] = [
   {
     id: '1',
     title: 'Weitz Des Moines Office',
-    description: '611 5th Street - Corporate Office',
+    description: '611 5th Street - The Weitz Company Corporate Office',
     lat: 41.5900,
     lng: -93.6241,
     viewerUrl: 'https://superspl.at/s?id=689907dd',
