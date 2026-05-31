@@ -30,7 +30,7 @@ const sampleSplats: Splat[] = [
     description: 'Captured near the capital building',
     lat: 41.5912,
     lng: -93.6037,
-    viewerUrl: 'https://superspl.at/scene/b11e45d1', // Replace with real URLs
+    viewerUrl: 'https://superspl.at/s?id=b11e45d1', // Replace with real URLs
     },
     {
     id: '2',
