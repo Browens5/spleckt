@@ -39,6 +39,13 @@ const sampleSplats: Splat[] = [
     lat: 43.03756,
     lng: -87.90817,
     viewerUrl: 'https://superspl.at/s?id=07537ddd',
+  },{
+    id: '4',
+    title: 'Home in Idaho Falls',
+    description: 'Winter in Idaho',
+    lat: 43.4666,
+    lng: -112.0341,
+    viewerUrl: 'https://superspl.at/s?id=58dcdba7',
   },
   // Add more of your captures here...
 ];
