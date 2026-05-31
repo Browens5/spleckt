@@ -17,7 +17,7 @@ export default function Home() {
           
           <div className="flex items-center gap-8 text-sm">
             <Link href="/map" className="hover:text-emerald-400 transition-colors">
-              Explore Map
+              Map
             </Link>
             <Link href="/about" className="hover:text-emerald-400 transition-colors">
               About
