@@ -26,11 +26,11 @@ type Splat = {
 const sampleSplats: Splat[] = [
   {
     id: '1',
-    title: 'Downtown Des Moines',
-    description: 'Captured near the capital building',
-    lat: 41.5912,
-    lng: -93.6037,
-    viewerUrl: 'https://superspl.at/s?id=b11e45d1', // Replace with real URLs
+    title: 'Weitz Des Moines Office',
+    description: '611 5th Street - Corporate Office',
+    lat: 41.5900,
+    lng: -93.6241,
+    viewerUrl: 'https://superspl.at/s?id=689907dd',
     },
     {
     id: '2',
