@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Spleckt
 
-## Getting Started
+Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian Splat capture and hosting for real estate, construction, businesses, and scenes.
 
-First, run the development server:
+## Stack
+
+- **Next.js** (App Router) + React — web + future mobile-friendly API surface
+- **Better Auth** — email/password client portal
+- **Drizzle ORM + libSQL** — local SQLite in dev; Turso-compatible in production
+- **Cloudflare R2** — scalable splat/video storage (local `.data/uploads` fallback)
+- **PlayCanvas SuperSplat Viewer** — self-hosted from `@playcanvas/supersplat-viewer`
+- **PlayCanvas SuperSplat Editor** — self-hosted build in `public/editor`
+
+## Features (MVP)
+
+1. Light, professional marketing landing page with process media + featured splats
+2. Client portal to upload/view splats
+3. Public hashed share links (`/s/[hash]`)
+4. Admin marketing media upload UI
+5. Self-hosted SuperSplat viewer + editor
+
+## Setup
 
 ```bash
+npm install
+cp .env.example .env.local
+# set BETTER_AUTH_SECRET to a long random string
+
+npm run db:push
+npm run db:seed
+npm run setup:editor   # first time only (clones + builds PlayCanvas SuperSplat)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Default admin (change after first login):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Email: `admin@spleckt.com`
+- Password: `changeme123`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Cloudflare R2
 
-## Learn More
+Set these in `.env.local` / Vercel / Cloudflare:
 
-To learn more about Next.js, take a look at the following resources:
+- `R2_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_PUBLIC_URL` (public bucket or custom domain)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Without R2, uploads are stored under `.data/uploads` and served from `/api/files/...`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Production notes
 
-## Deploy on Vercel
+- Keep the Next.js app on **Vercel** (or Cloudflare via OpenNext) and put large assets on **R2**.
+- Point `DATABASE_URL` at Turso/libSQL for serverless.
+- Set `NEXT_PUBLIC_APP_URL` and `BETTER_AUTH_URL` to `https://spleckt.com`.
+- Rebuild the editor periodically with `npm run setup:editor`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Key routes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Route | Purpose |
+| --- | --- |
+| `/` | Marketing landing |
+| `/login`, `/signup` | Portal auth |
+| `/portal` | Client splat library |
+| `/portal/upload` | Upload splat |
+| `/portal/media` | Admin marketing media |
+| `/portal/splats/[id]` | Viewer + share links |
+| `/portal/editor/[id]` | Self-hosted SuperSplat editor |
+| `/s/[hash]` | Public share viewer |
+| `/viewer` | Generic viewer with query params |

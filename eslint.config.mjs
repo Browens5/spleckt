@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored PlayCanvas SuperSplat builds
+    "public/editor/**",
+    "public/viewer/**",
   ]),
 ]);
 
