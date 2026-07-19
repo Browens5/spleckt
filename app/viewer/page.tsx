@@ -16,8 +16,8 @@ function ViewerInner() {
     return (
       <div className="auth-page">
         <div className="auth-card">
-          <h1>Missing splat</h1>
-          <p>Provide a content URL to open the SuperSplat viewer.</p>
+          <h1>No capture to show</h1>
+          <p>Add a capture link to open the interactive 3D viewer.</p>
           <Link href="/" className="btn btn--primary">
             Back home
           </Link>
@@ -31,7 +31,7 @@ function ViewerInner() {
       <div className="viewer-page__bar">
         <div>
           <h1>{title}</h1>
-          <p>Self-hosted PlayCanvas SuperSplat viewer</p>
+          <p>Explore this lifelike 3D capture</p>
         </div>
         <Link href="/" className="btn btn--ghost">
           Close

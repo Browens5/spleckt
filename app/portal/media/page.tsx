@@ -128,7 +128,7 @@ export default function MediaAdminPage() {
           <select name="kind" defaultValue="video">
             <option value="video">Video</option>
             <option value="image">Image</option>
-            <option value="splat">Splat example</option>
+            <option value="splat">3D capture example</option>
           </select>
         </label>
         <label>
@@ -157,7 +157,9 @@ export default function MediaAdminPage() {
               }
             />
             <div>
-              <span className="pill">{item.kind}</span>
+              <span className="pill">
+                {item.kind === "splat" ? "3D capture" : item.kind}
+              </span>
               <h3>{item.title}</h3>
               <p>{item.description}</p>
             </div>

@@ -88,13 +88,13 @@ export function LandingPage() {
             Spleckt
           </motion.p>
           <motion.h1 variants={fadeUp}>
-            Hyperrealistic 3D captures for spaces that need to be felt, not just
+            Lifelike 3D captures for spaces that need to be felt, not just
             photographed.
           </motion.h1>
           <motion.p className="hero__lede" variants={fadeUp}>
-            We capture locations, homes, businesses, and construction sites as
-            Gaussian Splats — then host them for marketing today and
-            documentation tomorrow.
+            We turn locations, homes, businesses, and construction sites into
+            lifelike 3D captures people can explore from anywhere — then host
+            them for marketing today and documentation tomorrow.
           </motion.p>
           <motion.div className="hero__actions" variants={fadeUp}>
             <Link href="/#contact" className="btn btn--primary btn--lg">
@@ -112,8 +112,8 @@ export function LandingPage() {
           <p className="eyebrow">Built for real estate & construction</p>
           <h2>Show the space as it truly is.</h2>
           <p>
-            Spleckt turns physical environments into navigable 3D assets your
-            clients, buyers, and project teams can explore from any device.
+            Spleckt creates lifelike 3D captures your clients, buyers, and
+            project teams can explore from any device.
           </p>
         </div>
 
@@ -125,11 +125,11 @@ export function LandingPage() {
             },
             {
               title: "Jobsite clarity",
-              body: "Document progress with high-fidelity captures teams can revisit for coordination, handoff, and accountability.",
+              body: "Document progress with detailed captures teams can revisit for coordination, handoff, and accountability.",
             },
             {
               title: "Hosted & shareable",
-              body: "Every splat lives in your portal with public hashed links for clients, partners, and stakeholders.",
+              body: "Every capture lives in your portal with a link you can share with clients, partners, and stakeholders.",
             },
           ].map((item, index) => (
             <motion.article
@@ -149,7 +149,7 @@ export function LandingPage() {
 
       <section className="section section--tint" id="process">
         <div className="section__intro">
-          <p className="eyebrow">Capture to hosted splat</p>
+          <p className="eyebrow">From real space to hosted 3D</p>
           <h2>From site visit to shareable 3D.</h2>
           <p>
             Upload process videos and stills from the portal — they appear here
@@ -160,7 +160,7 @@ export function LandingPage() {
         <div className="process-rail">
           {[
             "On-site capture",
-            "Gaussian processing",
+            "Build the 3D scene",
             "Edit & refine",
             "Host & share",
           ].map((step, index) => (
@@ -209,20 +209,17 @@ export function LandingPage() {
       <section className="section" id="examples">
         <div className="section__intro">
           <p className="eyebrow">Example captures</p>
-          <h2>Spaces preserved in living detail.</h2>
+          <h2>Spaces preserved in lifelike detail.</h2>
           <p>
-            Featured splats from the portal surface here so visitors can
-            experience the fidelity before they book.
+            Featured captures from the portal appear here so visitors can
+            explore the detail before they book.
           </p>
         </div>
 
         <div className="example-grid">
           {exampleSplats.length === 0 ? (
             <div className="media-empty">
-              <p>
-                Feature a splat from the portal to showcase it on the landing
-                page.
-              </p>
+              <p>Feature a capture from the portal to showcase it here.</p>
             </div>
           ) : (
             exampleSplats.map((splat, index) => (
@@ -285,7 +282,7 @@ export function LandingPage() {
       <footer className="site-footer">
         <div>
           <strong>Spleckt</strong>
-          <p>Hyperrealistic 3D Gaussian Splats for marketing and documentation.</p>
+          <p>Lifelike 3D captures for marketing and documentation.</p>
         </div>
         <div className="site-footer__links">
           <Link href="/login">Portal</Link>

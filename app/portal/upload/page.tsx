@@ -55,7 +55,7 @@ export default function UploadPage() {
     const form = new FormData(event.currentTarget);
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) {
-      setError("Choose a splat file to upload.");
+      setError("Choose a 3D capture file to upload.");
       setLoading(false);
       return;
     }
@@ -96,8 +96,12 @@ export default function UploadPage() {
       });
 
       if (!res.ok) {
+<<<<<<< HEAD
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Could not save splat metadata");
+=======
+        throw new Error("Could not save capture details");
+>>>>>>> ffc6324 (Refresh site copy for 3D capture newcomers)
       }
 
       const data = await res.json();
@@ -113,10 +117,10 @@ export default function UploadPage() {
       <div className="portal-page__header">
         <div>
           <p className="eyebrow">Library</p>
-          <h1>Upload a splat</h1>
+          <h1>Upload a 3D capture</h1>
           <p>
-            Accepts `.ply`, `.compressed.ply`, `.sog`, and related SuperSplat
-            scene files. Large files go to Cloudflare R2 when configured.
+            Add a lifelike capture to your library. We accept .ply,
+            .compressed.ply, .sog, and related 3D scene files.
           </p>
         </div>
       </div>
@@ -155,7 +159,7 @@ export default function UploadPage() {
           </label>
         ) : null}
         <label>
-          Splat file
+          Capture file
           <input
             name="file"
             type="file"
@@ -175,7 +179,7 @@ export default function UploadPage() {
         ) : null}
         {error ? <p className="form-error">{error}</p> : null}
         <button className="btn btn--primary" type="submit" disabled={loading}>
-          {loading ? "Uploading…" : "Upload splat"}
+          {loading ? "Uploading…" : "Upload capture"}
         </button>
       </form>
     </div>

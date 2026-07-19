@@ -61,7 +61,7 @@ export default function LoginPage() {
           <span className="brand-mark__name">Spleckt</span>
         </Link>
         <h1>Client portal</h1>
-        <p>Sign in to view, share, and manage your hosted splats.</p>
+        <p>Sign in to view, share, and manage your lifelike 3D captures.</p>
 
         <form className="form-stack" onSubmit={onSubmit}>
           <label>

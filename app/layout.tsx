@@ -14,11 +14,11 @@ const sans = Outfit({
 
 export const metadata: Metadata = {
   title: {
-    default: "Spleckt — Hyperrealistic 3D Gaussian Splats",
+    default: "Spleckt — Lifelike 3D captures",
     template: "%s · Spleckt",
   },
   description:
-    "Spleckt captures locations, homes, businesses, and construction sites as hyperrealistic 3D Gaussian Splats for marketing and documentation.",
+    "Spleckt turns locations, homes, businesses, and construction sites into lifelike 3D captures you can explore and share for marketing and documentation.",
 };
 
 export default function RootLayout({

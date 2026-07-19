@@ -12,7 +12,7 @@ export function SplatViewerFrame({
   contentUrl,
   settingsUrl,
   posterUrl,
-  title = "Splat viewer",
+  title = "3D capture viewer",
   className,
 }: SplatViewerFrameProps) {
   const params = new URLSearchParams({

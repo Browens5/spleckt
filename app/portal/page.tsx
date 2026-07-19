@@ -41,16 +41,16 @@ export default function PortalLibraryPage() {
       <div className="portal-page__header">
         <div>
           <p className="eyebrow">Your library</p>
-          <h1>Hosted splats</h1>
+          <h1>Your 3D captures</h1>
           <p>
             {canEdit
-              ? "Open, edit, and share captures with hashed public links."
+              ? "Open, edit, and share your lifelike captures with a simple link."
               : "View-only access. Ask an admin if you need editor permissions."}
           </p>
         </div>
         {canEdit ? (
           <Link href="/portal/upload" className="btn btn--primary">
-            Upload splat
+            Upload capture
           </Link>
         ) : (
           <span className="pill">{role}</span>
@@ -63,8 +63,8 @@ export default function PortalLibraryPage() {
         <div className="media-empty">
           <p>
             {canEdit
-              ? "No splats yet. Upload a `.ply`, `.compressed.ply`, or `.sog` file to get started."
-              : "No splats assigned to you yet. An editor or admin can upload and assign captures to your account."}
+              ? "No captures yet. Upload a .ply, .compressed.ply, or .sog capture file to get started."
+              : "No captures assigned to you yet. An editor or admin can upload and assign captures to your account."}
           </p>
         </div>
       ) : null}

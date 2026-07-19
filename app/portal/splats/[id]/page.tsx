@@ -42,7 +42,7 @@ export default function SplatDetailPage() {
       if (cancelled) return;
 
       if (!splatRes.ok) {
-        setError("Splat not found");
+        setError("Capture not found");
         return;
       }
 
@@ -101,7 +101,7 @@ export default function SplatDetailPage() {
   if (!splat) {
     return (
       <div className="portal-page">
-        <p>Loading splat…</p>
+        <p>Loading capture…</p>
       </div>
     );
   }
@@ -112,7 +112,7 @@ export default function SplatDetailPage() {
         <div>
           <p className="eyebrow">{splat.category.replace("-", " ")}</p>
           <h1>{splat.title}</h1>
-          <p>{splat.description || "Interactive Gaussian Splat capture"}</p>
+          <p>{splat.description || "Lifelike, interactive 3D capture"}</p>
         </div>
         <div className="splat-card__actions">
           {canEdit ? (
@@ -152,7 +152,7 @@ export default function SplatDetailPage() {
       </div>
 
       <div className="share-box">
-        <strong>Public hashed links</strong>
+        <strong>Share links</strong>
         {links.length === 0 ? (
           <p>
             {canEdit

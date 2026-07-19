@@ -42,16 +42,16 @@ export default function EditorPage() {
     >
       <div className="viewer-page__bar">
         <div>
-          <h1>{splat?.title ?? "SuperSplat Editor"}</h1>
+          <h1>{splat?.title ?? "3D capture editor"}</h1>
           <p>
-            Self-hosted PlayCanvas SuperSplat editor. Use File → Open to load the
-            splat, or drag the file into the editor.
+            Open your capture with File → Open, or drag the capture file into
+            the editor.
           </p>
         </div>
         <div className="splat-card__actions">
           {splat ? (
             <a className="btn btn--ghost" href={splat.fileUrl} download>
-              Download splat
+              Download capture
             </a>
           ) : null}
           <Link className="btn btn--primary" href={`/portal/splats/${params.id}`}>
@@ -61,7 +61,7 @@ export default function EditorPage() {
       </div>
       <iframe
         className="editor-frame"
-        title="SuperSplat Editor"
+        title="3D capture editor"
         src="/editor/index.html"
         allow="fullscreen; xr-spatial-tracking; accelerometer; gyroscope; magnetometer; clipboard-read; clipboard-write"
       />
