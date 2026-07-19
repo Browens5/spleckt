@@ -20,16 +20,25 @@ export default function SignupPage() {
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
 
-    const result = await authClient.signUp.email({ name, email, password });
-    setLoading(false);
+    try {
+      const result = await authClient.signUp.email({ name, email, password });
 
-    if (result.error) {
-      setError(result.error.message ?? "Unable to create account");
-      return;
+      if (result.error) {
+        setError(result.error.message ?? "Unable to create account");
+        return;
+      }
+
+      router.push("/portal");
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Account creation failed. Check that the database is configured.",
+      );
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/portal");
-    router.refresh();
   }
 
   return (

@@ -30,3 +30,27 @@ export function getAppUrl() {
     ) ?? "http://localhost:3000"
   );
 }
+
+/** Origins allowed to call Better Auth (apex + www). */
+export function getTrustedOrigins() {
+  const appUrl = getAppUrl().replace(/\/$/, "");
+  const origins = new Set<string>([
+    appUrl,
+    "https://spleckt.com",
+    "https://www.spleckt.com",
+    "http://localhost:3000",
+  ]);
+
+  try {
+    const url = new URL(appUrl);
+    if (url.hostname.startsWith("www.")) {
+      origins.add(`${url.protocol}//${url.hostname.replace(/^www\./, "")}`);
+    } else {
+      origins.add(`${url.protocol}//www.${url.hostname}`);
+    }
+  } catch {
+    // ignore invalid app url during build
+  }
+
+  return [...origins];
+}

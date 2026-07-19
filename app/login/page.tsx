@@ -19,16 +19,25 @@ export default function LoginPage() {
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
 
-    const result = await authClient.signIn.email({ email, password });
-    setLoading(false);
+    try {
+      const result = await authClient.signIn.email({ email, password });
 
-    if (result.error) {
-      setError(result.error.message ?? "Unable to sign in");
-      return;
+      if (result.error) {
+        setError(result.error.message ?? "Unable to sign in");
+        return;
+      }
+
+      router.push("/portal");
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Sign-in failed. Check that the database is configured.",
+      );
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/portal");
-    router.refresh();
   }
 
   return (

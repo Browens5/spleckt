@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { ensureSchema } from "@/lib/db/ensure-schema";
 
 export async function getSession() {
+  await ensureSchema();
   return auth.api.getSession({
     headers: await headers(),
   });

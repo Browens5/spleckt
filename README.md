@@ -41,7 +41,7 @@ Default admin (change after first login):
 
 | Variable | What it is |
 | --- | --- |
-| `NEXT_PUBLIC_APP_URL` | Your public site URL, e.g. `https://spleckt.com` (you choose this; not from Cloudflare/Turso) |
+| `NEXT_PUBLIC_APP_URL` | Your public site URL — use `https://www.spleckt.com` (apex redirects to www) |
 | `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
 | `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
 | `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
