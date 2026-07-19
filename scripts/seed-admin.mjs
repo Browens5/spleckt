@@ -2,14 +2,19 @@ import "dotenv/config";
 import { createClient } from "@libsql/client";
 import { hashPassword } from "better-auth/crypto";
 
-const url = process.env.DATABASE_URL ?? "file:.data/spleckt.db";
+const url =
+  process.env.TURSO_DATABASE_URL ??
+  process.env.DATABASE_URL ??
+  "file:.data/spleckt.db";
+const authToken =
+  process.env.TURSO_AUTH_TOKEN ?? process.env.DATABASE_AUTH_TOKEN;
 const email = process.env.ADMIN_EMAIL ?? "admin@spleckt.com";
 const password = process.env.ADMIN_PASSWORD ?? "changeme123";
 const name = process.env.ADMIN_NAME ?? "Spleckt Admin";
 
 const client = createClient({
   url,
-  authToken: process.env.DATABASE_AUTH_TOKEN,
+  authToken,
 });
 
 const userId = crypto.randomUUID();

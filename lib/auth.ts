@@ -3,8 +3,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { getAppUrl } from "@/lib/env";
 
 export const auth = betterAuth({
+  baseURL: getAppUrl(),
+  secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "sqlite",
     schema: {

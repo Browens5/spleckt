@@ -37,9 +37,20 @@ Default admin (change after first login):
 - Email: `admin@spleckt.com`
 - Password: `changeme123`
 
+## Environment variables
+
+| Variable | What it is |
+| --- | --- |
+| `NEXT_PUBLIC_APP_URL` | Your public site URL, e.g. `https://spleckt.com` (you choose this; not from Cloudflare/Turso) |
+| `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
+| `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
+| `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
+| `TURSO_AUTH_TOKEN` | From Turso dashboard → your database → Tokens |
+| `R2_*` | From Cloudflare R2 bucket + API token |
+
 ## Cloudflare R2
 
-Set these in `.env.local` / Vercel / Cloudflare:
+Set these in `.env.local` / Vercel:
 
 - `R2_ACCOUNT_ID`
 - `R2_ACCESS_KEY_ID`
@@ -51,9 +62,10 @@ Without R2, uploads are stored under `.data/uploads` and served from `/api/files
 
 ## Production notes
 
-- Keep the Next.js app on **Vercel** (or Cloudflare via OpenNext) and put large assets on **R2**.
-- Point `DATABASE_URL` at Turso/libSQL for serverless.
+- Keep the Next.js app on **Vercel** and put large assets on **R2**.
+- Use Turso via `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`.
 - Set `NEXT_PUBLIC_APP_URL` and `BETTER_AUTH_URL` to `https://spleckt.com`.
+- After first deploy: `npm run db:push && npm run db:seed` with prod env loaded.
 - Rebuild the editor periodically with `npm run setup:editor`.
 
 ## Key routes
