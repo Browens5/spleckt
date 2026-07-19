@@ -5,10 +5,30 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { getAppUrl, getTrustedOrigins } from "@/lib/env";
 
+const appUrl = getAppUrl();
+const isSplecktHost = /(?:^|\.)spleckt\.com$/i.test(
+  (() => {
+    try {
+      return new URL(appUrl).hostname;
+    } catch {
+      return "";
+    }
+  })(),
+);
+
 export const auth = betterAuth({
-  baseURL: getAppUrl(),
+  baseURL: appUrl,
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: getTrustedOrigins(),
+  advanced: isSplecktHost
+    ? {
+        // Session cookies must survive apex <-> www redirects.
+        crossSubDomainCookies: {
+          enabled: true,
+          domain: ".spleckt.com",
+        },
+      }
+    : undefined,
   database: drizzleAdapter(db, {
     provider: "sqlite",
     schema: {

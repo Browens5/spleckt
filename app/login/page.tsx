@@ -20,14 +20,27 @@ export default function LoginPage() {
     const password = String(form.get("password") ?? "");
 
     try {
-      const result = await authClient.signIn.email({ email, password });
+      const result = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/portal",
+      });
 
       if (result.error) {
         setError(result.error.message ?? "Unable to sign in");
         return;
       }
 
-      router.push("/portal");
+      // Confirm the session cookie is readable on this host before navigating.
+      const session = await authClient.getSession();
+      if (!session.data?.user) {
+        setError(
+          "Signed in, but no session cookie was stored. Make sure you stay on www.spleckt.com.",
+        );
+        return;
+      }
+
+      router.replace("/portal");
       router.refresh();
     } catch (err) {
       setError(

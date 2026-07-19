@@ -21,14 +21,27 @@ export default function SignupPage() {
     const password = String(form.get("password") ?? "");
 
     try {
-      const result = await authClient.signUp.email({ name, email, password });
+      const result = await authClient.signUp.email({
+        name,
+        email,
+        password,
+        callbackURL: "/portal",
+      });
 
       if (result.error) {
         setError(result.error.message ?? "Unable to create account");
         return;
       }
 
-      router.push("/portal");
+      const session = await authClient.getSession();
+      if (!session.data?.user) {
+        setError(
+          "Account created, but no session cookie was stored. Try signing in, and use www.spleckt.com.",
+        );
+        return;
+      }
+
+      router.replace("/portal");
       router.refresh();
     } catch (err) {
       setError(

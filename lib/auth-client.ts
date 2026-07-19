@@ -1,6 +1,9 @@
 import { createAuthClient } from "better-auth/react";
 
-export const authClient = createAuthClient({
-  // Falls back to current origin in the browser when unset.
-  baseURL: process.env.NEXT_PUBLIC_APP_URL,
-});
+/**
+ * Always use the current browser origin for auth requests.
+ * Hardcoding NEXT_PUBLIC_APP_URL to the apex domain while users visit www
+ * causes session cookies to be set on the wrong host, so signup/login
+ * appears to succeed then immediately fails to enter the portal.
+ */
+export const authClient = createAuthClient();
