@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, existsSync, writeFileSync } from "fs";
+import { cpSync, mkdirSync, existsSync, writeFileSync, readdirSync, rmSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -68,4 +68,12 @@ if (!existsSync(settingsPath)) {
   );
 }
 
+function removeMaps(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) removeMaps(full);
+    else if (entry.name.endsWith(".map")) rmSync(full);
+  }
+}
+removeMaps(target);
 console.log("Copied SuperSplat viewer assets to public/viewer");
