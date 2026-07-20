@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { usePortalRole } from "@/components/portal/PortalRoleContext";
 import { SplatViewerFrame } from "@/components/viewer/SplatViewerFrame";
 
 type Splat = {
@@ -23,6 +24,7 @@ type ShareLink = {
 
 export default function SplatDetailPage() {
   const params = useParams<{ id: string }>();
+  const { canEdit, isAdmin } = usePortalRole();
   const [splat, setSplat] = useState<Splat | null>(null);
   const [links, setLinks] = useState<ShareLink[]>([]);
   const [copied, setCopied] = useState(false);
@@ -59,7 +61,11 @@ export default function SplatDetailPage() {
     const res = await fetch(`/api/splats/${params.id}/share`, {
       method: "POST",
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Could not create share link");
+      return;
+    }
     const data = await res.json();
     setLinks((current) => [data.link, ...current]);
   }
@@ -84,7 +90,7 @@ export default function SplatDetailPage() {
     setTimeout(() => setCopied(false), 1600);
   }
 
-  if (error) {
+  if (error && !splat) {
     return (
       <div className="portal-page">
         <p className="form-error">{error}</p>
@@ -109,17 +115,33 @@ export default function SplatDetailPage() {
           <p>{splat.description || "Interactive Gaussian Splat capture"}</p>
         </div>
         <div className="splat-card__actions">
-          <Link className="btn btn--ghost" href={`/portal/editor/${splat.id}`}>
-            Open editor
-          </Link>
-          <button type="button" className="btn btn--ghost" onClick={toggleFeatured}>
-            {splat.isFeatured ? "Unfeature" : "Feature on landing"}
-          </button>
-          <button type="button" className="btn btn--primary" onClick={createShareLink}>
-            Create share link
-          </button>
+          {canEdit ? (
+            <Link className="btn btn--ghost" href={`/portal/editor/${splat.id}`}>
+              Open editor
+            </Link>
+          ) : null}
+          {isAdmin ? (
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={toggleFeatured}
+            >
+              {splat.isFeatured ? "Unfeature" : "Feature on landing"}
+            </button>
+          ) : null}
+          {canEdit ? (
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={createShareLink}
+            >
+              Create share link
+            </button>
+          ) : null}
         </div>
       </div>
+
+      {error ? <p className="form-error">{error}</p> : null}
 
       <div style={{ height: "58vh", borderRadius: 16, overflow: "hidden" }}>
         <SplatViewerFrame
@@ -132,7 +154,11 @@ export default function SplatDetailPage() {
       <div className="share-box">
         <strong>Public hashed links</strong>
         {links.length === 0 ? (
-          <p>No share links yet. Create one to send a public viewer URL.</p>
+          <p>
+            {canEdit
+              ? "No share links yet. Create one to send a public viewer URL."
+              : "No share links yet. An editor can create one for this capture."}
+          </p>
         ) : (
           links.map((link) => (
             <div key={link.id} className="splat-card__actions">

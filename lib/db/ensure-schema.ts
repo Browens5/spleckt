@@ -9,7 +9,7 @@ const statements = [
     email TEXT NOT NULL UNIQUE,
     email_verified INTEGER NOT NULL DEFAULT 0,
     image TEXT,
-    role TEXT NOT NULL DEFAULT 'client',
+    role TEXT NOT NULL DEFAULT 'viewer',
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`,
@@ -96,5 +96,11 @@ export async function ensureSchema() {
   for (const sql of statements) {
     await client.execute(sql);
   }
+
+  // Migrate legacy roles and keep the default aligned with viewer/editor/admin.
+  await client.execute(
+    `UPDATE user SET role = 'viewer' WHERE role IS NULL OR role = '' OR role = 'client'`,
+  );
+
   ensured = true;
 }

@@ -1,13 +1,51 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePortalRole } from "@/components/portal/PortalRoleContext";
 import { uploadFile } from "@/lib/upload-client";
+
+type DirectoryUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
 
 export default function UploadPage() {
   const router = useRouter();
+  const { canEdit, isAdmin } = usePortalRole();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<DirectoryUser[]>([]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+
+    void fetch("/api/users")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setUsers(data.users ?? []);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
+
+  if (!canEdit) {
+    return (
+      <div className="portal-page">
+        <div className="media-empty">
+          <p>
+            Your account is view-only. Ask an admin to promote you to editor if
+            you need to upload or edit splats.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,13 +61,19 @@ export default function UploadPage() {
     }
 
     try {
-      const uploaded = await uploadFile({ file, purpose: "splat" });
+      const ownerId = String(form.get("ownerId") ?? "") || undefined;
+      const uploaded = await uploadFile({
+        file,
+        purpose: "splat",
+        ownerId: isAdmin ? ownerId : undefined,
+      });
       let thumbnailKey: string | undefined;
       const thumb = form.get("thumbnail");
       if (thumb instanceof File && thumb.size > 0) {
         const thumbUpload = await uploadFile({
           file: thumb,
           purpose: "thumbnail",
+          ownerId: isAdmin ? ownerId : undefined,
         });
         thumbnailKey = thumbUpload.key;
       }
@@ -47,11 +91,13 @@ export default function UploadPage() {
           contentType: file.type || "application/octet-stream",
           thumbnailKey,
           isFeatured: form.get("isFeatured") === "on",
+          ownerId: isAdmin ? ownerId : undefined,
         }),
       });
 
       if (!res.ok) {
-        throw new Error("Could not save splat metadata");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Could not save splat metadata");
       }
 
       const data = await res.json();
@@ -95,6 +141,19 @@ export default function UploadPage() {
             <option value="other">Other</option>
           </select>
         </label>
+        {isAdmin ? (
+          <label>
+            Assign to user
+            <select name="ownerId" defaultValue="">
+              <option value="">Me (admin)</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.email}) — {user.role}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <label>
           Splat file
           <input
@@ -108,10 +167,12 @@ export default function UploadPage() {
           Thumbnail (optional)
           <input name="thumbnail" type="file" accept="image/*" />
         </label>
-        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <input name="isFeatured" type="checkbox" />
-          Feature on marketing landing page (admin)
-        </label>
+        {isAdmin ? (
+          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <input name="isFeatured" type="checkbox" />
+            Feature on marketing landing page
+          </label>
+        ) : null}
         {error ? <p className="form-error">{error}</p> : null}
         <button className="btn btn--primary" type="submit" disabled={loading}>
           {loading ? "Uploading…" : "Upload splat"}

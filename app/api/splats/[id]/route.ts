@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { splats } from "@/lib/db/schema";
-import { getSession, isAdmin } from "@/lib/session";
+import { canEditSplats, getSession, isAdmin } from "@/lib/session";
 import { publicAssetUrl } from "@/lib/storage";
 
 const updateSchema = z.object({
@@ -18,9 +18,14 @@ const updateSchema = z.object({
   settingsJson: z.string().optional(),
   isFeatured: z.boolean().optional(),
   status: z.enum(["processing", "ready", "archived"]).optional(),
+  ownerId: z.string().optional(),
 });
 
-async function getOwnedSplat(id: string, userId: string, role?: string | null) {
+async function getAccessibleSplat(
+  id: string,
+  userId: string,
+  role?: string | null,
+) {
   const [row] = await db.select().from(splats).where(eq(splats.id, id)).limit(1);
   if (!row) return null;
   if (!isAdmin(role) && row.ownerId !== userId) return null;
@@ -37,12 +42,14 @@ export async function GET(
   }
 
   const { id } = await context.params;
-  const row = await getOwnedSplat(id, session.user.id, session.user.role);
+  const row = await getAccessibleSplat(id, session.user.id, session.user.role);
   if (!row) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   return NextResponse.json({
+    role: session.user.role,
+    canEdit: canEditSplats(session.user.role),
     splat: {
       ...row,
       fileUrl: publicAssetUrl(row.fileKey),
@@ -60,8 +67,19 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!canEditSplats(session.user.role)) {
+    return NextResponse.json(
+      { error: "Viewers cannot edit splats." },
+      { status: 403 },
+    );
+  }
+
   const { id } = await context.params;
-  const existing = await getOwnedSplat(id, session.user.id, session.user.role);
+  const existing = await getAccessibleSplat(
+    id,
+    session.user.id,
+    session.user.role,
+  );
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -78,9 +96,11 @@ export async function PATCH(
       title: data.title,
       description: data.description,
       category: data.category,
-      thumbnailKey: data.thumbnailKey === undefined ? undefined : data.thumbnailKey,
+      thumbnailKey:
+        data.thumbnailKey === undefined ? undefined : data.thumbnailKey,
       settingsJson: data.settingsJson,
       status: data.status,
+      ownerId: isAdmin(session.user.role) ? data.ownerId : undefined,
       isFeatured: isAdmin(session.user.role)
         ? data.isFeatured
         : existing.isFeatured,
@@ -107,8 +127,19 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!canEditSplats(session.user.role)) {
+    return NextResponse.json(
+      { error: "Viewers cannot delete splats." },
+      { status: 403 },
+    );
+  }
+
   const { id } = await context.params;
-  const existing = await getOwnedSplat(id, session.user.id, session.user.role);
+  const existing = await getAccessibleSplat(
+    id,
+    session.user.id,
+    session.user.role,
+  );
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

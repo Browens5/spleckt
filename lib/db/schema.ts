@@ -9,7 +9,7 @@ export const user = sqliteTable("user", {
     .notNull()
     .default(false),
   image: text("image"),
-  role: text("role").notNull().default("client"), // admin | client
+  role: text("role").notNull().default("viewer"), // viewer | editor | admin
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),

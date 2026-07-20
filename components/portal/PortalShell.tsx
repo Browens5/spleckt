@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { PortalRoleProvider, usePortalRole } from "@/components/portal/PortalRoleContext";
 import { authClient } from "@/lib/auth-client";
+import { normalizeRole } from "@/lib/types";
 
 const nav = [
   { href: "/portal", label: "Library" },
-  { href: "/portal/upload", label: "Upload" },
+  { href: "/portal/upload", label: "Upload", editorOnly: true },
+  { href: "/portal/users", label: "Users", adminOnly: true },
   { href: "/portal/media", label: "Marketing media", adminOnly: true },
 ];
 
-export function PortalShell({
+function PortalChrome({
   children,
   user,
 }: {
@@ -19,7 +22,7 @@ export function PortalShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isAdmin = user.role === "admin";
+  const { role, canEdit, isAdmin } = usePortalRole();
 
   async function signOut() {
     await authClient.signOut();
@@ -37,7 +40,11 @@ export function PortalShell({
 
         <nav className="portal__nav">
           {nav
-            .filter((item) => !item.adminOnly || isAdmin)
+            .filter((item) => {
+              if (item.adminOnly) return isAdmin;
+              if (item.editorOnly) return canEdit;
+              return true;
+            })
             .map((item) => (
               <Link
                 key={item.href}
@@ -53,7 +60,7 @@ export function PortalShell({
           <div>
             <strong>{user.name}</strong>
             <p>{user.email}</p>
-            {isAdmin ? <span className="pill">Admin</span> : null}
+            <span className="pill">{role}</span>
           </div>
           <button type="button" className="btn btn--ghost" onClick={signOut}>
             Sign out
@@ -63,5 +70,19 @@ export function PortalShell({
 
       <main className="portal__main">{children}</main>
     </div>
+  );
+}
+
+export function PortalShell({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user: { name: string; email: string; role?: string | null };
+}) {
+  return (
+    <PortalRoleProvider role={normalizeRole(user.role)}>
+      <PortalChrome user={user}>{children}</PortalChrome>
+    </PortalRoleProvider>
   );
 }

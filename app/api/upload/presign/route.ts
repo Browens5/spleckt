@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createId } from "@/lib/ids";
-import { getSession, isAdmin } from "@/lib/session";
+import { canEditSplats, canManageMarketing, getSession, isAdmin } from "@/lib/session";
 import { createUploadUrl } from "@/lib/storage";
 
 const bodySchema = z.object({
@@ -26,6 +26,17 @@ export async function POST(request: NextRequest) {
 
   const { fileName, contentType, purpose, ownerId } = parsed.data;
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+  if (
+    (purpose === "splat" || purpose === "thumbnail") &&
+    !canEditSplats(session.user.role)
+  ) {
+    return NextResponse.json(
+      { error: "Viewers cannot upload files." },
+      { status: 403 },
+    );
+  }
+
   const targetOwner =
     isAdmin(session.user.role) && ownerId ? ownerId : session.user.id;
 
@@ -38,13 +49,13 @@ export async function POST(request: NextRequest) {
       key = `thumbnails/${targetOwner}/${createId()}-${safeName}`;
       break;
     case "media":
-      if (!isAdmin(session.user.role)) {
+      if (!canManageMarketing(session.user.role)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       key = `media/${createId()}-${safeName}`;
       break;
     case "media-poster":
-      if (!isAdmin(session.user.role)) {
+      if (!canManageMarketing(session.user.role)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       key = `media/posters/${createId()}-${safeName}`;

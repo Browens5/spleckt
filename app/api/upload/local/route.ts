@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getSession, isAdmin } from "@/lib/session";
+import { canEditSplats, canManageMarketing, getSession, isAdmin } from "@/lib/session";
 import { putLocalObject } from "@/lib/storage";
 
 export async function PUT(request: NextRequest) {
@@ -15,9 +15,21 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Missing key" }, { status: 400 });
   }
 
-  // Clients may only upload into their own prefix; admins may upload anywhere.
   const role = session.user.role;
-  if (!isAdmin(role) && !key.startsWith(`splats/${session.user.id}/`)) {
+  const isMedia = key.startsWith("media/");
+  const isOwnSplatPrefix =
+    key.startsWith(`splats/${session.user.id}/`) ||
+    key.startsWith(`thumbnails/${session.user.id}/`);
+
+  if (isMedia && !canManageMarketing(role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!isMedia && !canEditSplats(role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!isMedia && !isAdmin(role) && !isOwnSplatPrefix) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

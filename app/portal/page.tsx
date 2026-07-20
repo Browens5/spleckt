@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePortalRole } from "@/components/portal/PortalRoleContext";
 
 type Splat = {
   id: string;
@@ -14,6 +15,7 @@ type Splat = {
 };
 
 export default function PortalLibraryPage() {
+  const { canEdit, role } = usePortalRole();
   const [splats, setSplats] = useState<Splat[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,18 +42,30 @@ export default function PortalLibraryPage() {
         <div>
           <p className="eyebrow">Your library</p>
           <h1>Hosted splats</h1>
-          <p>Open, edit, and share captures with hashed public links.</p>
+          <p>
+            {canEdit
+              ? "Open, edit, and share captures with hashed public links."
+              : "View-only access. Ask an admin if you need editor permissions."}
+          </p>
         </div>
-        <Link href="/portal/upload" className="btn btn--primary">
-          Upload splat
-        </Link>
+        {canEdit ? (
+          <Link href="/portal/upload" className="btn btn--primary">
+            Upload splat
+          </Link>
+        ) : (
+          <span className="pill">{role}</span>
+        )}
       </div>
 
       {loading ? <p>Loading library…</p> : null}
 
       {!loading && splats.length === 0 ? (
         <div className="media-empty">
-          <p>No splats yet. Upload a `.ply`, `.compressed.ply`, or `.sog` file to get started.</p>
+          <p>
+            {canEdit
+              ? "No splats yet. Upload a `.ply`, `.compressed.ply`, or `.sog` file to get started."
+              : "No splats assigned to you yet. An editor or admin can upload and assign captures to your account."}
+          </p>
         </div>
       ) : null}
 
@@ -76,14 +90,16 @@ export default function PortalLibraryPage() {
                 className="btn btn--primary"
                 href={`/portal/splats/${splat.id}`}
               >
-                Open
+                View
               </Link>
-              <Link
-                className="btn btn--ghost"
-                href={`/portal/editor/${splat.id}`}
-              >
-                Editor
-              </Link>
+              {canEdit ? (
+                <Link
+                  className="btn btn--ghost"
+                  href={`/portal/editor/${splat.id}`}
+                >
+                  Editor
+                </Link>
+              ) : null}
             </div>
           </article>
         ))}

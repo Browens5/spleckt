@@ -62,7 +62,10 @@ export default function SignupPage() {
           <span className="brand-mark__name">Spleckt</span>
         </Link>
         <h1>Create account</h1>
-        <p>Set up portal access for your Spleckt library.</p>
+        <p>
+          New accounts start as viewers. An admin can promote you to editor when
+          you need upload access.
+        </p>
 
         <form className="form-stack" onSubmit={onSubmit}>
           <label>

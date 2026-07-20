@@ -14,10 +14,18 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 ## Features (MVP)
 
 1. Light, professional marketing landing page with process media + featured splats
-2. Client portal to upload/view splats
+2. Client portal with roles: **viewer** (default), **editor**, **admin**
 3. Public hashed share links (`/s/[hash]`)
-4. Admin marketing media upload UI
+4. Admin marketing media upload UI + user role management
 5. Self-hosted SuperSplat viewer + editor
+
+### Roles
+
+| Role | Access |
+| --- | --- |
+| `viewer` | View assigned splats only (default for new signups) |
+| `editor` | Upload, edit, share, and use the SuperSplat editor |
+| `admin` | Everything editors can do, plus marketing media + change user roles |
 
 ## Setup
 

@@ -731,6 +731,52 @@ textarea {
   font-size: 0.85rem;
 }
 
+.users-table {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.users-table__head,
+.users-table__row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 0.8fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.users-table__head {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0 0.25rem;
+}
+
+.users-table__row {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-solid);
+}
+
+.users-table__row select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .users-table__head {
+    display: none;
+  }
+
+  .users-table__row {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .service-grid,
   .process-rail,

@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { splats } from "@/lib/db/schema";
 import { defaultExperienceSettings } from "@/lib/default-settings";
 import { createId } from "@/lib/ids";
-import { getSession, isAdmin } from "@/lib/session";
+import { canEditSplats, getSession, isAdmin } from "@/lib/session";
 import { publicAssetUrl } from "@/lib/storage";
 
 const createSchema = z.object({
@@ -31,6 +31,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Viewers/editors see only their assigned/owned splats; admins see all.
   const rows = isAdmin(session.user.role)
     ? await db.select().from(splats).orderBy(splats.createdAt)
     : await db
@@ -40,15 +41,12 @@ export async function GET() {
         .orderBy(splats.createdAt);
 
   return NextResponse.json({
-    splats: rows
-      .reverse()
-      .map((row) => ({
-        ...row,
-        fileUrl: publicAssetUrl(row.fileKey),
-        thumbnailUrl: row.thumbnailKey
-          ? publicAssetUrl(row.thumbnailKey)
-          : null,
-      })),
+    role: session.user.role,
+    splats: rows.reverse().map((row) => ({
+      ...row,
+      fileUrl: publicAssetUrl(row.fileKey),
+      thumbnailUrl: row.thumbnailKey ? publicAssetUrl(row.thumbnailKey) : null,
+    })),
   });
 }
 
@@ -56,6 +54,13 @@ export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!canEditSplats(session.user.role)) {
+    return NextResponse.json(
+      { error: "Viewers cannot upload splats. Ask an admin to grant editor access." },
+      { status: 403 },
+    );
   }
 
   const parsed = createSchema.safeParse(await request.json());
@@ -69,7 +74,10 @@ export async function POST(request: NextRequest) {
       ? data.ownerId
       : session.user.id;
 
-  if (!isAdmin(session.user.role) && !data.fileKey.startsWith(`splats/${session.user.id}/`)) {
+  if (
+    !isAdmin(session.user.role) &&
+    !data.fileKey.startsWith(`splats/${session.user.id}/`)
+  ) {
     return NextResponse.json({ error: "Forbidden file key" }, { status: 403 });
   }
 
