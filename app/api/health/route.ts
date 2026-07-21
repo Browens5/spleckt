@@ -9,6 +9,7 @@ import {
   getDatabaseUrl,
   getTrustedOrigins,
 } from "@/lib/env";
+import { getR2Status } from "@/lib/storage";
 
 export async function GET() {
   const url = getDatabaseUrl();
@@ -30,6 +31,8 @@ export async function GET() {
     dbError = error instanceof Error ? error.message : "Unknown database error";
   }
 
+  const r2 = await getR2Status();
+
   return NextResponse.json({
     ok: dbOk,
     appUrl: getAppUrl(),
@@ -41,8 +44,18 @@ export async function GET() {
       ok: dbOk,
       tableCount,
       error: dbError,
-      // Never return the full URL with credentials; only host-ish hint.
-      urlHost: url.replace(/^libsql:\/\//, "").replace(/^https?:\/\//, "").split("/")[0],
+      urlHost: url
+        .replace(/^libsql:\/\//, "")
+        .replace(/^https?:\/\//, "")
+        .split("/")[0],
+    },
+    r2: {
+      ...r2,
+      hint: !r2.configured
+        ? "R2 env vars missing — uploads fall back to local (not suitable on Vercel)."
+        : r2.corsOk
+          ? "R2 CORS looks configured for browser uploads."
+          : "Could not set R2 CORS automatically. In Cloudflare R2 → bucket → Settings → CORS, allow PUT from https://www.spleckt.com.",
     },
     authSecretConfigured: Boolean(process.env.BETTER_AUTH_SECRET),
   });

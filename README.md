@@ -66,7 +66,13 @@ Set these in `.env.local` / Vercel:
 - `R2_BUCKET_NAME`
 - `R2_PUBLIC_URL` (public bucket or custom domain)
 
-Without R2, uploads are stored under `.data/uploads` and served from `/api/files/...`.
+The app attempts to set R2 CORS automatically on upload. If browser uploads still fail with **Failed to fetch**, open Cloudflare → R2 → your bucket → **Settings → CORS policy** and allow:
+
+- Origins: `https://www.spleckt.com`, `https://spleckt.com`
+- Methods: `GET`, `PUT`, `HEAD`
+- Headers: `*`
+
+Without R2, uploads are stored under `.data/uploads` and served from `/api/files/...` (local only).
 
 ## Production notes
 

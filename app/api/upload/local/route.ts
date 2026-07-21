@@ -2,8 +2,12 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { canEditSplats, canManageMarketing, getSession, isAdmin } from "@/lib/session";
-import { putLocalObject } from "@/lib/storage";
+import { ensureR2Cors, isR2Configured, putObject } from "@/lib/storage";
 
+/**
+ * Same-origin upload proxy. Useful for smaller files / debugging.
+ * Large splat files should still use R2 presigned URLs (browser → R2).
+ */
 export async function PUT(request: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -33,10 +37,37 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  // Soft size guard for the proxy path (Vercel body limits).
+  const lengthHeader = request.headers.get("content-length");
+  if (lengthHeader && Number(lengthHeader) > 4.2 * 1024 * 1024) {
+    return NextResponse.json(
+      {
+        error:
+          "File too large for proxy upload. Use R2 direct upload (configure bucket CORS).",
+      },
+      { status: 413 },
+    );
+  }
+
+  if (isR2Configured()) {
+    await ensureR2Cors();
+  }
+
   const contentType =
     request.headers.get("content-type") ?? "application/octet-stream";
   const buffer = Buffer.from(await request.arrayBuffer());
-  const publicUrl = await putLocalObject(key, buffer, contentType);
 
-  return NextResponse.json({ ok: true, publicUrl });
+  try {
+    const publicUrl = await putObject(key, buffer, contentType);
+    return NextResponse.json({ ok: true, publicUrl });
+  } catch (error) {
+    console.error("upload proxy failed", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Upload storage failed",
+      },
+      { status: 500 },
+    );
+  }
 }
