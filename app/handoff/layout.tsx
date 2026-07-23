@@ -14,7 +14,7 @@ const sans = Figtree({
 
 export const metadata: Metadata = {
   title: {
-    default: "Handoff — Training Center",
+    absolute: "Handoff — Training Center",
     template: "%s · Handoff",
   },
   description:
