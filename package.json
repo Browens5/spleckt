@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:seed": "node scripts/seed-admin.mjs"
+    "db:seed": "node scripts/seed-admin.mjs",
+    "db:seed:handoff": "node scripts/seed-handoff.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1090.0",

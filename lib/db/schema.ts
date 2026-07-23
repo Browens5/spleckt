@@ -136,12 +136,98 @@ export const mediaAssets = sqliteTable("media_assets", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
 });
 
+/** Handoff training catalog — modules for tools, software, and techniques. */
+export const trainingModules = sqliteTable("training_modules", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull().default(""),
+  body: text("body").notNull().default(""),
+  kind: text("kind").notNull().default("module"), // module | tool | software | technique
+  durationMinutes: integer("duration_minutes").notNull().default(15),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
+export const trainingTests = sqliteTable("training_tests", {
+  id: text("id").primaryKey(),
+  moduleId: text("module_id")
+    .notNull()
+    .references(() => trainingModules.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  passingScore: integer("passing_score").notNull().default(80),
+  questionsJson: text("questions_json").notNull().default("[]"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
+export const trainingProgress = sqliteTable("training_progress", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  moduleId: text("module_id")
+    .notNull()
+    .references(() => trainingModules.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("in_progress"), // in_progress | completed
+  completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
+export const trainingAttempts = sqliteTable("training_attempts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  testId: text("test_id")
+    .notNull()
+    .references(() => trainingTests.id, { onDelete: "cascade" }),
+  score: integer("score").notNull().default(0),
+  passed: integer("passed", { mode: "boolean" }).notNull().default(false),
+  answersJson: text("answers_json").notNull().default("[]"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
+export const trainingCertifications = sqliteTable("training_certifications", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  moduleId: text("module_id")
+    .notNull()
+    .references(() => trainingModules.id, { onDelete: "cascade" }),
+  attemptId: text("attempt_id")
+    .notNull()
+    .references(() => trainingAttempts.id, { onDelete: "cascade" }),
+  code: text("code").notNull().unique(),
+  issuedAt: integer("issued_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   splats: many(splats),
   shareLinks: many(shareLinks),
   mediaAssets: many(mediaAssets),
+  trainingProgress: many(trainingProgress),
+  trainingAttempts: many(trainingAttempts),
+  trainingCertifications: many(trainingCertifications),
 }));
 
 export const splatRelations = relations(splats, ({ one, many }) => ({
@@ -173,3 +259,57 @@ export const mediaAssetRelations = relations(mediaAssets, ({ one }) => ({
     references: [splats.id],
   }),
 }));
+
+export const trainingModuleRelations = relations(trainingModules, ({ many }) => ({
+  tests: many(trainingTests),
+  progress: many(trainingProgress),
+  certifications: many(trainingCertifications),
+}));
+
+export const trainingTestRelations = relations(trainingTests, ({ one, many }) => ({
+  module: one(trainingModules, {
+    fields: [trainingTests.moduleId],
+    references: [trainingModules.id],
+  }),
+  attempts: many(trainingAttempts),
+}));
+
+export const trainingProgressRelations = relations(trainingProgress, ({ one }) => ({
+  user: one(user, {
+    fields: [trainingProgress.userId],
+    references: [user.id],
+  }),
+  module: one(trainingModules, {
+    fields: [trainingProgress.moduleId],
+    references: [trainingModules.id],
+  }),
+}));
+
+export const trainingAttemptRelations = relations(trainingAttempts, ({ one }) => ({
+  user: one(user, {
+    fields: [trainingAttempts.userId],
+    references: [user.id],
+  }),
+  test: one(trainingTests, {
+    fields: [trainingAttempts.testId],
+    references: [trainingTests.id],
+  }),
+}));
+
+export const trainingCertificationRelations = relations(
+  trainingCertifications,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [trainingCertifications.userId],
+      references: [user.id],
+    }),
+    module: one(trainingModules, {
+      fields: [trainingCertifications.moduleId],
+      references: [trainingModules.id],
+    }),
+    attempt: one(trainingAttempts, {
+      fields: [trainingCertifications.attemptId],
+      references: [trainingAttempts.id],
+    }),
+  }),
+);
