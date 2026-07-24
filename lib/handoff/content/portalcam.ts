@@ -46,10 +46,10 @@ export const portalCamLesson: InteractiveLesson = {
         },
         {
           type: "resource",
-          title: "XGRIDS PortalCam package",
-          url: "https://store.xgrids.com/products/portalcam",
+          title: "XGRIDS PortalCam",
+          url: "https://xgrids.com/us/portalcam",
           description:
-            "Official product page: specs, workflow, and software requirements (LCC Scan + LCC Studio).",
+            "Official PortalCam page: product overview, workflow, and construction-ready capture capabilities.",
         },
         {
           type: "quiz",
@@ -124,10 +124,10 @@ export const portalCamLesson: InteractiveLesson = {
         },
         {
           type: "resource",
-          title: "LCC Cloud — on-site modeling & progress tracking",
-          url: "https://store.xgrids.com/products/lcc-cloud-1-year",
+          title: "XGRIDS PortalCam tutorials",
+          url: "https://xgrids.com/us/support/tutorials?page=PortalCam",
           description:
-            "XGRIDS highlights AEC progress tracking as a core LCC application path.",
+            "Official PortalCam tutorial library for field capture and construction workflows.",
         },
       ],
     },
@@ -172,9 +172,10 @@ export const portalCamLesson: InteractiveLesson = {
         },
         {
           type: "resource",
-          title: "Download LCC Scan & LCC Studio",
-          url: "https://www.xgrids.com/support/download?page=LCCStudio",
-          description: "Official XGRIDS downloads and support hub.",
+          title: "PortalCam support tutorials",
+          url: "https://xgrids.com/us/support/tutorials?page=PortalCam",
+          description:
+            "Official setup and field tutorials for PortalCam and LCC Scan.",
         },
         {
           type: "quiz",
@@ -283,16 +284,16 @@ export const portalCamLesson: InteractiveLesson = {
         },
         {
           type: "resource",
-          title: "LCC Studio docs — Pre-Reconstruction Work",
-          url: "https://docs.xgrids.com/en-us/06-lixel-cybercolor/01-lcc-studio/v2.0.0/05-pre-reconstruction.html",
+          title: "XGRIDS developer tutorials",
+          url: "https://developer.xgrids.com/#/tutorial",
           description:
-            "Official guidance on capture requirements, project paths, USB import, and reconstruction types.",
+            "Official developer tutorial hub covering LCC Studio reconstruction workflows.",
         },
         {
           type: "resource",
-          title: "XGRIDS tutorials hub",
-          url: "https://xgrids.com/support/tutorials",
-          description: "Browse official LCC / PortalCam tutorial collection.",
+          title: "PortalCam tutorial library",
+          url: "https://xgrids.com/us/support/tutorials?page=PortalCam",
+          description: "Browse official PortalCam video and written tutorials.",
         },
         {
           type: "callout",
@@ -440,9 +441,10 @@ export const portalCamLesson: InteractiveLesson = {
         },
         {
           type: "resource",
-          title: "XGRIDS support & tutorials",
-          url: "https://xgrids.com/intl/support/tutorials?page=LCCStudio",
-          description: "Keep learning with official LCC Studio tutorial pages.",
+          title: "Keep learning on XGRIDS",
+          url: "https://xgrids.com/us/support/tutorials?page=PortalCam",
+          description:
+            "Continue with official PortalCam tutorials after you finish this module.",
         },
         {
           type: "callout",
