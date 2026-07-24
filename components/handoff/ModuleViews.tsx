@@ -86,7 +86,10 @@ export function ModuleList({
           </div>
           <div className="handoff-module-row__status">
             {mod.certified ? (
-              <span className="handoff-status handoff-status--certified">Certified</span>
+              <span className="handoff-status handoff-status--certified">
+                <span className="ho-medal-mini" aria-hidden />
+                Certified
+              </span>
             ) : mod.progressStatus === "completed" ? (
               <span className="handoff-status handoff-status--ready">Ready for test</span>
             ) : mod.progressStatus === "in_progress" ? (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ModuleKindLabel } from "@/components/handoff/ModuleViews";
+import { CertificationMedalGallery } from "@/components/handoff/CertificationMedals";
 import { ensureSchema } from "@/lib/db/ensure-schema";
 import { listUserCertifications } from "@/lib/handoff/training";
 import { getSession } from "@/lib/session";
@@ -12,44 +12,33 @@ export default async function HandoffCertificationsPage() {
   const certifications = await listUserCertifications(session.user.id);
 
   return (
-    <div className="handoff-panel">
+    <div className="handoff-panel handoff-panel--wide">
       <header className="handoff-panel__header">
         <h1>Certifications</h1>
         <p>
-          Credentials you have earned by passing module certification tests.
+          Interactive medals for every module you complete. Hover for shine,
+          click to flip and inspect the credential.
         </p>
       </header>
 
       {certifications.length === 0 ? (
         <div className="handoff-empty">
-          <p>No certifications yet. Complete a module test to earn your first credential.</p>
+          <p>No certifications yet. Complete a module test to earn your first medal.</p>
           <Link href="/center" className="btn btn--primary handoff-btn">
             Browse modules
           </Link>
         </div>
       ) : (
-        <div className="handoff-cert-list">
-          {certifications.map((cert) => (
-            <article key={cert.id} className="handoff-cert">
-              <div className="handoff-module-row__meta">
-                <ModuleKindLabel kind={cert.moduleKind} />
-                <time dateTime={new Date(cert.issuedAt).toISOString()}>
-                  Issued{" "}
-                  {new Date(cert.issuedAt).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </time>
-              </div>
-              <h2>{cert.moduleTitle}</h2>
-              <p className="handoff-cert-code">
-                <code>{cert.code}</code>
-              </p>
-              <Link href={`/center/modules/${cert.moduleSlug}`}>View module</Link>
-            </article>
-          ))}
-        </div>
+        <CertificationMedalGallery
+          certifications={certifications.map((cert) => ({
+            id: cert.id,
+            code: cert.code,
+            issuedAt: cert.issuedAt,
+            moduleTitle: cert.moduleTitle,
+            moduleSlug: cert.moduleSlug,
+            moduleKind: cert.moduleKind,
+          }))}
+        />
       )}
     </div>
   );

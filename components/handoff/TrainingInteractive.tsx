@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { EarnedMedalBanner } from "@/components/handoff/CertificationMedals";
 import type { PublicTrainingQuestion } from "@/lib/handoff/types";
 
 export function ModuleActions({
@@ -71,12 +72,16 @@ export function CertificationTest({
   passingScore,
   questions,
   moduleSlug,
+  moduleKind = "module",
+  moduleTitle,
 }: {
   testId: string;
   title: string;
   passingScore: number;
   questions: PublicTrainingQuestion[];
   moduleSlug: string;
+  moduleKind?: string;
+  moduleTitle?: string;
 }) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -134,9 +139,11 @@ export function CertificationTest({
           {result.passingScore}%.
         </p>
         {result.certification ? (
-          <p className="handoff-cert-code">
-            Certificate code: <code>{result.certification.code}</code>
-          </p>
+          <EarnedMedalBanner
+            code={result.certification.code}
+            moduleKind={moduleKind}
+            moduleTitle={moduleTitle}
+          />
         ) : null}
         <div className="handoff-actions">
           <Link href={`/center/modules/${moduleSlug}`} className="btn btn--ghost handoff-btn-ghost">
@@ -144,7 +151,7 @@ export function CertificationTest({
           </Link>
           {result.passed ? (
             <Link href="/center/certifications" className="btn btn--primary handoff-btn">
-              View certifications
+              View medal case
             </Link>
           ) : (
             <button
