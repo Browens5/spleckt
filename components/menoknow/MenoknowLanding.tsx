@@ -10,9 +10,9 @@ const themes = [
     id: "trucks",
     href: "/play/trucks",
     title: "Monster Trucks",
-    blurb: "Crash through letters and big loud sounds.",
+    blurb: "Letter rally — listen, match, and jump.",
     accent: "trucks",
-    cta: "Coming soon — peek inside",
+    cta: "Play Letter Rally",
   },
   {
     id: "build",
@@ -33,7 +33,7 @@ const themes = [
 ] as const;
 
 const skills = [
-  { label: "Letters", note: "A–Z adventures" },
+  { label: "Letters", note: "Monster truck letter rally" },
   {
     label: "Numbers",
     note: "0–100 cow counting",

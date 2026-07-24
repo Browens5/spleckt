@@ -3665,3 +3665,770 @@ textarea {
     min-height: 3.6rem;
   }
 }
+
+/* —— Monster truck letter rally —— */
+.mk-audio-btn {
+  min-height: 2.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+.mk-truck-game-card__art {
+  background:
+    radial-gradient(circle at 70% 70%, rgba(232, 180, 35, 0.55), transparent 40%),
+    linear-gradient(160deg, #f6d56a, #e07020) !important;
+}
+
+.mk-truck-game-card__art::before {
+  content: "";
+  position: absolute;
+  left: 16%;
+  bottom: 18%;
+  width: 58%;
+  height: 38%;
+  border-radius: 0.5rem;
+  background: #2a3344;
+  box-shadow:
+    0.9rem -0.85rem 0 0 #f0c14b,
+    1.7rem -0.85rem 0 0 #e07020;
+}
+
+.mk-truck-game-card .mk-farm-game__cta {
+  color: var(--mk-accent-deep);
+}
+
+.mk-truckgame__main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 6.5rem 1.25rem 3rem;
+}
+
+.mk-truckgame__main > h1 {
+  margin: 0;
+  font-family: var(--mk-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  letter-spacing: -0.03em;
+}
+
+.mk-truckgame__lede {
+  margin: 0.55rem 0 0;
+  max-width: 44ch;
+  color: var(--mk-muted);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.mk-truckgame__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.mk-truckgame__menu,
+.mk-truckgame__play,
+.mk-truckgame__done {
+  margin-top: 1.4rem;
+}
+
+.mk-truckgame__menu h2,
+.mk-truckgame__done h2 {
+  margin: 0 0 0.75rem;
+  font-family: var(--mk-display);
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
+}
+
+.mk-truckgame__hero-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: 1.2rem;
+  background: rgba(255, 252, 245, 0.84);
+  border: 3px solid rgba(36, 48, 68, 0.08);
+}
+
+.mk-truckgame__hero-card p {
+  margin: 0;
+  font-weight: 700;
+  color: var(--mk-muted);
+  line-height: 1.4;
+}
+
+.mk-truckgame__levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.mk-level--listen .mk-level__range {
+  background: rgba(224, 112, 32, 0.16);
+  color: var(--mk-accent-deep);
+}
+
+.mk-level--case .mk-level__range {
+  background: rgba(74, 163, 212, 0.18);
+  color: #2f7eab;
+}
+
+.mk-level--picture .mk-level__range {
+  background: rgba(232, 180, 35, 0.22);
+  color: #9a6d10;
+}
+
+.mk-truckgame__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  margin-bottom: 0.85rem;
+  font-weight: 800;
+  color: var(--mk-accent-deep);
+}
+
+.mk-track {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  border: 3px solid rgba(36, 48, 68, 0.1);
+  min-height: 12.5rem;
+  background: linear-gradient(180deg, #7ec8ea 0%, #b8dff2 42%, #d9ac62 42%, #c98a3c 100%);
+  margin-bottom: 1rem;
+}
+
+.mk-track__sky {
+  position: absolute;
+  inset: 0 0 55%;
+  background:
+    radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.5) 0 7%, transparent 8%),
+    radial-gradient(circle at 20% 40%, rgba(255, 255, 255, 0.35) 0 5%, transparent 6%);
+}
+
+.mk-track__ramp {
+  position: absolute;
+  right: 18%;
+  bottom: 34%;
+  width: 4.5rem;
+  height: 1.6rem;
+  background: #a86f2f;
+  clip-path: polygon(0 100%, 100% 100%, 100% 0);
+  opacity: 0.9;
+}
+
+.mk-track__dirt {
+  position: absolute;
+  inset: auto 0 1.8rem;
+  height: 2.8rem;
+}
+
+.mk-track__dashes {
+  position: absolute;
+  inset: 45% 4% auto;
+  height: 0.28rem;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.55) 0 1.4rem,
+    transparent 1.4rem 2.3rem
+  );
+}
+
+.mk-track__truck-wrap {
+  position: absolute;
+  bottom: 0.15rem;
+  width: 4.5rem;
+  height: 3rem;
+}
+
+.mk-track__finish {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0;
+  width: 0.55rem;
+  height: 100%;
+  background: repeating-linear-gradient(
+    180deg,
+    #fffaf2 0 0.35rem,
+    #2a3344 0.35rem 0.7rem
+  );
+  border-radius: 0.2rem;
+}
+
+.mk-track__meter {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.45rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.55rem;
+  align-items: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #fffaf2;
+  text-shadow: 0 1px 0 rgba(36, 48, 68, 0.25);
+}
+
+.mk-track__bar {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(36, 48, 68, 0.25);
+  overflow: hidden;
+}
+
+.mk-track__bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--mk-truck), var(--mk-accent));
+  border-radius: inherit;
+}
+
+.mk-track__speed--0 { color: #ffe0c8; }
+.mk-track__speed--3 { color: #fff3b0; }
+
+.mk-track__trick {
+  position: absolute;
+  top: 0.7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.92);
+  font-family: var(--mk-display);
+  font-weight: 700;
+  color: var(--mk-accent-deep);
+  box-shadow: 0 4px 0 rgba(36, 48, 68, 0.12);
+}
+
+.mk-truck-sprite {
+  position: relative;
+  width: 5.6rem;
+  height: 3.4rem;
+  flex-shrink: 0;
+}
+
+.mk-truck-sprite--compact {
+  width: 4.2rem;
+  height: 2.6rem;
+}
+
+.mk-truck-sprite__body {
+  position: absolute;
+  left: 4%;
+  bottom: 28%;
+  width: 62%;
+  height: 42%;
+  border-radius: 0.45rem;
+  background: linear-gradient(160deg, var(--mk-truck), #f3c84a);
+}
+
+.mk-truck-sprite__cab {
+  position: absolute;
+  left: 52%;
+  bottom: 28%;
+  width: 34%;
+  height: 52%;
+  border-radius: 0.35rem 0.7rem 0.3rem 0.3rem;
+  background: linear-gradient(150deg, var(--mk-accent), #f08a3a);
+}
+
+.mk-truck-sprite__cab::after {
+  content: "";
+  position: absolute;
+  inset: 18% 16% auto 22%;
+  height: 34%;
+  border-radius: 0.25rem;
+  background: rgba(180, 230, 255, 0.85);
+}
+
+.mk-truck-sprite__scoop {
+  position: absolute;
+  left: 0;
+  bottom: 34%;
+  width: 14%;
+  height: 28%;
+  border-radius: 0.2rem 0 0.35rem 0.35rem;
+  background: #2a3344;
+}
+
+.mk-truck-sprite__wheel {
+  position: absolute;
+  bottom: 0;
+  width: 22%;
+  height: 36%;
+  border-radius: 50%;
+  background: #2a3344;
+  box-shadow: inset 0 0 0 0.22rem #6d778a;
+}
+
+.mk-truck-sprite__wheel--front { left: 12%; }
+.mk-truck-sprite__wheel--rear { left: 48%; }
+
+.mk-truck-sprite__flame {
+  position: absolute;
+  left: -8%;
+  bottom: 40%;
+  width: 12%;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd27a, #e07020 60%, transparent 70%);
+  opacity: 0.85;
+}
+
+.mk-truck-prompt {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+  margin-bottom: 0.85rem;
+}
+
+.mk-truck-prompt p {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.mk-truck-prompt__glyph {
+  display: grid;
+  place-items: center;
+  min-width: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 252, 245, 0.92);
+  border: 3px solid rgba(36, 48, 68, 0.12);
+  font-family: var(--mk-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--mk-accent-deep);
+}
+
+.mk-truckgame__choices {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.mk-letter-choice {
+  min-height: 4.25rem;
+  border-radius: 1.15rem;
+  border: 3px solid rgba(36, 48, 68, 0.12);
+  background: rgba(255, 252, 245, 0.92);
+  font-family: var(--mk-display);
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  font-weight: 700;
+  cursor: pointer;
+  color: inherit;
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.mk-letter-choice:hover:not(:disabled),
+.mk-letter-choice:focus-visible:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--mk-accent);
+  outline: none;
+}
+
+.mk-letter-choice:disabled { cursor: default; }
+
+.mk-letter-choice.is-correct {
+  background: rgba(142, 207, 138, 0.55);
+  border-color: var(--mk-grass-deep);
+}
+
+.mk-letter-choice.is-dim { opacity: 0.45; }
+
+.mk-truckgame__toolbar,
+.mk-truckgame__done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.mk-truckgame__done {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.55rem;
+}
+
+.mk-truckgame__done p {
+  margin: 0;
+  font-weight: 700;
+  color: var(--mk-muted);
+  max-width: 36ch;
+  line-height: 1.45;
+}
+
+/* Letter pictures */
+.mk-pic {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: center;
+  width: min(100%, 11rem);
+}
+
+.mk-pic__art {
+  position: relative;
+  width: 7.5rem;
+  height: 7.5rem;
+  border-radius: 1.2rem;
+  border: 3px solid rgba(36, 48, 68, 0.1);
+  background: rgba(255, 252, 245, 0.9);
+  overflow: hidden;
+}
+
+.mk-pic__word {
+  font-family: var(--mk-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.mk-pic--apple .mk-pic__art {
+  background: linear-gradient(180deg, #dff5e2, #fffaf2);
+}
+.mk-pic--apple .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: 30%;
+  width: 44%;
+  height: 48%;
+  border-radius: 50% 50% 45% 45%;
+  background: #e05050;
+  box-shadow: inset -0.35rem 0 0 rgba(0, 0, 0, 0.08);
+}
+.mk-pic--apple .mk-pic__art::after {
+  content: "";
+  position: absolute;
+  left: 48%;
+  top: 18%;
+  width: 0.28rem;
+  height: 0.9rem;
+  background: #5a3a1a;
+  border-radius: 999px;
+}
+
+.mk-pic--ball .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, #e07020 45%, #c45512);
+}
+
+.mk-pic--cat .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 26%;
+  top: 34%;
+  width: 48%;
+  height: 40%;
+  border-radius: 1.2rem;
+  background: #f0c14b;
+  box-shadow: -0.55rem -0.55rem 0 -0.15rem #f0c14b, 0.55rem -0.55rem 0 -0.15rem #f0c14b;
+}
+
+.mk-pic--dog .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 36%;
+  width: 56%;
+  height: 38%;
+  border-radius: 1rem;
+  background: #c98a3c;
+  box-shadow: 1.35rem 0.15rem 0 #c98a3c;
+}
+
+.mk-pic--egg .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 34%;
+  top: 24%;
+  width: 32%;
+  height: 52%;
+  border-radius: 50% 50% 45% 45%;
+  background: #fff4d6;
+  border: 3px solid rgba(36, 48, 68, 0.12);
+}
+
+.mk-pic--fish .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 38%;
+  width: 48%;
+  height: 28%;
+  border-radius: 50%;
+  background: #4aa3d4;
+  box-shadow: 1.55rem 0 0 -0.15rem #2f7eab;
+}
+
+.mk-pic--goat .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 24%;
+  top: 40%;
+  width: 50%;
+  height: 32%;
+  border-radius: 1rem;
+  background: #efe6d6;
+  box-shadow: 1.2rem -0.15rem 0 #efe6d6;
+}
+
+.mk-pic--hat .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: 30%;
+  width: 44%;
+  height: 28%;
+  border-radius: 0.4rem 0.4rem 0 0;
+  background: #2f7eab;
+  box-shadow: 0 1.1rem 0 -0.15rem #1f5f82, 0 1.1rem 0 0.35rem #2f7eab;
+}
+
+.mk-pic--ice .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: 28%;
+  width: 40%;
+  height: 46%;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, #eaf7ff, #9fd4ef);
+}
+
+.mk-pic--jam .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 34%;
+  top: 28%;
+  width: 32%;
+  height: 46%;
+  border-radius: 0.3rem;
+  background: linear-gradient(180deg, #f08a3a, #c45512);
+  box-shadow: inset 0 0.55rem 0 #fffaf2;
+}
+
+.mk-pic--kite .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: 22%;
+  width: 40%;
+  height: 40%;
+  background: #e05050;
+  transform: rotate(45deg);
+  border-radius: 0.25rem;
+}
+
+.mk-pic--leaf .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: 26%;
+  width: 40%;
+  height: 48%;
+  border-radius: 0 60% 40% 60%;
+  background: #6fb86a;
+  transform: rotate(-20deg);
+}
+
+.mk-pic--moon .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: 26%;
+  width: 44%;
+  height: 44%;
+  border-radius: 50%;
+  background: #f0c14b;
+  box-shadow: inset -0.7rem 0 0 #e8b423;
+}
+
+.mk-pic--nest .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 46%;
+  width: 56%;
+  height: 28%;
+  border-radius: 50%;
+  background: #c98a3c;
+  box-shadow: inset 0 -0.35rem 0 #a86f2f, 0 -0.55rem 0 -0.1rem #fff4d6;
+}
+
+.mk-pic--octopus .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: 28%;
+  width: 40%;
+  height: 34%;
+  border-radius: 50%;
+  background: #e07020;
+  box-shadow:
+    -0.7rem 1.1rem 0 -0.15rem #e07020,
+    0.7rem 1.1rem 0 -0.15rem #e07020,
+    0 1.2rem 0 -0.15rem #e07020;
+}
+
+.mk-pic--pig .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 26%;
+  top: 34%;
+  width: 48%;
+  height: 40%;
+  border-radius: 1.2rem;
+  background: #f5b7c5;
+}
+
+.mk-pic--queen .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: 30%;
+  width: 44%;
+  height: 22%;
+  background: #e8b423;
+  clip-path: polygon(0 100%, 15% 30%, 35% 80%, 50% 10%, 65% 80%, 85% 30%, 100% 100%);
+}
+
+.mk-pic--rainbow .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 18%;
+  top: 34%;
+  width: 64%;
+  height: 40%;
+  border-radius: 50% 50% 0 0;
+  background:
+    radial-gradient(circle at 50% 100%, transparent 42%, #e05050 43% 48%, #e8b423 49% 54%, #6fb86a 55% 60%, #4aa3d4 61% 66%, transparent 67%);
+}
+
+.mk-pic--sun .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: 28%;
+  width: 44%;
+  height: 44%;
+  border-radius: 50%;
+  background: #f0c14b;
+  box-shadow: 0 0 0 0.45rem rgba(240, 193, 75, 0.35);
+}
+
+.mk-pic--tree .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 34%;
+  top: 22%;
+  width: 32%;
+  height: 36%;
+  border-radius: 50%;
+  background: #4d9450;
+  box-shadow: 0 1.5rem 0 -0.05rem #8b5a2b;
+}
+
+.mk-pic--umbrella .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 30%;
+  width: 56%;
+  height: 28%;
+  border-radius: 50% 50% 0 0;
+  background: #e05050;
+  box-shadow: 0.05rem 1.2rem 0 -0.05rem #5a3a1a;
+}
+
+.mk-pic--van .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 18%;
+  top: 40%;
+  width: 64%;
+  height: 28%;
+  border-radius: 0.4rem;
+  background: #4aa3d4;
+  box-shadow: inset -1.2rem 0 0 #2f7eab;
+}
+
+.mk-pic--whale .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 18%;
+  top: 38%;
+  width: 58%;
+  height: 28%;
+  border-radius: 50%;
+  background: #5a6a7d;
+  box-shadow: 1.6rem -0.35rem 0 -0.15rem #5a6a7d;
+}
+
+.mk-pic--box .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: 30%;
+  width: 44%;
+  height: 40%;
+  border-radius: 0.35rem;
+  background: #c98a3c;
+  box-shadow: inset 0 0.55rem 0 rgba(255, 255, 255, 0.2);
+}
+
+.mk-pic--yarn .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  top: 28%;
+  width: 44%;
+  height: 44%;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 40% 40%, #e07020 0 0.2rem, #f08a3a 0.2rem 0.4rem);
+}
+
+.mk-pic--zebra .mk-pic__art::before {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 36%;
+  width: 56%;
+  height: 34%;
+  border-radius: 1rem;
+  background:
+    repeating-linear-gradient(90deg, #f7f3ea 0 0.35rem, #2a3344 0.35rem 0.7rem);
+}
+
+@media (max-width: 900px) {
+  .mk-truckgame__levels,
+  .mk-truckgame__choices {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .mk-truckgame__levels,
+  .mk-truckgame__choices {
+    grid-template-columns: 1fr;
+  }
+
+  .mk-nav .mk-audio-btn {
+    display: none;
+  }
+
+  .mk-letter-choice {
+    min-height: 3.6rem;
+  }
+}

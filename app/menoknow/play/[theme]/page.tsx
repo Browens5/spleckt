@@ -4,11 +4,6 @@ import { notFound } from "next/navigation";
 import { MenoknowBrand } from "@/components/menoknow/MenoknowBrand";
 
 const themes = {
-  trucks: {
-    title: "Monster Trucks",
-    accent: "trucks",
-    promise: "Letter ramps, smash-and-say sounds, and big truck counting.",
-  },
   build: {
     title: "Construction",
     accent: "build",
