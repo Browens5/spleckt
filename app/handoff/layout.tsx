@@ -14,11 +14,11 @@ const sans = Figtree({
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Handoff — Training Center",
+    absolute: "Handoff — Relay training for clean knowledge passes",
     template: "%s · Handoff",
   },
   description:
-    "Handoff training modules, certification tests, and credentials for tools, software, and techniques.",
+    "Handoff is relay training for teams: learn a skill, prove it, and pass information cleanly to the next person.",
 };
 
 export default function HandoffRootLayout({

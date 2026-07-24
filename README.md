@@ -30,7 +30,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 
 ## Handoff (`handoff.spleckt.com`)
 
-Separate training product hosted in the same Next.js app. Host-based routing sends `handoff.spleckt.com` (and `handoff.localhost:3000` in local dev) to the Handoff UI. The main Spleckt site does not link to it; `/handoff` paths return 404 on www/apex.
+Separate training product hosted in the same Next.js app. Named for the **relay baton handoff** in track and field: a clean pass of knowledge to the next teammate. Host-based routing sends `handoff.spleckt.com` (and `handoff.localhost:3000` in local dev) to the Handoff UI. The main Spleckt site does not link to it; `/handoff` paths return 404 on www/apex.
 
 - Shared Better Auth users/credentials (cross-subdomain cookies on `.spleckt.com`)
 - Direct login/signup on Handoff → training center
@@ -38,6 +38,7 @@ Separate training product hosted in the same Next.js app. Host-based routing sen
 
 ```bash
 npm run db:seed:handoff
+npm run db:seed:portalcam   # XGRIDS PortalCam interactive construction module
 ```
 
 Point DNS for `handoff.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_HANDOFF_URL`.

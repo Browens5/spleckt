@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { useRef } from "react";
+import { HandoffBrand } from "@/components/handoff/HandoffBrand";
 
 export function HandoffLanding() {
   const heroRef = useRef<HTMLElement>(null);
@@ -12,19 +13,17 @@ export function HandoffLanding() {
   });
   const shift = useTransform(scrollYProgress, [0, 1], [0, 70]);
   const fade = useTransform(scrollYProgress, [0, 0.85], [1, 0.4]);
+  const laneShift = useTransform(scrollYProgress, [0, 1], [0, -40]);
 
   return (
     <div className="handoff-shell">
       <header className="handoff-header">
         <div className="handoff-header__inner">
-          <Link href="/" className="handoff-brand">
-            <span className="handoff-brand__mark" aria-hidden />
-            <span className="handoff-brand__name">Handoff</span>
-          </Link>
+          <HandoffBrand />
           <nav className="handoff-nav">
             <Link href="/login">Sign in</Link>
             <Link href="/signup" className="btn btn--primary handoff-btn">
-              Start training
+              Take the baton
             </Link>
           </nav>
         </div>
@@ -36,6 +35,11 @@ export function HandoffLanding() {
           style={{ y: shift, opacity: fade }}
           aria-hidden
         />
+        <motion.div
+          className="handoff-hero__lanes"
+          style={{ x: laneShift }}
+          aria-hidden
+        />
         <div className="handoff-hero__content">
           <p className="handoff-brand-hero">Handoff</p>
           <motion.h1
@@ -43,7 +47,7 @@ export function HandoffLanding() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           >
-            Train, test, and certify what you know.
+            Pass the knowledge. Keep the team moving.
           </motion.h1>
           <motion.p
             className="handoff-hero__lede"
@@ -51,8 +55,9 @@ export function HandoffLanding() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           >
-            Focused modules for tools, software, and techniques — with a
-            certification for every skill you complete.
+            Like a clean baton pass in a relay, Handoff trains the next person up
+            — modules, tests, and certifications so nothing gets dropped between
+            teammates.
           </motion.p>
           <motion.div
             className="handoff-hero__actions"
@@ -61,10 +66,10 @@ export function HandoffLanding() {
             transition={{ duration: 0.5, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
           >
             <Link href="/login" className="btn btn--primary btn--lg handoff-btn">
-              Enter training center
+              Enter the exchange zone
             </Link>
             <Link href="/signup" className="btn btn--ghost btn--lg handoff-btn-ghost">
-              Create an account
+              Join the relay
             </Link>
           </motion.div>
         </div>
@@ -78,18 +83,18 @@ export function HandoffLanding() {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.5 }}
         >
-          <h2>One path per skill</h2>
+          <h2>Train for the exchange</h2>
           <p>
-            Study the module, pass the test, earn the credential. Progress stays
-            with your account whether you signed in here or already have access
-            from your shared workspace credentials.
+            Every module is a leg of the race: learn the skill, prove it under
+            pressure, earn the credential. Then hand it forward — the next
+            teammate starts at full speed, not from a standing start.
           </p>
         </motion.div>
       </section>
 
       <footer className="handoff-footer">
         <span className="handoff-brand__name">Handoff</span>
-        <span>Training center</span>
+        <span>Clean passes. Strong teams.</span>
       </footer>
     </div>
   );

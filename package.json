@@ -15,7 +15,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed-admin.mjs",
-    "db:seed:handoff": "node scripts/seed-handoff.mjs"
+    "db:seed:handoff": "node scripts/seed-handoff.mjs",
+    "db:seed:portalcam": "tsx scripts/seed-portalcam.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1090.0",
