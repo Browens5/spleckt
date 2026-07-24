@@ -161,23 +161,132 @@ export function layoutForCount(n: number): CowLayout {
   return { tens, ones, showIndividuals: false };
 }
 
-export function speakText(text: string) {
+const ONES = [
+  "zero",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+  "thirteen",
+  "fourteen",
+  "fifteen",
+  "sixteen",
+  "seventeen",
+  "eighteen",
+  "nineteen",
+] as const;
+
+const TENS = [
+  "",
+  "",
+  "twenty",
+  "thirty",
+  "forty",
+  "fifty",
+  "sixty",
+  "seventy",
+  "eighty",
+  "ninety",
+] as const;
+
+/** Spoken number words sound more natural than digit strings. */
+export function numberWord(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return String(n);
+  if (n < 20) return ONES[n] ?? String(n);
+  if (n < 100) {
+    const ten = Math.floor(n / 10);
+    const one = n % 10;
+    return one === 0 ? TENS[ten]! : `${TENS[ten]}-${ONES[one]}`;
+  }
+  if (n === 100) return "one hundred";
+  return String(n);
+}
+
+function scoreVoice(voice: SpeechSynthesisVoice) {
+  const name = `${voice.name} ${voice.lang}`.toLowerCase();
+  let score = 0;
+  if (/en(-|_)?(us|gb|au|ie|za)?/.test(voice.lang.toLowerCase())) score += 8;
+  if (voice.localService) score += 2;
+  // Prefer natural / neural / premium named voices.
+  if (/natural|neural|premium|enhanced|siri|aria|jenny|sara|guy|davis|ryan|sonia|natasha|samantha|karen|moira|daniel|kate|oliver|google us|google uk/.test(name)) {
+    score += 12;
+  }
+  // Avoid obviously robotic / compact voices.
+  if (/compact|espeak|robot|novelty|whisper|zarvox|trinoids|bad news|good news|bubbles|boing|organ/.test(name)) {
+    score -= 20;
+  }
+  if (/female|woman|girl|samantha|karen|moira|aria|jenny|sara|sonia|kate/.test(name)) {
+    score += 3; // warm storyteller vibe for preschool
+  }
+  return score;
+}
+
+let cachedVoice: SpeechSynthesisVoice | null | undefined;
+
+function pickNaturalVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  if (cachedVoice !== undefined) return cachedVoice;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) {
+    cachedVoice = null;
+    return null;
+  }
+  const ranked = [...voices].sort((a, b) => scoreVoice(b) - scoreVoice(a));
+  cachedVoice = ranked[0] ?? null;
+  return cachedVoice;
+}
+
+function warmVoices() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const refresh = () => {
+    cachedVoice = undefined;
+    pickNaturalVoice();
+  };
+  refresh();
+  window.speechSynthesis.addEventListener("voiceschanged", refresh, {
+    once: true,
+  });
+}
+
+if (typeof window !== "undefined") {
+  warmVoices();
+}
+
+export function speakText(text: string, opts?: { interject?: string }) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.92;
-  utterance.pitch = 1.08;
+
+  const voice = pickNaturalVoice();
+  const utterance = new SpeechSynthesisUtterance(
+    opts?.interject ? `${opts.interject}. ${text}` : text,
+  );
+  if (voice) utterance.voice = voice;
+  // Closer to conversational storytelling than a chirpy robot.
+  utterance.rate = 0.9;
+  utterance.pitch = 1.02;
+  utterance.volume = 1;
   window.speechSynthesis.speak(utterance);
 }
 
-export function numberWord(n: number) {
-  return String(n);
+/** Speak a number using natural words ("twenty-three"). */
+export function speakNumber(n: number) {
+  speakText(numberWord(n));
 }
 
 export function celebratePhrase(n: number) {
   if (n === 0) return "Zero cows! An empty pasture.";
   if (n === 1) return "One cow! Moo!";
   if (n === 100) return "One hundred cows! What a huge herd!";
-  if (n % 10 === 0 && n >= 10) return `${n} cows! Nice counting by tens!`;
-  return `${n} cows! Great counting!`;
+  if (n % 10 === 0 && n >= 10) {
+    return `${numberWord(n)} cows! Nice counting by tens!`;
+  }
+  return `${numberWord(n)} cows! Great counting!`;
 }

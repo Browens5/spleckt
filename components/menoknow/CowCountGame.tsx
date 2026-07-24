@@ -4,29 +4,36 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { CowSprite } from "@/components/menoknow/CowSprite";
+import { FarmerDot, StoryStage } from "@/components/menoknow/CowStory";
 import { MenoknowBrand } from "@/components/menoknow/MenoknowBrand";
+import { getFarmAudio } from "@/lib/menoknow/audio";
 import {
   buildChoices,
-  celebratePhrase,
   COUNT_LEVELS,
   getLevel,
   layoutForCount,
   pickTarget,
+  speakNumber,
   speakText,
+  numberWord,
   type CountLevelId,
   type CountMode,
 } from "@/lib/menoknow/cow-count";
+import {
+  finishStory,
+  levelStory,
+  modeStory,
+  STORY_INTRO,
+  successStory,
+} from "@/lib/menoknow/cow-story";
 
-type Phase = "menu" | "play" | "level-done";
+type Phase = "story" | "menu" | "level-intro" | "play" | "level-done";
 
 type RoundState = {
   target: number;
   choices: number[];
-  /** For individual herds: each cow tapped. */
   countedCows: boolean[];
-  /** For grouped herds: each ten-pen tapped. */
   countedPens: boolean[];
-  /** For grouped herds: leftover ones tapped. */
   countedOnes: boolean[];
   built: number;
   guided: boolean;
@@ -69,65 +76,123 @@ function fullyCounted(round: RoundState) {
 
 export function CowCountGame() {
   const liveId = useId();
-  const [phase, setPhase] = useState<Phase>("menu");
+  const audio = getFarmAudio();
+  const [phase, setPhase] = useState<Phase>("story");
+  const [storyStep, setStoryStep] = useState(0);
   const [levelId, setLevelId] = useState<CountLevelId>("starter");
   const [mode, setMode] = useState<CountMode>("count");
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState<RoundState | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [musicOn, setMusicOn] = useState(true);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const guideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const level = getLevel(levelId);
+  const introBeat = STORY_INTRO[storyStep] ?? STORY_INTRO[0]!;
+  const levelBeat = levelStory(levelId);
+  const doneBeat = finishStory(level.title, score);
 
   useEffect(() => {
     return () => {
       if (advanceTimer.current) clearTimeout(advanceTimer.current);
       if (guideTimer.current) clearTimeout(guideTimer.current);
+      audio.stopMusic();
       if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     };
-  }, []);
+  }, [audio]);
+
+  useEffect(() => {
+    if (phase !== "story") return;
+    speakText(introBeat.spoken);
+  }, [phase, storyStep, introBeat.spoken]);
 
   function clearTimers() {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
     if (guideTimer.current) clearTimeout(guideTimer.current);
   }
 
-  function startGame(nextLevel: CountLevelId, nextMode: CountMode) {
+  async function unlockAudio() {
+    await audio.unlock();
+    if (!muted && musicOn) await audio.startMusic();
+  }
+
+  function toggleMute() {
+    const next = !muted;
+    setMuted(next);
+    audio.setMuted(next);
+  }
+
+  function toggleMusic() {
+    const next = !musicOn;
+    setMusicOn(next);
+    audio.setMusicOn(next);
+  }
+
+  function goMenu() {
     clearTimers();
+    setPhase("menu");
+    setRound(null);
+    void unlockAudio();
+    void audio.whoosh();
+    speakText("Choose how to help Farmer Dot, then pick a pasture.");
+  }
+
+  function beginLevel(nextLevel: CountLevelId, nextMode: CountMode) {
+    clearTimers();
+    void unlockAudio();
+    void audio.whoosh();
     setLevelId(nextLevel);
     setMode(nextMode);
     setRoundIndex(0);
     setScore(0);
-    const first = freshRound(nextLevel);
+    setRound(null);
+    setPhase("level-intro");
+    const beat = levelStory(nextLevel);
+    speakText(`${beat.spoken} ${modeStory(nextMode)}`);
+  }
+
+  function enterPlay() {
+    const first = freshRound(levelId);
     setRound(first);
     setPhase("play");
-    speakText(
-      nextMode === "count"
-        ? "Tap each cow as you count. Then pick how many."
-        : `Build a herd of ${first.target} cows.`,
-    );
+    void audio.pop();
+    promptRound(first, mode);
   }
 
   function promptRound(next: RoundState, nextMode: CountMode) {
     if (nextMode === "count") {
-      if (next.target === 0) speakText("An empty pasture. How many cows?");
-      else speakText("Count the cows. Tap as you go.");
+      if (next.target === 0) {
+        speakText("Oh! An empty pasture. How many cows do you see?");
+      } else {
+        speakText("Count the cows with me. Tap as you go.");
+      }
     } else {
-      speakText(`We need ${next.target} cows. Tap plus to add.`);
+      speakText(
+        `Farmer Dot needs ${numberPhrase(next.target)}. Tap plus to add cows.`,
+      );
     }
+  }
+
+  function numberPhrase(n: number) {
+    if (n === 0) return "zero cows";
+    if (n === 1) return "one cow";
+    return `${numberWord(n)} cows`;
   }
 
   function goNextRound(currentTarget: number, nextScore: number) {
     const nextIndex = roundIndex + 1;
     if (nextIndex >= level.rounds) {
       setPhase("level-done");
-      speakText(`Level complete! You earned ${nextScore} stars.`);
+      void audio.star();
+      speakText(finishStory(level.title, nextScore).spoken);
       return;
     }
     const next = freshRound(levelId, currentTarget);
     setRoundIndex(nextIndex);
     setRound(next);
+    void audio.whoosh();
     promptRound(next, mode);
   }
 
@@ -138,7 +203,9 @@ export function CowCountGame() {
     countedCows[index] = true;
     const next = { ...round, countedCows };
     setRound(next);
-    speakText(String(tallyCount(next)));
+    void audio.tap();
+    void audio.moo();
+    speakNumber(tallyCount(next));
   }
 
   function onTapPen(index: number) {
@@ -148,7 +215,8 @@ export function CowCountGame() {
     countedPens[index] = true;
     const next = { ...round, countedPens };
     setRound(next);
-    speakText(String(tallyCount(next)));
+    void audio.pop();
+    speakNumber(tallyCount(next));
   }
 
   function onTapOne(index: number) {
@@ -158,7 +226,8 @@ export function CowCountGame() {
     countedOnes[index] = true;
     const next = { ...round, countedOnes };
     setRound(next);
-    speakText(String(tallyCount(next)));
+    void audio.tap();
+    speakNumber(tallyCount(next));
   }
 
   function countWithMe() {
@@ -166,6 +235,7 @@ export function CowCountGame() {
     if (round.target === 0) {
       speakText("Zero cows");
       setRound({ ...round, guided: true });
+      void audio.pop();
       return;
     }
 
@@ -197,9 +267,11 @@ export function CowCountGame() {
               }
             : current,
         );
+        void audio.moo();
         return;
       }
-      speakText(String(value));
+      speakNumber(value);
+      void audio.tap();
       setRound((current) => {
         if (!current) return current;
         if (layout.showIndividuals) {
@@ -218,7 +290,7 @@ export function CowCountGame() {
         };
       });
       i += 1;
-      guideTimer.current = setTimeout(tick, 700);
+      guideTimer.current = setTimeout(tick, 780);
     };
     tick();
   }
@@ -229,7 +301,9 @@ export function CowCountGame() {
     const built = Math.min(cap, round.built + amount);
     if (built === round.built) return;
     setRound({ ...round, built });
-    speakText(String(built));
+    void audio.pop();
+    if (amount >= 10) void audio.moo();
+    speakNumber(built);
   }
 
   function removeCow() {
@@ -237,14 +311,17 @@ export function CowCountGame() {
     if (round.built <= 0) return;
     const built = round.built - 1;
     setRound({ ...round, built });
-    speakText(built === 0 ? "Zero" : String(built));
+    void audio.tap();
+    if (built === 0) speakText("zero");
+    else speakNumber(built);
   }
 
   function submitAnswer(value: number) {
     if (!round || round.answered) return;
 
     if (mode === "count" && round.target > 0 && !fullyCounted(round)) {
-      speakText("Count first — tap cows or pens, or press Count with me.");
+      speakText("Count first. Tap cows or pens, or press Count with me.");
+      void audio.oops();
       return;
     }
 
@@ -255,26 +332,27 @@ export function CowCountGame() {
     if (ok) {
       const nextScore = score + 1;
       setScore(nextScore);
-      speakText(celebratePhrase(round.target));
+      void audio.success();
+      void audio.moo();
+      speakText(successStory(round.target, nextScore));
       advanceTimer.current = setTimeout(() => {
         goNextRound(round.target, nextScore);
-      }, 1600);
+      }, 1900);
     } else {
+      void audio.oops();
       speakText(
         mode === "build"
-          ? `Not yet. We need ${round.target}. You have ${round.built}.`
-          : `Not yet. There are ${round.target} cows.`,
+          ? `Not yet. We need ${numberPhrase(round.target)}. You have ${numberPhrase(round.built)}.`
+          : `Not yet. There are ${numberPhrase(round.target)}. Let's try again.`,
       );
     }
   }
 
   function retryRound() {
     if (!round) return;
-    const reset = freshRound(levelId, round.target + 1);
-    // Keep same target for retry.
     const layout = layoutForCount(round.target);
     const next: RoundState = {
-      ...reset,
+      ...freshRound(levelId, round.target + 1),
       target: round.target,
       choices: round.choices,
       countedCows: Array.from({ length: round.target }, () => false),
@@ -282,6 +360,7 @@ export function CowCountGame() {
       countedOnes: Array.from({ length: layout.ones }, () => false),
     };
     setRound(next);
+    void audio.whoosh();
     promptRound(next, mode);
   }
 
@@ -291,6 +370,30 @@ export function CowCountGame() {
         <div className="mk-header__inner">
           <MenoknowBrand />
           <nav className="mk-nav" aria-label="Primary">
+            <button
+              type="button"
+              className="mk-btn mk-btn--ghost mk-audio-btn"
+              onClick={() => {
+                void unlockAudio();
+                toggleMusic();
+              }}
+              aria-pressed={musicOn && !muted}
+              title={musicOn ? "Music on" : "Music off"}
+            >
+              {musicOn && !muted ? "Music" : "Music off"}
+            </button>
+            <button
+              type="button"
+              className="mk-btn mk-btn--ghost mk-audio-btn"
+              onClick={() => {
+                void unlockAudio();
+                toggleMute();
+              }}
+              aria-pressed={!muted}
+              title={muted ? "Unmute" : "Mute"}
+            >
+              {muted ? "Muted" : "Sound"}
+            </button>
             <Link href="/play/farm">Cow Farm</Link>
             <Link href="/" className="mk-btn mk-btn--ghost">
               Home
@@ -303,8 +406,8 @@ export function CowCountGame() {
         <p className="mk-coming__eyebrow">Cow Farm · Numbers</p>
         <h1>Count the cows</h1>
         <p className="mk-cowgame__lede">
-          Tap each cow (or each pen of ten), say the number, then choose how
-          many. Zero means an empty pasture.
+          Help Farmer Dot bring the herd home. Tap, listen, and count from zero
+          to one hundred.
         </p>
 
         <div className="mk-cowgame__live" id={liveId} aria-live="polite">
@@ -318,6 +421,29 @@ export function CowCountGame() {
         </div>
 
         <AnimatePresence mode="wait">
+          {phase === "story" ? (
+            <StoryStage
+              key={`story-${storyStep}`}
+              beat={introBeat}
+              step={storyStep + 1}
+              total={STORY_INTRO.length}
+              cta={storyStep >= STORY_INTRO.length - 1 ? "Let's help!" : "Next"}
+              onNext={async () => {
+                await unlockAudio();
+                void audio.pop();
+                if (storyStep >= STORY_INTRO.length - 1) {
+                  goMenu();
+                  return;
+                }
+                setStoryStep((s) => s + 1);
+              }}
+              onSkip={async () => {
+                await unlockAudio();
+                goMenu();
+              }}
+            />
+          ) : null}
+
           {phase === "menu" ? (
             <motion.section
               key="menu"
@@ -326,12 +452,23 @@ export function CowCountGame() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
+              <div className="mk-cowgame__cast">
+                <FarmerDot />
+                <p>
+                  Farmer Dot is ready. Pick a way to help, then choose a
+                  pasture.
+                </p>
+              </div>
+
               <h2>How do you want to play?</h2>
               <div className="mk-cowgame__modes" role="group" aria-label="Game mode">
                 <button
                   type="button"
                   className={`mk-mode${mode === "count" ? " is-active" : ""}`}
-                  onClick={() => setMode("count")}
+                  onClick={() => {
+                    setMode("count");
+                    void audio.tap();
+                  }}
                 >
                   <strong>Count the herd</strong>
                   <span>See cows → count → pick the number</span>
@@ -339,7 +476,10 @@ export function CowCountGame() {
                 <button
                   type="button"
                   className={`mk-mode${mode === "build" ? " is-active" : ""}`}
-                  onClick={() => setMode("build")}
+                  onClick={() => {
+                    setMode("build");
+                    void audio.tap();
+                  }}
                 >
                   <strong>Make a herd</strong>
                   <span>Hear a number → add cows until it matches</span>
@@ -353,7 +493,7 @@ export function CowCountGame() {
                     key={item.id}
                     type="button"
                     className="mk-level"
-                    onClick={() => startGame(item.id, mode)}
+                    onClick={() => beginLevel(item.id, mode)}
                   >
                     <span className="mk-level__range">
                       {item.decadesOnly ? "Tens" : `${item.min}–${item.max}`}
@@ -363,7 +503,28 @@ export function CowCountGame() {
                   </button>
                 ))}
               </div>
+
+              <button
+                type="button"
+                className="mk-btn mk-btn--ghost"
+                onClick={() => {
+                  setStoryStep(0);
+                  setPhase("story");
+                  void audio.whoosh();
+                }}
+              >
+                Replay story
+              </button>
             </motion.section>
+          ) : null}
+
+          {phase === "level-intro" ? (
+            <StoryStage
+              key={`level-${levelId}`}
+              beat={levelBeat}
+              cta="Start counting"
+              onNext={enterPlay}
+            />
           ) : null}
 
           {phase === "play" && round ? (
@@ -404,6 +565,7 @@ export function CowCountGame() {
                 countedOnes={round.countedOnes}
                 built={round.built}
                 locked={round.answered}
+                celebrate={round.correct === true}
                 onTapCow={onTapCow}
                 onTapPen={onTapPen}
                 onTapOne={onTapOne}
@@ -473,8 +635,8 @@ export function CowCountGame() {
                   role="group"
                   aria-label="How many cows?"
                 >
-                  {round.choices.map((choice) => (
-                    <button
+                  {round.choices.map((choice, index) => (
+                    <motion.button
                       key={choice}
                       type="button"
                       className={`mk-choice${
@@ -490,21 +652,27 @@ export function CowCountGame() {
                       }`}
                       onClick={() => submitAnswer(choice)}
                       disabled={round.answered}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 * index }}
+                      whileTap={{ scale: 0.94 }}
                     >
                       {choice}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               ) : null}
 
               {round.answered ? (
-                <div
+                <motion.div
                   className={`mk-cowgame__feedback${
                     round.correct ? " is-good" : " is-retry"
                   }`}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
                 >
                   {round.correct ? (
-                    <p>{celebratePhrase(round.target)}</p>
+                    <p>{successStory(round.target, score)}</p>
                   ) : (
                     <>
                       <p>
@@ -519,18 +687,14 @@ export function CowCountGame() {
                       </button>
                     </>
                   )}
-                </div>
+                </motion.div>
               ) : null}
 
               <div className="mk-cowgame__toolbar">
                 <button
                   type="button"
                   className="mk-btn mk-btn--ghost"
-                  onClick={() => {
-                    clearTimers();
-                    setPhase("menu");
-                    setRound(null);
-                  }}
+                  onClick={goMenu}
                 >
                   Change level
                 </button>
@@ -546,23 +710,29 @@ export function CowCountGame() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
             >
-              <h2>Herd hero!</h2>
-              <p>
-                You finished <strong>{level.title}</strong> with {score} star
-                {score === 1 ? "" : "s"}.
-              </p>
+              <div className="mk-cowgame__cast mk-cowgame__cast--done">
+                <FarmerDot wave />
+                <motion.div
+                  className="mk-starburst"
+                  aria-hidden
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                />
+              </div>
+              <h2>{doneBeat.title}</h2>
+              <p>{doneBeat.line}</p>
               <div className="mk-cowgame__done-actions">
                 <button
                   type="button"
                   className="mk-btn mk-btn--primary mk-btn--lg"
-                  onClick={() => startGame(levelId, mode)}
+                  onClick={() => beginLevel(levelId, mode)}
                 >
                   Play again
                 </button>
                 <button
                   type="button"
                   className="mk-btn mk-btn--ghost mk-btn--lg"
-                  onClick={() => setPhase("menu")}
+                  onClick={goMenu}
                 >
                   Pick another level
                 </button>
@@ -583,6 +753,7 @@ function Pasture({
   countedOnes,
   built,
   locked,
+  celebrate,
   onTapCow,
   onTapPen,
   onTapOne,
@@ -594,6 +765,7 @@ function Pasture({
   countedOnes: boolean[];
   built: number;
   locked: boolean;
+  celebrate: boolean;
   onTapCow: (index: number) => void;
   onTapPen: (index: number) => void;
   onTapOne: (index: number) => void;
@@ -603,9 +775,19 @@ function Pasture({
 
   if (displayCount === 0) {
     return (
-      <div className="mk-pasture mk-pasture--empty" aria-label="Empty pasture">
-        <p>No cows yet — this is zero.</p>
-      </div>
+      <motion.div
+        className="mk-pasture mk-pasture--empty"
+        aria-label="Empty pasture"
+        initial={{ opacity: 0.6 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.p
+          initial={{ y: 8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+        >
+          No cows yet — this is zero.
+        </motion.p>
+      </motion.div>
     );
   }
 
@@ -617,9 +799,11 @@ function Pasture({
       >
         {Array.from({ length: displayCount }).map((_, index) => (
           <CowSprite
-            key={index}
+            key={`${displayCount}-${index}`}
+            index={index}
             size={displayCount > 10 ? "sm" : "md"}
             counted={mode === "count" ? countedCows[index] : false}
+            celebrate={celebrate}
             onClick={
               mode === "count" && !locked ? () => onTapCow(index) : undefined
             }
@@ -642,7 +826,7 @@ function Pasture({
       aria-label={`${displayCount} cows in pens of ten`}
     >
       {Array.from({ length: layout.tens }).map((_, index) => (
-        <button
+        <motion.button
           key={`ten-${index}`}
           type="button"
           className={`mk-pen${countedPens[index] ? " is-counted" : ""}${
@@ -657,14 +841,17 @@ function Pasture({
               ? `Pen of 10, counted`
               : "Pen of 10 cows, tap to count"
           }
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
         >
           <span className="mk-pen__label">10</span>
           <span className="mk-pen__cows" aria-hidden>
             {Array.from({ length: 10 }).map((__, cowIndex) => (
-              <CowSprite key={cowIndex} size="sm" />
+              <CowSprite key={cowIndex} size="sm" index={cowIndex} />
             ))}
           </span>
-        </button>
+        </motion.button>
       ))}
       {layout.ones > 0 ? (
         <div className="mk-pen mk-pen--ones">
@@ -674,7 +861,9 @@ function Pasture({
               <CowSprite
                 key={index}
                 size="sm"
+                index={index}
                 counted={mode === "count" ? countedOnes[index] : false}
+                celebrate={celebrate}
                 onClick={
                   mode === "count" && !locked
                     ? () => onTapOne(index)
