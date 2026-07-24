@@ -38,6 +38,8 @@ export default async function HandoffModuleTestPage({
         passingScore={publicTest.passingScore}
         questions={publicTest.questions}
         moduleSlug={mod.slug}
+        moduleKind={mod.kind}
+        moduleTitle={mod.title}
       />
     </div>
   );
