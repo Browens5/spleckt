@@ -8,6 +8,7 @@ export const vlx3ModuleMeta = {
   summary:
     "Interactive field-to-cloud training for the NavVis VLX 3 wearable scanner and NavVis IVION — capture, control points, IVION Processing, sites, measurement, and construction collaboration.",
   kind: "tool" as const,
+  category: "laser_scanner" as const,
   durationMinutes: 50,
   sortOrder: 20,
 };

@@ -24,6 +24,7 @@ const bootstrap = [
     summary TEXT NOT NULL DEFAULT '',
     body TEXT NOT NULL DEFAULT '',
     kind TEXT NOT NULL DEFAULT 'module',
+    category TEXT NOT NULL DEFAULT 'general',
     duration_minutes INTEGER NOT NULL DEFAULT 15,
     sort_order INTEGER NOT NULL DEFAULT 0,
     is_published INTEGER NOT NULL DEFAULT 1,
@@ -46,18 +47,27 @@ async function main() {
     await client.execute(sql);
   }
 
+  try {
+    await client.execute(
+      `ALTER TABLE training_modules ADD COLUMN category TEXT NOT NULL DEFAULT 'general'`,
+    );
+  } catch {
+    // Column already exists.
+  }
+
   const body = JSON.stringify(l2ProLesson);
   const testId = "tt_l2pro_construction";
 
   await client.execute({
     sql: `INSERT INTO training_modules (
-      id, slug, title, summary, body, kind, duration_minutes, sort_order, is_published, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+      id, slug, title, summary, body, kind, category, duration_minutes, sort_order, is_published, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
     ON CONFLICT(slug) DO UPDATE SET
       title = excluded.title,
       summary = excluded.summary,
       body = excluded.body,
       kind = excluded.kind,
+      category = excluded.category,
       duration_minutes = excluded.duration_minutes,
       sort_order = excluded.sort_order,
       is_published = 1,
@@ -69,6 +79,7 @@ async function main() {
       l2ProModuleMeta.summary,
       body,
       l2ProModuleMeta.kind,
+      l2ProModuleMeta.category,
       l2ProModuleMeta.durationMinutes,
       l2ProModuleMeta.sortOrder,
       now,

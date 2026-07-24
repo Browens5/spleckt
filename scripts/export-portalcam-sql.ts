@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS training_modules (
   summary TEXT NOT NULL DEFAULT '',
   body TEXT NOT NULL DEFAULT '',
   kind TEXT NOT NULL DEFAULT 'module',
+  category TEXT NOT NULL DEFAULT 'general',
   duration_minutes INTEGER NOT NULL DEFAULT 15,
   sort_order INTEGER NOT NULL DEFAULT 0,
   is_published INTEGER NOT NULL DEFAULT 1,
@@ -41,7 +42,7 @@ CREATE TABLE IF NOT EXISTS training_tests (
 
 const insertModule = `-- Step 1: run this by itself first
 INSERT INTO training_modules (
-  id, slug, title, summary, body, kind, duration_minutes, sort_order, is_published, created_at, updated_at
+  id, slug, title, summary, body, kind, category, duration_minutes, sort_order, is_published, created_at, updated_at
 ) VALUES (
   ${sqlString(portalCamModuleMeta.id)},
   ${sqlString(portalCamModuleMeta.slug)},
@@ -49,6 +50,7 @@ INSERT INTO training_modules (
   ${sqlString(portalCamModuleMeta.summary)},
   ${sqlString(body)},
   ${sqlString(portalCamModuleMeta.kind)},
+  ${sqlString(portalCamModuleMeta.category)},
   ${portalCamModuleMeta.durationMinutes},
   ${portalCamModuleMeta.sortOrder},
   1,
@@ -61,6 +63,7 @@ ON CONFLICT(slug) DO UPDATE SET
   summary = excluded.summary,
   body = excluded.body,
   kind = excluded.kind,
+  category = excluded.category,
   duration_minutes = excluded.duration_minutes,
   sort_order = excluded.sort_order,
   is_published = 1,

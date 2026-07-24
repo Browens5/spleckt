@@ -1,5 +1,7 @@
 export type TrainingKind = "module" | "tool" | "software" | "technique";
 
+export type TrainingCategory = "drone" | "laser_scanner" | "general";
+
 export type TrainingQuestion = {
   id: string;
   prompt: string;
@@ -21,6 +23,26 @@ export function normalizeTrainingKind(kind?: string | null): TrainingKind {
     return kind;
   }
   return "module";
+}
+
+export function normalizeTrainingCategory(
+  category?: string | null,
+): TrainingCategory {
+  if (category === "drone" || category === "laser_scanner" || category === "general") {
+    return category;
+  }
+  return "general";
+}
+
+export function trainingCategoryLabel(category: TrainingCategory) {
+  switch (category) {
+    case "drone":
+      return "Drones";
+    case "laser_scanner":
+      return "Laser scanners";
+    default:
+      return "Other training";
+  }
 }
 
 export function parseTrainingQuestions(raw: string | null | undefined): TrainingQuestion[] {

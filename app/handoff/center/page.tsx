@@ -23,8 +23,8 @@ export default async function HandoffCenterPage() {
       <header className="handoff-panel__header">
         <h1>Training modules</h1>
         <p>
-          Work through each module, pass its test, and earn a certification for
-          the tool, software, or technique you learned.
+          Work through modules by category — laser scanners and drones — then
+          pass each test to earn a certification.
         </p>
       </header>
 
@@ -34,6 +34,7 @@ export default async function HandoffCenterPage() {
           title: mod.title,
           summary: mod.summary,
           kind: mod.kind,
+          category: mod.category,
           durationMinutes: mod.durationMinutes,
           progressStatus: progressMap.get(mod.id)?.status ?? "not_started",
           certified: certMap.has(mod.id),

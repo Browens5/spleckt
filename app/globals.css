@@ -1204,6 +1204,31 @@ textarea {
   color: var(--ho-ink);
 }
 
+.handoff-module-groups {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.handoff-module-group__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.handoff-module-group__header h2 {
+  margin: 0;
+  font-family: var(--ho-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.handoff-module-group__header span {
+  color: var(--ho-muted);
+  font-size: 0.85rem;
+}
+
 .handoff-module-list {
   display: grid;
   gap: 0.85rem;
@@ -1220,6 +1245,13 @@ textarea {
 
 .handoff-module-row:last-child {
   border-bottom: 1px solid var(--ho-line);
+}
+
+.handoff-module-row h3 {
+  font-family: var(--ho-display);
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  margin: 0.35rem 0;
 }
 
 .handoff-module-row h2 {

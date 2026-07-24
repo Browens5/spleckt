@@ -1,10 +1,10 @@
 import "dotenv/config";
 import { createClient } from "@libsql/client";
 import {
-  portalCamLesson,
-  portalCamModuleMeta,
-  portalCamTestQuestions,
-} from "../lib/handoff/content/portalcam";
+  mavic3eLesson,
+  mavic3eModuleMeta,
+  mavic3eTestQuestions,
+} from "../lib/handoff/content/mavic3e";
 
 const url =
   process.env.TURSO_DATABASE_URL ??
@@ -55,8 +55,8 @@ async function main() {
     // Column already exists.
   }
 
-  const body = JSON.stringify(portalCamLesson);
-  const testId = "tt_portalcam_construction";
+  const body = JSON.stringify(mavic3eLesson);
+  const testId = "tt_dji_mavic_3_enterprise";
 
   await client.execute({
     sql: `INSERT INTO training_modules (
@@ -73,15 +73,15 @@ async function main() {
       is_published = 1,
       updated_at = excluded.updated_at`,
     args: [
-      portalCamModuleMeta.id,
-      portalCamModuleMeta.slug,
-      portalCamModuleMeta.title,
-      portalCamModuleMeta.summary,
+      mavic3eModuleMeta.id,
+      mavic3eModuleMeta.slug,
+      mavic3eModuleMeta.title,
+      mavic3eModuleMeta.summary,
       body,
-      portalCamModuleMeta.kind,
-      portalCamModuleMeta.category,
-      portalCamModuleMeta.durationMinutes,
-      portalCamModuleMeta.sortOrder,
+      mavic3eModuleMeta.kind,
+      mavic3eModuleMeta.category,
+      mavic3eModuleMeta.durationMinutes,
+      mavic3eModuleMeta.sortOrder,
       now,
       now,
     ],
@@ -89,7 +89,7 @@ async function main() {
 
   const existing = await client.execute({
     sql: `SELECT id FROM training_tests WHERE module_id = ? LIMIT 1`,
-    args: [portalCamModuleMeta.id],
+    args: [mavic3eModuleMeta.id],
   });
 
   if (existing.rows.length === 0) {
@@ -99,9 +99,9 @@ async function main() {
       ) VALUES (?, ?, ?, 80, ?, ?, ?)`,
       args: [
         testId,
-        portalCamModuleMeta.id,
-        `${portalCamModuleMeta.title} certification test`,
-        JSON.stringify(portalCamTestQuestions),
+        mavic3eModuleMeta.id,
+        `${mavic3eModuleMeta.title} certification test`,
+        JSON.stringify(mavic3eTestQuestions),
         now,
         now,
       ],
@@ -112,8 +112,8 @@ async function main() {
             SET title = ?, passing_score = 80, questions_json = ?, updated_at = ?
             WHERE id = ?`,
       args: [
-        `${portalCamModuleMeta.title} certification test`,
-        JSON.stringify(portalCamTestQuestions),
+        `${mavic3eModuleMeta.title} certification test`,
+        JSON.stringify(mavic3eTestQuestions),
         now,
         existing.rows[0].id,
       ],
@@ -121,7 +121,7 @@ async function main() {
   }
 
   console.log(
-    `Seeded PortalCam training: /center/modules/${portalCamModuleMeta.slug}`,
+    `Seeded Mavic 3 Enterprise training: /center/modules/${mavic3eModuleMeta.slug}`,
   );
 }
 

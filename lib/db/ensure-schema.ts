@@ -94,6 +94,7 @@ const statements = [
     summary TEXT NOT NULL DEFAULT '',
     body TEXT NOT NULL DEFAULT '',
     kind TEXT NOT NULL DEFAULT 'module',
+    category TEXT NOT NULL DEFAULT 'general',
     duration_minutes INTEGER NOT NULL DEFAULT 15,
     sort_order INTEGER NOT NULL DEFAULT 0,
     is_published INTEGER NOT NULL DEFAULT 1,
@@ -143,6 +144,30 @@ export async function ensureSchema() {
   for (const sql of statements) {
     await client.execute(sql);
   }
+
+  // Add training_modules.category on existing databases (CREATE IF NOT EXISTS won't alter).
+  try {
+    await client.execute(
+      `ALTER TABLE training_modules ADD COLUMN category TEXT NOT NULL DEFAULT 'general'`,
+    );
+  } catch {
+    // Column already exists.
+  }
+
+  await client.execute(
+    `UPDATE training_modules
+     SET category = 'laser_scanner'
+     WHERE slug IN (
+       'xgrids-portalcam-construction',
+       'xgrids-l2pro-construction',
+       'navvis-vlx3-ivion'
+     )`,
+  );
+  await client.execute(
+    `UPDATE training_modules
+     SET category = 'drone'
+     WHERE slug IN ('dji-mavic-3-enterprise')`,
+  );
 
   // Migrate legacy roles and keep the default aligned with viewer/editor/admin.
   await client.execute(

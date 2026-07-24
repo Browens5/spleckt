@@ -8,6 +8,7 @@ export const l2ProModuleMeta = {
   summary:
     "Interactive field-to-office training for the Lixel L2 Pro — LixelGO capture, RTK/GCP georeferencing, LixelStudio point clouds, and LCC Studio Gaussian Splats for construction documentation.",
   kind: "tool" as const,
+  category: "laser_scanner" as const,
   durationMinutes: 50,
   sortOrder: 10,
 };

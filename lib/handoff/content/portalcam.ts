@@ -8,6 +8,7 @@ export const portalCamModuleMeta = {
   summary:
     "Interactive field-to-office training for PortalCam, LCC Scan, and LCC Studio — built around construction progress, coordination, and stakeholder walkthroughs.",
   kind: "tool" as const,
+  category: "laser_scanner" as const,
   durationMinutes: 45,
   sortOrder: 0,
 };

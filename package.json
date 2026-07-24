@@ -18,7 +18,8 @@
     "db:seed:handoff": "node scripts/seed-handoff.mjs",
     "db:seed:portalcam": "tsx scripts/seed-portalcam.ts",
     "db:seed:l2pro": "tsx scripts/seed-l2pro.ts",
-    "db:seed:vlx3": "tsx scripts/seed-vlx3.ts"
+    "db:seed:vlx3": "tsx scripts/seed-vlx3.ts",
+    "db:seed:mavic3e": "tsx scripts/seed-mavic3e.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1090.0",

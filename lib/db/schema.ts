@@ -144,6 +144,7 @@ export const trainingModules = sqliteTable("training_modules", {
   summary: text("summary").notNull().default(""),
   body: text("body").notNull().default(""),
   kind: text("kind").notNull().default("module"), // module | tool | software | technique
+  category: text("category").notNull().default("general"), // drone | laser_scanner | general
   durationMinutes: integer("duration_minutes").notNull().default(15),
   sortOrder: integer("sort_order").notNull().default(0),
   isPublished: integer("is_published", { mode: "boolean" }).notNull().default(true),

@@ -1,17 +1,17 @@
 import { writeFileSync } from "node:fs";
 import {
-  vlx3Lesson,
-  vlx3ModuleMeta,
-  vlx3TestQuestions,
-} from "../lib/handoff/content/vlx3";
+  mavic3eLesson,
+  mavic3eModuleMeta,
+  mavic3eTestQuestions,
+} from "../lib/handoff/content/mavic3e";
 
 function sqlString(value: string) {
   return `'${value.replace(/'/g, "''")}'`;
 }
 
 const now = Date.now();
-const body = JSON.stringify(vlx3Lesson);
-const questions = JSON.stringify(vlx3TestQuestions);
+const body = JSON.stringify(mavic3eLesson);
+const questions = JSON.stringify(mavic3eTestQuestions);
 
 const createTables = `-- Step 0 (optional): create tables if they do not exist yet
 CREATE TABLE IF NOT EXISTS training_modules (
@@ -44,15 +44,15 @@ const insertModule = `-- Step 1: run this by itself first
 INSERT INTO training_modules (
   id, slug, title, summary, body, kind, category, duration_minutes, sort_order, is_published, created_at, updated_at
 ) VALUES (
-  ${sqlString(vlx3ModuleMeta.id)},
-  ${sqlString(vlx3ModuleMeta.slug)},
-  ${sqlString(vlx3ModuleMeta.title)},
-  ${sqlString(vlx3ModuleMeta.summary)},
+  ${sqlString(mavic3eModuleMeta.id)},
+  ${sqlString(mavic3eModuleMeta.slug)},
+  ${sqlString(mavic3eModuleMeta.title)},
+  ${sqlString(mavic3eModuleMeta.summary)},
   ${sqlString(body)},
-  ${sqlString(vlx3ModuleMeta.kind)},
-  ${sqlString(vlx3ModuleMeta.category)},
-  ${vlx3ModuleMeta.durationMinutes},
-  ${vlx3ModuleMeta.sortOrder},
+  ${sqlString(mavic3eModuleMeta.kind)},
+  ${sqlString(mavic3eModuleMeta.category)},
+  ${mavic3eModuleMeta.durationMinutes},
+  ${mavic3eModuleMeta.sortOrder},
   1,
   ${now},
   ${now}
@@ -75,9 +75,9 @@ const insertTest = `-- Step 2: run only after Step 1 succeeds
 INSERT INTO training_tests (
   id, module_id, title, passing_score, questions_json, created_at, updated_at
 ) VALUES (
-  ${sqlString("tt_navvis_vlx3_ivion")},
-  ${sqlString(vlx3ModuleMeta.id)},
-  ${sqlString(`${vlx3ModuleMeta.title} certification test`)},
+  ${sqlString("tt_dji_mavic_3_enterprise")},
+  ${sqlString(mavic3eModuleMeta.id)},
+  ${sqlString(`${mavic3eModuleMeta.title} certification test`)},
   80,
   ${sqlString(questions)},
   ${now},
@@ -92,11 +92,11 @@ ON CONFLICT(id) DO UPDATE SET
 `;
 
 const verify = `-- Step 3: verify
-SELECT id, slug, title FROM training_modules WHERE slug = 'navvis-vlx3-ivion';
-SELECT id, module_id, title, passing_score FROM training_tests WHERE id = 'tt_navvis_vlx3_ivion';
+SELECT id, slug, title FROM training_modules WHERE slug = 'dji-mavic-3-enterprise';
+SELECT id, module_id, title, passing_score FROM training_tests WHERE id = 'tt_dji_mavic_3_enterprise';
 `;
 
-const combined = `-- NavVis VLX 3 + IVION seed for Turso SQL Editor
+const combined = `-- Mavic 3 Enterprise seed for Turso SQL Editor
 -- IMPORTANT: Run Step 1, then Step 2 separately (do not rely on DELETE).
 
 ${createTables}
@@ -108,7 +108,7 @@ ${insertTest}
 ${verify}
 `;
 
-writeFileSync("scripts/seed-vlx3-turso.sql", combined);
-writeFileSync("scripts/seed-vlx3-turso-step1-module.sql", insertModule);
-writeFileSync("scripts/seed-vlx3-turso-step2-test.sql", insertTest);
-console.log("Wrote Turso SQL seed files for VLX 3 (upsert-safe, no DELETE)");
+writeFileSync("scripts/seed-mavic3e-turso.sql", combined);
+writeFileSync("scripts/seed-mavic3e-turso-step1-module.sql", insertModule);
+writeFileSync("scripts/seed-mavic3e-turso-step2-test.sql", insertTest);
+console.log("Wrote Turso SQL seed files for Mavic 3 Enterprise (upsert-safe, no DELETE)");
