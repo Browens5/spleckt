@@ -57,10 +57,10 @@ export default function HandoffLoginPage() {
     <div className="handoff-auth">
       <div className="handoff-auth__card">
         <HandoffBrand compact />
-        <h1>Step into the exchange</h1>
+        <h1>Training center</h1>
         <p>
-          Sign in to pick up the baton — or use the same credentials you already
-          share with your workspace teammates.
+          Sign in with your Handoff account, or use the same credentials you
+          already have from your shared workspace.
         </p>
 
         <form className="form-stack" onSubmit={onSubmit}>
@@ -85,7 +85,7 @@ export default function HandoffLoginPage() {
         </form>
 
         <p className="handoff-auth__footer">
-          New to the relay? <Link href="/signup">Create an account</Link>
+          Need an account? <Link href="/signup">Create one</Link>
         </p>
       </div>
     </div>

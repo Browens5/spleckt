@@ -34,7 +34,7 @@ export function HandoffShell({
     <div className="handoff-center">
       <aside className="handoff-center__sidebar">
         <HandoffBrand compact />
-        <p className="handoff-center__tag">Relay training</p>
+        <p className="handoff-center__tag">Training center</p>
 
         <nav className="handoff-center__nav">
           {nav.map((item) => (

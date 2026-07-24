@@ -14,16 +14,15 @@ export default async function HandoffCertificationsPage() {
   return (
     <div className="handoff-panel">
       <header className="handoff-panel__header">
-        <h1>Certified passes</h1>
+        <h1>Certifications</h1>
         <p>
-          Proof you can hand the skill forward — earned by finishing module
-          certification tests.
+          Credentials you have earned by passing module certification tests.
         </p>
       </header>
 
       {certifications.length === 0 ? (
         <div className="handoff-empty">
-          <p>No certifications yet. Finish a module test to lock in your first clean pass.</p>
+          <p>No certifications yet. Complete a module test to earn your first credential.</p>
           <Link href="/center" className="btn btn--primary handoff-btn">
             Browse modules
           </Link>
