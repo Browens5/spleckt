@@ -96,12 +96,8 @@ export default function UploadPage() {
       });
 
       if (!res.ok) {
-<<<<<<< HEAD
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Could not save splat metadata");
-=======
-        throw new Error("Could not save capture details");
->>>>>>> ffc6324 (Refresh site copy for 3D capture newcomers)
+        throw new Error(data.error ?? "Could not save capture details");
       }
 
       const data = await res.json();
