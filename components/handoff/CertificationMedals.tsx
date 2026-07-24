@@ -56,6 +56,7 @@ const KIND_THEME: Record<
 
 const SLUG_PHOTOS: Record<string, string> = {
   "xgrids-portalcam-construction": "/handoff/medals/portalcam.png",
+  "xgrids-l2pro-construction": "/handoff/medals/l2pro.png",
 };
 
 const KIND_PHOTOS: Record<string, string> = {
