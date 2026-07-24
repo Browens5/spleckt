@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { HandoffBrand } from "@/components/handoff/HandoffBrand";
 import { authClient } from "@/lib/auth-client";
 
 export default function HandoffLoginPage() {
@@ -55,14 +56,11 @@ export default function HandoffLoginPage() {
   return (
     <div className="handoff-auth">
       <div className="handoff-auth__card">
-        <Link href="/" className="handoff-brand handoff-brand--compact">
-          <span className="handoff-brand__mark" aria-hidden />
-          <span className="handoff-brand__name">Handoff</span>
-        </Link>
-        <h1>Training center</h1>
+        <HandoffBrand compact />
+        <h1>Step into the exchange</h1>
         <p>
-          Sign in with your Handoff account, or use the same credentials you
-          already have from your shared workspace.
+          Sign in to pick up the baton — or use the same credentials you already
+          share with your workspace teammates.
         </p>
 
         <form className="form-stack" onSubmit={onSubmit}>
@@ -87,7 +85,7 @@ export default function HandoffLoginPage() {
         </form>
 
         <p className="handoff-auth__footer">
-          Need an account? <Link href="/signup">Create one</Link>
+          New to the relay? <Link href="/signup">Create an account</Link>
         </p>
       </div>
     </div>

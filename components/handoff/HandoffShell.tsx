@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { HandoffBrand } from "@/components/handoff/HandoffBrand";
 import { authClient } from "@/lib/auth-client";
 
 const nav = [
@@ -32,10 +33,8 @@ export function HandoffShell({
   return (
     <div className="handoff-center">
       <aside className="handoff-center__sidebar">
-        <Link href="/" className="handoff-brand handoff-brand--compact">
-          <span className="handoff-brand__mark" aria-hidden />
-          <span className="handoff-brand__name">Handoff</span>
-        </Link>
+        <HandoffBrand compact />
+        <p className="handoff-center__tag">Relay training</p>
 
         <nav className="handoff-center__nav">
           {nav.map((item) => (

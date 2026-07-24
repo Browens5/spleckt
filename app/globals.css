@@ -828,26 +828,28 @@ textarea {
   }
 }
 
-/* —— Handoff training surface (handoff.spleckt.com) —— */
+/* —— Handoff training surface (handoff.spleckt.com) ——
+   Track & field relay theme: clean baton passes between teammates. */
 .handoff {
-  --ho-bg: #eef3f1;
-  --ho-bg-deep: #d9e4df;
-  --ho-ink: #14201c;
-  --ho-muted: #4d5f58;
-  --ho-line: rgba(20, 32, 28, 0.12);
-  --ho-surface: rgba(255, 255, 255, 0.82);
-  --ho-accent: #0f7a5f;
-  --ho-accent-deep: #0b5c48;
-  --ho-warm: #c9852c;
+  --ho-bg: #eef1f6;
+  --ho-bg-deep: #d9dee8;
+  --ho-ink: #141824;
+  --ho-muted: #5a6275;
+  --ho-line: rgba(20, 24, 36, 0.12);
+  --ho-surface: rgba(255, 255, 255, 0.84);
+  --ho-accent: #e0352d;
+  --ho-accent-deep: #b5241e;
+  --ho-warm: #d4a017;
+  --ho-lane: rgba(20, 24, 36, 0.08);
   --ho-display: var(--handoff-display), "Avenir Next", sans-serif;
   --ho-sans: var(--handoff-sans), "Segoe UI", sans-serif;
   color: var(--ho-ink);
   font-family: var(--ho-sans);
   min-height: 100%;
   background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(15, 122, 95, 0.14), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(201, 133, 44, 0.12), transparent 50%),
-    linear-gradient(180deg, #f3f7f5 0%, var(--ho-bg) 40%, #e7efeb 100%);
+    radial-gradient(ellipse 70% 45% at 12% -8%, rgba(224, 53, 45, 0.12), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 88% 0%, rgba(212, 160, 23, 0.1), transparent 50%),
+    linear-gradient(180deg, #f4f6fa 0%, var(--ho-bg) 42%, #e4e8f0 100%);
 }
 
 .handoff-shell,
@@ -859,22 +861,45 @@ textarea {
 .handoff-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.7rem;
 }
 
 .handoff-brand__mark {
-  width: 1.1rem;
-  height: 1.1rem;
-  background:
-    linear-gradient(135deg, var(--ho-accent) 0 42%, transparent 43% 57%, var(--ho-warm) 58%);
-  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  position: relative;
+  width: 1.55rem;
+  height: 1.15rem;
+  display: inline-grid;
+  place-items: center;
+}
+
+.handoff-brand__baton {
+  width: 1.35rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ho-warm), #f0c14b 45%, var(--ho-accent));
+  box-shadow: 0 0 0 2px rgba(224, 53, 45, 0.12);
+  transform: rotate(-18deg);
+}
+
+.handoff-brand__lane {
+  position: absolute;
+  inset: auto 0 -0.15rem;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ho-ink) 18%,
+    var(--ho-ink) 82%,
+    transparent
+  );
+  opacity: 0.28;
 }
 
 .handoff-brand__name {
   font-family: var(--ho-display);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  font-size: 1.4rem;
 }
 
 .handoff-brand--compact .handoff-brand__name {
@@ -886,7 +911,7 @@ textarea {
   inset: 0 0 auto;
   z-index: 30;
   backdrop-filter: blur(12px);
-  background: rgba(238, 243, 241, 0.72);
+  background: rgba(238, 241, 246, 0.78);
   border-bottom: 1px solid transparent;
 }
 
@@ -943,11 +968,27 @@ textarea {
   position: absolute;
   inset: -8% -4% -16%;
   background:
-    linear-gradient(115deg, rgba(15, 122, 95, 0.2), transparent 42%),
-    linear-gradient(200deg, rgba(20, 32, 28, 0.08), transparent 50%),
-    url("data:image/svg+xml,%3Csvg width='180' height='180' viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%230f7a5f' stroke-opacity='0.14'%3E%3Cpath d='M0 90h180M90 0v180'/%3E%3Cpath d='M0 0l180 180M180 0L0 180' stroke-opacity='0.08'/%3E%3C/g%3E%3C/svg%3E"),
-    linear-gradient(165deg, #e7f0ec 0%, #f5f8f6 45%, #dce8e2 100%);
-  background-size: auto, auto, 180px 180px, auto;
+    radial-gradient(ellipse 55% 40% at 70% 30%, rgba(224, 53, 45, 0.18), transparent 60%),
+    radial-gradient(ellipse 40% 35% at 20% 70%, rgba(212, 160, 23, 0.14), transparent 55%),
+    linear-gradient(165deg, #e8ecf4 0%, #f6f7fa 42%, #dde3ee 100%);
+}
+
+.handoff-hero__lanes {
+  position: absolute;
+  inset: -20% -30% -10%;
+  background:
+    repeating-linear-gradient(
+      108deg,
+      transparent 0 46px,
+      rgba(20, 24, 36, 0.045) 46px 48px
+    ),
+    repeating-linear-gradient(
+      108deg,
+      transparent 0 188px,
+      rgba(224, 53, 45, 0.1) 188px 192px
+    );
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent 75%);
+  pointer-events: none;
 }
 
 .handoff-hero__content {
@@ -1082,8 +1123,23 @@ textarea {
   gap: 1.5rem;
   padding: 1.4rem 1.1rem;
   border-right: 1px solid var(--ho-line);
-  background: rgba(255, 255, 255, 0.55);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.5)),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 28px,
+      rgba(20, 24, 36, 0.03) 28px 29px
+    );
   min-height: 100vh;
+}
+
+.handoff-center__tag {
+  margin: -0.6rem 0 0;
+  color: var(--ho-muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .handoff-center__nav {
@@ -1101,7 +1157,7 @@ textarea {
 .handoff-center__nav a.is-active,
 .handoff-center__nav a:hover {
   color: var(--ho-ink);
-  background: rgba(15, 122, 95, 0.08);
+  background: rgba(224, 53, 45, 0.07);
   border-left-color: var(--ho-accent);
 }
 
@@ -1377,7 +1433,7 @@ textarea {
 
 .ho-lesson__progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--ho-accent), #2a9d7c);
+  background: linear-gradient(90deg, var(--ho-warm), var(--ho-accent));
   transition: width 220ms ease;
 }
 
@@ -1407,8 +1463,8 @@ textarea {
 }
 
 .ho-lesson__chapters button.is-active {
-  border-color: rgba(15, 122, 95, 0.45);
-  background: rgba(15, 122, 95, 0.1);
+  border-color: rgba(224, 53, 45, 0.45);
+  background: rgba(224, 53, 45, 0.08);
   color: var(--ho-ink);
 }
 
@@ -1479,7 +1535,7 @@ textarea {
 }
 
 .ho-resource:hover {
-  border-color: rgba(15, 122, 95, 0.45);
+  border-color: rgba(224, 53, 45, 0.4);
   transform: translateY(-1px);
 }
 
@@ -1499,7 +1555,7 @@ textarea {
 .ho-callout {
   padding: 0.95rem 1rem;
   border-left: 3px solid var(--ho-accent);
-  background: rgba(15, 122, 95, 0.08);
+  background: rgba(224, 53, 45, 0.07);
 }
 
 .ho-callout p {
@@ -1578,17 +1634,17 @@ textarea {
 }
 
 .ho-scenario__choices button:hover {
-  border-color: rgba(15, 122, 95, 0.4);
+  border-color: rgba(224, 53, 45, 0.35);
 }
 
 .ho-scenario__choices button.is-selected {
-  border-color: rgba(15, 122, 95, 0.55);
-  background: rgba(15, 122, 95, 0.08);
+  border-color: rgba(224, 53, 45, 0.5);
+  background: rgba(224, 53, 45, 0.07);
 }
 
 .ho-scenario__choices button.is-correct {
-  border-color: rgba(15, 122, 95, 0.7);
-  background: rgba(15, 122, 95, 0.14);
+  border-color: rgba(30, 140, 90, 0.65);
+  background: rgba(30, 140, 90, 0.12);
 }
 
 .ho-scenario__choices button.is-wrong {

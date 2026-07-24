@@ -135,7 +135,7 @@ export function InteractiveLessonPlayer({
                 disabled={!chapterReady || finishing}
                 onClick={finishModule}
               >
-                {finishing ? "Saving…" : "Finish module"}
+                {finishing ? "Saving…" : "Complete this leg"}
               </button>
             ) : null}
             <Link

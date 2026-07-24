@@ -3,7 +3,7 @@ import { HandoffLanding } from "@/components/handoff/HandoffLanding";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Handoff — Training Center",
+    absolute: "Handoff — Pass the knowledge. Keep the team moving.",
   },
 };
 

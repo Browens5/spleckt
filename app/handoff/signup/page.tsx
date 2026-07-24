@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { HandoffBrand } from "@/components/handoff/HandoffBrand";
 import { authClient } from "@/lib/auth-client";
 
 export default function HandoffSignupPage() {
@@ -57,12 +58,12 @@ export default function HandoffSignupPage() {
   return (
     <div className="handoff-auth">
       <div className="handoff-auth__card">
-        <Link href="/" className="handoff-brand handoff-brand--compact">
-          <span className="handoff-brand__mark" aria-hidden />
-          <span className="handoff-brand__name">Handoff</span>
-        </Link>
-        <h1>Create your training account</h1>
-        <p>Join Handoff to study modules and earn certifications.</p>
+        <HandoffBrand compact />
+        <h1>Join the relay</h1>
+        <p>
+          Create your Handoff account and start training for a clean pass to the
+          next teammate.
+        </p>
 
         <form className="form-stack" onSubmit={onSubmit}>
           <label>
@@ -90,7 +91,7 @@ export default function HandoffSignupPage() {
         </form>
 
         <p className="handoff-auth__footer">
-          Already have credentials? <Link href="/login">Sign in</Link>
+          Already on the team? <Link href="/login">Sign in</Link>
         </p>
       </div>
     </div>
