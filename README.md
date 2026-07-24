@@ -18,6 +18,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 3. Public hashed share links (`/s/[hash]`)
 4. Admin marketing media upload UI + user role management
 5. Self-hosted SuperSplat viewer + editor
+6. **Handoff** training surface on `handoff.spleckt.com` (modules, tests, certifications) — not linked from the main marketing site
 
 ### Roles
 
@@ -26,6 +27,20 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 | `viewer` | View assigned splats only (default for new signups) |
 | `editor` | Upload, edit, share, and use the SuperSplat editor |
 | `admin` | Everything editors can do, plus marketing media + change user roles |
+
+## Handoff (`handoff.spleckt.com`)
+
+Separate training product hosted in the same Next.js app. Host-based routing sends `handoff.spleckt.com` (and `handoff.localhost:3000` in local dev) to the Handoff UI. The main Spleckt site does not link to it; `/handoff` paths return 404 on www/apex.
+
+- Shared Better Auth users/credentials (cross-subdomain cookies on `.spleckt.com`)
+- Direct login/signup on Handoff → training center
+- Modules for tools / software / techniques, certification tests, and issued certificate codes
+
+```bash
+npm run db:seed:handoff
+```
+
+Point DNS for `handoff.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_HANDOFF_URL`.
 
 ## Setup
 
@@ -36,9 +51,12 @@ cp .env.example .env.local
 
 npm run db:push
 npm run db:seed
+npm run db:seed:handoff
 npm run setup:editor   # first time only (clones + builds PlayCanvas SuperSplat)
 npm run dev
 ```
+
+Local Handoff: open `http://handoff.localhost:3000` (same process as `npm run dev`).
 
 Default admin (change after first login):
 
@@ -50,6 +68,7 @@ Default admin (change after first login):
 | Variable | What it is |
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Your public site URL — use `https://www.spleckt.com` (apex redirects to www) |
+| `NEXT_PUBLIC_HANDOFF_URL` | Optional Handoff URL — defaults to `https://handoff.spleckt.com` |
 | `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
 | `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
 | `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
@@ -95,3 +114,14 @@ Without R2, uploads are stored under `.data/uploads` and served from `/api/files
 | `/portal/editor/[id]` | Self-hosted SuperSplat editor |
 | `/s/[hash]` | Public share viewer |
 | `/viewer` | Generic viewer with query params |
+
+### Handoff host (`handoff.spleckt.com`)
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Handoff landing |
+| `/login`, `/signup` | Training auth (shared credentials) |
+| `/center` | Training modules |
+| `/center/modules/[slug]` | Module content |
+| `/center/modules/[slug]/test` | Certification test |
+| `/center/certifications` | Earned certificates |

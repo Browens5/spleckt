@@ -51,7 +51,9 @@ function desiredCorsRules(): CORSRule[] {
       ...getTrustedOrigins(),
       "https://www.spleckt.com",
       "https://spleckt.com",
+      "https://handoff.spleckt.com",
       "http://localhost:3000",
+      "http://handoff.localhost:3000",
     ]),
   );
 

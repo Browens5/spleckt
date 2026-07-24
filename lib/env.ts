@@ -31,15 +31,21 @@ export function getAppUrl() {
   );
 }
 
-/** Origins allowed to call Better Auth (apex + www). */
+/** Origins allowed to call Better Auth (apex + www + handoff). */
 export function getTrustedOrigins() {
   const appUrl = getAppUrl().replace(/\/$/, "");
   const origins = new Set<string>([
     appUrl,
     "https://spleckt.com",
     "https://www.spleckt.com",
+    "https://handoff.spleckt.com",
     "http://localhost:3000",
+    "http://handoff.localhost:3000",
   ]);
+
+  if (process.env.NEXT_PUBLIC_HANDOFF_URL) {
+    origins.add(process.env.NEXT_PUBLIC_HANDOFF_URL.replace(/\/$/, ""));
+  }
 
   try {
     const url = new URL(appUrl);
@@ -47,6 +53,15 @@ export function getTrustedOrigins() {
       origins.add(`${url.protocol}//${url.hostname.replace(/^www\./, "")}`);
     } else {
       origins.add(`${url.protocol}//www.${url.hostname}`);
+    }
+
+    if (/(?:^|\.)spleckt\.com$/i.test(url.hostname)) {
+      origins.add(`${url.protocol}//handoff.spleckt.com`);
+    }
+
+    if (url.hostname === "localhost" || url.hostname.endsWith(".localhost")) {
+      const port = url.port ? `:${url.port}` : "";
+      origins.add(`${url.protocol}//handoff.localhost${port}`);
     }
   } catch {
     // ignore invalid app url during build

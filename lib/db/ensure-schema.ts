@@ -87,6 +87,53 @@ const statements = [
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS training_modules (
+    id TEXT PRIMARY KEY NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    kind TEXT NOT NULL DEFAULT 'module',
+    duration_minutes INTEGER NOT NULL DEFAULT 15,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_published INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS training_tests (
+    id TEXT PRIMARY KEY NOT NULL,
+    module_id TEXT NOT NULL REFERENCES training_modules(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    passing_score INTEGER NOT NULL DEFAULT 80,
+    questions_json TEXT NOT NULL DEFAULT '[]',
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS training_progress (
+    id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    module_id TEXT NOT NULL REFERENCES training_modules(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'in_progress',
+    completed_at INTEGER,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS training_attempts (
+    id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    test_id TEXT NOT NULL REFERENCES training_tests(id) ON DELETE CASCADE,
+    score INTEGER NOT NULL DEFAULT 0,
+    passed INTEGER NOT NULL DEFAULT 0,
+    answers_json TEXT NOT NULL DEFAULT '[]',
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS training_certifications (
+    id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE,
+    module_id TEXT NOT NULL REFERENCES training_modules(id) ON DELETE CASCADE,
+    attempt_id TEXT NOT NULL REFERENCES training_attempts(id) ON DELETE CASCADE,
+    code TEXT NOT NULL UNIQUE,
+    issued_at INTEGER NOT NULL
+  )`,
 ];
 
 export async function ensureSchema() {
