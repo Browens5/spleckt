@@ -1,8 +1,10 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ModuleBody } from "@/components/handoff/ModuleViews";
+import { TrainingMinigame } from "@/components/handoff/TrainingMinigames";
 import type {
   InteractiveBlock,
   InteractiveChapter,
@@ -30,6 +32,7 @@ export function InteractiveLessonPlayer({
     {},
   );
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [minigames, setMinigames] = useState<Record<string, boolean>>({});
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +41,8 @@ export function InteractiveLessonPlayer({
   const progress = ((chapterIndex + 1) / lesson.chapters.length) * 100;
 
   const chapterReady = useMemo(
-    () => isChapterReady(chapter, quizAnswers, scenarioPicks),
-    [chapter, quizAnswers, scenarioPicks],
+    () => isChapterReady(chapter, quizAnswers, scenarioPicks, minigames),
+    [chapter, quizAnswers, scenarioPicks, minigames],
   );
 
   async function finishModule() {
@@ -57,7 +60,11 @@ export function InteractiveLessonPlayer({
   return (
     <div className="ho-lesson">
       <div className="ho-lesson__progress" aria-hidden>
-        <div className="ho-lesson__progress-bar" style={{ width: `${progress}%` }} />
+        <motion.div
+          className="ho-lesson__progress-bar"
+          animate={{ width: `${progress}%` }}
+          transition={{ type: "spring", stiffness: 120, damping: 20 }}
+        />
       </div>
 
       <div className="ho-lesson__chapters" role="tablist" aria-label="Lesson chapters">
@@ -76,34 +83,47 @@ export function InteractiveLessonPlayer({
         ))}
       </div>
 
-      <article className="ho-lesson__chapter">
-        {chapter.eyebrow ? (
-          <p className="ho-lesson__eyebrow">{chapter.eyebrow}</p>
-        ) : null}
-        <h2>{chapter.title}</h2>
+      <AnimatePresence mode="wait">
+        <motion.article
+          key={chapter.id}
+          className="ho-lesson__chapter"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {chapter.eyebrow ? (
+            <p className="ho-lesson__eyebrow">{chapter.eyebrow}</p>
+          ) : null}
+          <h2>{chapter.title}</h2>
 
-        <div className="ho-lesson__blocks">
-          {chapter.blocks.map((block, index) => (
-            <BlockView
-              key={`${chapter.id}-${index}`}
-              block={block}
-              blockKey={`${chapter.id}-${index}`}
-              quizAnswers={quizAnswers}
-              scenarioPicks={scenarioPicks}
-              checkedItems={checkedItems}
-              onQuizAnswer={(id, choiceIndex) =>
-                setQuizAnswers((prev) => ({ ...prev, [id]: choiceIndex }))
-              }
-              onScenarioPick={(key, choiceIndex) =>
-                setScenarioPicks((prev) => ({ ...prev, [key]: choiceIndex }))
-              }
-              onToggleCheck={(key) =>
-                setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }))
-              }
-            />
-          ))}
-        </div>
-      </article>
+          <div className="ho-lesson__blocks">
+            {chapter.blocks.map((block, index) => (
+              <BlockView
+                key={`${chapter.id}-${index}`}
+                block={block}
+                blockKey={`${chapter.id}-${index}`}
+                quizAnswers={quizAnswers}
+                scenarioPicks={scenarioPicks}
+                checkedItems={checkedItems}
+                minigames={minigames}
+                onQuizAnswer={(id, choiceIndex) =>
+                  setQuizAnswers((prev) => ({ ...prev, [id]: choiceIndex }))
+                }
+                onScenarioPick={(key, choiceIndex) =>
+                  setScenarioPicks((prev) => ({ ...prev, [key]: choiceIndex }))
+                }
+                onToggleCheck={(key) =>
+                  setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }))
+                }
+                onMinigameComplete={(id) =>
+                  setMinigames((prev) => ({ ...prev, [id]: true }))
+                }
+              />
+            ))}
+          </div>
+        </motion.article>
+      </AnimatePresence>
 
       <div className="ho-lesson__nav">
         <button
@@ -116,16 +136,17 @@ export function InteractiveLessonPlayer({
         </button>
 
         {!isLast ? (
-          <button
+          <motion.button
             type="button"
             className="btn btn--primary handoff-btn"
             disabled={!chapterReady}
+            whileTap={chapterReady ? { scale: 0.98 } : undefined}
             onClick={() =>
               setChapterIndex((i) => Math.min(lesson.chapters.length - 1, i + 1))
             }
           >
-            {chapterReady ? "Next chapter" : "Complete checks to continue"}
-          </button>
+            {chapterReady ? "Next leg →" : "Finish checks & games first"}
+          </motion.button>
         ) : (
           <div className="ho-lesson__finish">
             {!completed ? (
@@ -155,7 +176,7 @@ export function InteractiveLessonPlayer({
       {error ? <p className="form-error">{error}</p> : null}
       {!chapterReady ? (
         <p className="ho-lesson__hint">
-          Answer the knowledge checks in this chapter before moving on.
+          Clear the knowledge checks and mini games in this chapter to keep the baton moving.
         </p>
       ) : null}
     </div>
@@ -166,6 +187,7 @@ function isChapterReady(
   chapter: InteractiveChapter,
   quizAnswers: Record<string, number>,
   scenarioPicks: Record<string, number>,
+  minigames: Record<string, boolean>,
 ) {
   for (const [index, block] of chapter.blocks.entries()) {
     if (block.type === "quiz") {
@@ -177,6 +199,9 @@ function isChapterReady(
       if (pick === undefined) return false;
       if (!block.choices[pick]?.correct) return false;
     }
+    if (block.type === "minigame") {
+      if (!minigames[block.id]) return false;
+    }
   }
   return true;
 }
@@ -187,18 +212,22 @@ function BlockView({
   quizAnswers,
   scenarioPicks,
   checkedItems,
+  minigames,
   onQuizAnswer,
   onScenarioPick,
   onToggleCheck,
+  onMinigameComplete,
 }: {
   block: InteractiveBlock;
   blockKey: string;
   quizAnswers: Record<string, number>;
   scenarioPicks: Record<string, number>;
   checkedItems: Record<string, boolean>;
+  minigames: Record<string, boolean>;
   onQuizAnswer: (id: string, choiceIndex: number) => void;
   onScenarioPick: (key: string, choiceIndex: number) => void;
   onToggleCheck: (key: string) => void;
+  onMinigameComplete: (id: string) => void;
 }) {
   if (block.type === "text") {
     return <ModuleBody body={block.markdown} />;
@@ -206,7 +235,12 @@ function BlockView({
 
   if (block.type === "video") {
     return (
-      <figure className="ho-video">
+      <motion.figure
+        className="ho-video"
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+      >
         <div className="ho-video__frame">
           <iframe
             src={`https://www.youtube.com/embed/${block.youtubeId}`}
@@ -225,22 +259,23 @@ function BlockView({
             </a>
           ) : null}
         </figcaption>
-      </figure>
+      </motion.figure>
     );
   }
 
   if (block.type === "resource") {
     return (
-      <a
+      <motion.a
         className="ho-resource"
         href={block.url}
         target="_blank"
         rel="noreferrer"
+        whileHover={{ y: -2 }}
       >
         <span className="ho-resource__label">Resource</span>
         <strong>{block.title}</strong>
         {block.description ? <span>{block.description}</span> : null}
-      </a>
+      </motion.a>
     );
   }
 
@@ -289,9 +324,10 @@ function BlockView({
             const selected = pick === index;
             const revealed = pick !== undefined;
             return (
-              <button
+              <motion.button
                 key={index}
                 type="button"
+                whileTap={{ scale: 0.985 }}
                 className={[
                   selected ? "is-selected" : "",
                   revealed && choice.correct ? "is-correct" : "",
@@ -302,7 +338,7 @@ function BlockView({
                 onClick={() => onScenarioPick(blockKey, index)}
               >
                 {choice.label}
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -324,9 +360,10 @@ function BlockView({
           {block.choices.map((choice, index) => {
             const selected = answer === index;
             return (
-              <button
+              <motion.button
                 key={index}
                 type="button"
+                whileTap={{ scale: 0.985 }}
                 className={[
                   selected ? "is-selected" : "",
                   answered && index === block.correctIndex ? "is-correct" : "",
@@ -339,7 +376,7 @@ function BlockView({
                 onClick={() => onQuizAnswer(block.id, index)}
               >
                 {choice}
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -347,6 +384,16 @@ function BlockView({
           <p className="ho-scenario__feedback">{block.explanation}</p>
         ) : null}
       </div>
+    );
+  }
+
+  if (block.type === "minigame") {
+    return (
+      <TrainingMinigame
+        block={block}
+        completed={Boolean(minigames[block.id])}
+        onComplete={() => onMinigameComplete(block.id)}
+      />
     );
   }
 
