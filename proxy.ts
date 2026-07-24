@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { hostnameFromHostHeader, isHandoffHostname } from "@/lib/host";
+import {
+  hostnameFromHostHeader,
+  isHandoffHostname,
+  isMenoknowHostname,
+} from "@/lib/host";
 
 const PASSTHROUGH_PREFIXES = [
   "/api",
@@ -18,29 +22,58 @@ function shouldPassthrough(pathname: string) {
   );
 }
 
-export function proxy(request: NextRequest) {
-  const hostname = hostnameFromHostHeader(request.headers.get("host"));
-  const { pathname, search } = request.nextUrl;
-  const handoffHost = isHandoffHostname(hostname);
+function hideInternalPath(
+  pathname: string,
+  product: "handoff" | "menoknow",
+  onProductHost: boolean,
+) {
+  if (onProductHost) return false;
+  return pathname === `/${product}` || pathname.startsWith(`/${product}/`);
+}
 
-  // Keep /handoff/* invisible on the main Spleckt hosts.
-  if (!handoffHost && (pathname === "/handoff" || pathname.startsWith("/handoff/"))) {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  if (!handoffHost || shouldPassthrough(pathname)) {
-    return NextResponse.next();
-  }
-
-  // Already rewritten / internal path
-  if (pathname === "/handoff" || pathname.startsWith("/handoff/")) {
+function rewriteToProduct(
+  request: NextRequest,
+  pathname: string,
+  search: string,
+  product: "handoff" | "menoknow",
+) {
+  if (pathname === `/${product}` || pathname.startsWith(`/${product}/`)) {
     return NextResponse.next();
   }
 
   const url = request.nextUrl.clone();
-  url.pathname = pathname === "/" ? "/handoff" : `/handoff${pathname}`;
+  url.pathname = pathname === "/" ? `/${product}` : `/${product}${pathname}`;
   url.search = search;
   return NextResponse.rewrite(url);
+}
+
+export function proxy(request: NextRequest) {
+  const hostname = hostnameFromHostHeader(request.headers.get("host"));
+  const { pathname, search } = request.nextUrl;
+  const handoffHost = isHandoffHostname(hostname);
+  const menoknowHost = isMenoknowHostname(hostname);
+
+  // Keep product paths invisible on the main Spleckt hosts.
+  if (hideInternalPath(pathname, "handoff", handoffHost)) {
+    return new NextResponse(null, { status: 404 });
+  }
+  if (hideInternalPath(pathname, "menoknow", menoknowHost)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  if (shouldPassthrough(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (handoffHost) {
+    return rewriteToProduct(request, pathname, search, "handoff");
+  }
+
+  if (menoknowHost) {
+    return rewriteToProduct(request, pathname, search, "menoknow");
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

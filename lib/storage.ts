@@ -52,8 +52,10 @@ function desiredCorsRules(): CORSRule[] {
       "https://www.spleckt.com",
       "https://spleckt.com",
       "https://handoff.spleckt.com",
+      "https://menoknow.spleckt.com",
       "http://localhost:3000",
       "http://handoff.localhost:3000",
+      "http://menoknow.localhost:3000",
     ]),
   );
 

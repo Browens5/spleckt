@@ -19,6 +19,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 4. Admin marketing media upload UI + user role management
 5. Self-hosted SuperSplat viewer + editor
 6. **Handoff** training surface on `handoff.spleckt.com` (modules, tests, certifications) — not linked from the main marketing site
+7. **MenoKnow** kids game center on `menoknow.spleckt.com` (letters, numbers, simple activities) — not linked from the main marketing site
 
 ### Roles
 
@@ -43,6 +44,14 @@ npm run db:seed:portalcam   # XGRIDS PortalCam interactive construction module
 
 Point DNS for `handoff.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_HANDOFF_URL`.
 
+## MenoKnow (`menoknow.spleckt.com`)
+
+Kids educational game center for ages ~3–4. Host-based routing sends `menoknow.spleckt.com` (and `menoknow.localhost:3000` in local dev) to the MenoKnow UI. The main Spleckt site does not link to it; `/menoknow` paths return 404 on www/apex.
+
+Theme play zones (Monster Trucks, Construction, Cow Farm) are scaffolded on the main page; letter/number/activity games come next.
+
+Point DNS for `menoknow.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_MENOKNOW_URL`.
+
 ## Setup
 
 ```bash
@@ -58,6 +67,7 @@ npm run dev
 ```
 
 Local Handoff: open `http://handoff.localhost:3000` (same process as `npm run dev`).
+Local MenoKnow: open `http://menoknow.localhost:3000`.
 
 Default admin (change after first login):
 
@@ -70,6 +80,7 @@ Default admin (change after first login):
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | Your public site URL — use `https://www.spleckt.com` (apex redirects to www) |
 | `NEXT_PUBLIC_HANDOFF_URL` | Optional Handoff URL — defaults to `https://handoff.spleckt.com` |
+| `NEXT_PUBLIC_MENOKNOW_URL` | Optional MenoKnow URL — defaults to `https://menoknow.spleckt.com` |
 | `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
 | `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
 | `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
@@ -126,3 +137,13 @@ Without R2, uploads are stored under `.data/uploads` and served from `/api/files
 | `/center/modules/[slug]` | Module content |
 | `/center/modules/[slug]/test` | Certification test |
 | `/center/certifications` | Earned certificates |
+
+### MenoKnow host (`menoknow.spleckt.com`)
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Kids game center landing |
+| `/play` | Play zone hub |
+| `/play/trucks` | Monster Trucks zone (games modules next) |
+| `/play/build` | Construction zone (game modules next) |
+| `/play/farm` | Cow Farm zone (game modules next) |

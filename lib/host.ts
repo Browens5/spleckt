@@ -1,22 +1,34 @@
-/** Host helpers for the Handoff training surface (handoff.spleckt.com). */
+/** Host helpers for Spleckt product surfaces (handoff, menoknow). */
 
 export function hostnameFromHostHeader(hostHeader: string | null | undefined) {
   if (!hostHeader) return "";
   return hostHeader.split(":")[0]?.toLowerCase() ?? "";
 }
 
-export function isHandoffHostname(hostname: string) {
+function matchesProductHostname(hostname: string, product: string) {
   const host = hostname.toLowerCase();
   return (
-    host === "handoff.spleckt.com" ||
-    host === "handoff.localhost" ||
-    host.startsWith("handoff.localhost.") ||
-    host === "handoff.127.0.0.1"
+    host === `${product}.spleckt.com` ||
+    host === `${product}.localhost` ||
+    host.startsWith(`${product}.localhost.`) ||
+    host === `${product}.127.0.0.1`
   );
 }
 
-export function getHandoffUrl() {
-  const explicit = process.env.NEXT_PUBLIC_HANDOFF_URL?.trim();
+export function isHandoffHostname(hostname: string) {
+  return matchesProductHostname(hostname, "handoff");
+}
+
+export function isMenoknowHostname(hostname: string) {
+  return matchesProductHostname(hostname, "menoknow");
+}
+
+function deriveProductUrl(
+  product: "handoff" | "menoknow",
+  explicitEnv: string | undefined,
+  fallbackPortLocal: string,
+) {
+  const explicit = explicitEnv?.trim();
   if (explicit) return explicit.replace(/\/$/, "");
 
   try {
@@ -24,15 +36,31 @@ export function getHandoffUrl() {
     if (appUrl) {
       const url = new URL(appUrl);
       if (/(?:^|\.)spleckt\.com$/i.test(url.hostname)) {
-        return `${url.protocol}//handoff.spleckt.com`;
+        return `${url.protocol}//${product}.spleckt.com`;
       }
       if (url.hostname === "localhost" || url.hostname.endsWith(".localhost")) {
-        return `${url.protocol}//handoff.localhost${url.port ? `:${url.port}` : ""}`;
+        return `${url.protocol}//${product}.localhost${url.port ? `:${url.port}` : ""}`;
       }
     }
   } catch {
     // ignore
   }
 
-  return "http://handoff.localhost:3000";
+  return fallbackPortLocal;
+}
+
+export function getHandoffUrl() {
+  return deriveProductUrl(
+    "handoff",
+    process.env.NEXT_PUBLIC_HANDOFF_URL,
+    "http://handoff.localhost:3000",
+  );
+}
+
+export function getMenoknowUrl() {
+  return deriveProductUrl(
+    "menoknow",
+    process.env.NEXT_PUBLIC_MENOKNOW_URL,
+    "http://menoknow.localhost:3000",
+  );
 }

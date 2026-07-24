@@ -2308,3 +2308,821 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+/* —— MenoKnow kids game center (menoknow.spleckt.com) ——
+   Sunny play-yard: trucks, diggers, and farm days for ages 3–4. */
+.menoknow {
+  --mk-sky: #7ec8ea;
+  --mk-sky-deep: #4aa3d4;
+  --mk-sand: #f0d39a;
+  --mk-dirt: #c98a3c;
+  --mk-grass: #6fb86a;
+  --mk-grass-deep: #4d9450;
+  --mk-ink: #243044;
+  --mk-muted: #5a6a7d;
+  --mk-line: rgba(36, 48, 68, 0.12);
+  --mk-surface: rgba(255, 252, 245, 0.88);
+  --mk-accent: #e07020;
+  --mk-accent-deep: #c45512;
+  --mk-truck: #e8b423;
+  --mk-farm: #8ecf8a;
+  --mk-build: #f4a261;
+  --mk-display: var(--menoknow-display), "Trebuchet MS", sans-serif;
+  --mk-sans: var(--menoknow-sans), "Segoe UI", sans-serif;
+  color: var(--mk-ink);
+  font-family: var(--mk-sans);
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(126, 200, 234, 0.55), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 8% 20%, rgba(232, 180, 35, 0.18), transparent 55%),
+    linear-gradient(180deg, #dff1fb 0%, #f7efd8 48%, #e8f3df 100%);
+}
+
+.mk-shell,
+.mk-play {
+  min-height: 100vh;
+}
+
+.mk-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mk-brand__mark {
+  position: relative;
+  width: 2.1rem;
+  height: 1.35rem;
+}
+
+.mk-brand__cabin {
+  position: absolute;
+  left: 0.15rem;
+  top: 0.15rem;
+  width: 1.7rem;
+  height: 0.72rem;
+  border-radius: 0.28rem 0.45rem 0.2rem 0.2rem;
+  background: linear-gradient(120deg, var(--mk-truck), #f5d56a 55%, var(--mk-accent));
+}
+
+.mk-brand__wheel {
+  position: absolute;
+  bottom: 0;
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 50%;
+  background: var(--mk-ink);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.mk-brand__wheel--left {
+  left: 0.28rem;
+}
+
+.mk-brand__wheel--right {
+  right: 0.22rem;
+}
+
+.mk-brand__name {
+  font-family: var(--mk-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-size: 1.45rem;
+}
+
+.mk-brand--compact .mk-brand__name {
+  font-size: 1.2rem;
+}
+
+.mk-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 30;
+  backdrop-filter: blur(10px);
+  background: rgba(223, 241, 251, 0.72);
+  border-bottom: 1px solid transparent;
+}
+
+.mk-header__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mk-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.mk-nav a:hover {
+  color: var(--mk-accent-deep);
+}
+
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 1rem;
+  border: 2px solid transparent;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.mk-btn:hover {
+  transform: translateY(-1px);
+}
+
+.mk-btn--primary {
+  background: var(--mk-accent);
+  color: #fffaf3;
+  box-shadow: 0 8px 0 var(--mk-accent-deep);
+}
+
+.mk-btn--primary:hover {
+  background: #ea7d2e;
+}
+
+.mk-btn--primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 4px 0 var(--mk-accent-deep);
+}
+
+.mk-btn--ghost {
+  background: rgba(255, 252, 245, 0.7);
+  border-color: rgba(36, 48, 68, 0.14);
+  color: var(--mk-ink);
+}
+
+.mk-btn--lg {
+  min-height: 3.35rem;
+  padding: 0.7rem 1.45rem;
+  font-size: 1.12rem;
+  border-radius: 1.15rem;
+}
+
+.mk-hero {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+  padding: 6.5rem 1.25rem 3.5rem;
+}
+
+.mk-hero__sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.55) 0 7%, transparent 8%),
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.4) 0 5%, transparent 6%),
+    linear-gradient(180deg, var(--mk-sky-deep) 0%, var(--mk-sky) 38%, #b8dff2 58%, transparent 72%);
+  pointer-events: none;
+}
+
+.mk-hero__yard {
+  position: absolute;
+  inset: auto 0 0;
+  height: min(52vh, 420px);
+  pointer-events: none;
+}
+
+.mk-hero__hills {
+  position: absolute;
+  inset: 18% 0 28%;
+  background:
+    radial-gradient(ellipse 42% 100% at 12% 100%, var(--mk-grass) 0 70%, transparent 71%),
+    radial-gradient(ellipse 48% 110% at 55% 110%, var(--mk-grass-deep) 0 68%, transparent 69%),
+    radial-gradient(ellipse 40% 100% at 90% 100%, #81c47c 0 72%, transparent 73%);
+}
+
+.mk-hero__road {
+  position: absolute;
+  inset: auto 0 0;
+  height: 34%;
+  background: linear-gradient(180deg, #d9ac62 0%, var(--mk-dirt) 45%, #a86f2f 100%);
+  clip-path: polygon(0 28%, 100% 8%, 100% 100%, 0 100%);
+}
+
+.mk-hero__road::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 42%;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.55) 0 2.2rem,
+    transparent 2.2rem 3.4rem
+  );
+}
+
+.mk-hero__truck {
+  position: absolute;
+  left: 10%;
+  bottom: 18%;
+  width: 9.5rem;
+  height: 5.2rem;
+  animation: mk-bounce 2.8s ease-in-out infinite;
+}
+
+.mk-hero__truck-body {
+  position: absolute;
+  left: 0;
+  bottom: 1.1rem;
+  width: 6.2rem;
+  height: 2.4rem;
+  border-radius: 0.55rem 0.35rem 0.35rem 0.55rem;
+  background: linear-gradient(160deg, var(--mk-truck), #f3c84a);
+}
+
+.mk-hero__truck-cab {
+  position: absolute;
+  left: 5.5rem;
+  bottom: 1.1rem;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 0.45rem 0.9rem 0.35rem 0.35rem;
+  background: linear-gradient(150deg, var(--mk-accent), #f08a3a);
+}
+
+.mk-hero__truck-cab::after {
+  content: "";
+  position: absolute;
+  inset: 0.55rem 0.45rem auto 0.7rem;
+  height: 1.1rem;
+  border-radius: 0.3rem;
+  background: rgba(180, 230, 255, 0.85);
+}
+
+.mk-hero__truck-wheel {
+  position: absolute;
+  bottom: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: #2a3344;
+  box-shadow: inset 0 0 0 0.28rem #6d778a;
+}
+
+.mk-hero__truck-wheel--front {
+  left: 1.1rem;
+}
+
+.mk-hero__truck-wheel--rear {
+  left: 4.2rem;
+}
+
+.mk-hero__truck-block {
+  position: absolute;
+  left: 1.5rem;
+  bottom: 3.5rem;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.45rem;
+  background: #fff7e8;
+  color: var(--mk-accent-deep);
+  font-family: var(--mk-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 0 rgba(36, 48, 68, 0.12);
+  animation: mk-float 3.2s ease-in-out infinite;
+}
+
+.mk-hero__cow {
+  position: absolute;
+  right: 14%;
+  bottom: 22%;
+  width: 5.2rem;
+  height: 3.6rem;
+  animation: mk-sway 3.6s ease-in-out infinite;
+}
+
+.mk-hero__cow-body {
+  position: absolute;
+  left: 0.3rem;
+  bottom: 0.55rem;
+  width: 3.6rem;
+  height: 2.1rem;
+  border-radius: 1.4rem;
+  background: #f7f3ea;
+}
+
+.mk-hero__cow-spot {
+  position: absolute;
+  left: 1.1rem;
+  bottom: 1.2rem;
+  width: 1.15rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: #3d3a36;
+  opacity: 0.85;
+}
+
+.mk-hero__cow-head {
+  position: absolute;
+  right: 0;
+  bottom: 1.15rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background: #f7f3ea;
+  box-shadow: inset -0.35rem -0.15rem 0 #3d3a36;
+}
+
+.mk-hero__cow-head::before,
+.mk-hero__cow-head::after {
+  content: "";
+  position: absolute;
+  top: -0.35rem;
+  width: 0.35rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #d9c8a5;
+}
+
+.mk-hero__cow-head::before {
+  left: 0.3rem;
+  transform: rotate(-18deg);
+}
+
+.mk-hero__cow-head::after {
+  right: 0.3rem;
+  transform: rotate(18deg);
+}
+
+.mk-hero__crane {
+  position: absolute;
+  left: 48%;
+  bottom: 30%;
+  width: 5rem;
+  height: 7rem;
+}
+
+.mk-hero__crane-arm {
+  position: absolute;
+  left: 0.8rem;
+  top: 0.4rem;
+  width: 3.8rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: var(--mk-build);
+  transform: rotate(-18deg);
+  transform-origin: left center;
+}
+
+.mk-hero__crane-arm::before {
+  content: "";
+  position: absolute;
+  left: -0.35rem;
+  top: -1.6rem;
+  width: 0.42rem;
+  height: 3.2rem;
+  border-radius: 999px;
+  background: #d9894a;
+}
+
+.mk-hero__crane-hook {
+  position: absolute;
+  left: 3.9rem;
+  top: 0.1rem;
+  width: 0.16rem;
+  height: 2.4rem;
+  background: rgba(36, 48, 68, 0.45);
+}
+
+.mk-hero__crane-block {
+  position: absolute;
+  left: 3.1rem;
+  top: 2.4rem;
+  width: 1.85rem;
+  height: 1.85rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.4rem;
+  background: #fff7e8;
+  color: var(--mk-grass-deep);
+  font-family: var(--mk-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  box-shadow: 0 4px 0 rgba(36, 48, 68, 0.12);
+  animation: mk-float 2.7s ease-in-out infinite reverse;
+}
+
+.mk-hero__content {
+  position: relative;
+  z-index: 2;
+  max-width: 34rem;
+  margin: 0 auto 0 4vw;
+}
+
+.mk-brand-hero {
+  margin: 0 0 0.35rem;
+  font-family: var(--mk-display);
+  font-size: clamp(2.8rem, 8vw, 4.6rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: #fffaf2;
+  text-shadow: 0 4px 0 rgba(36, 48, 68, 0.18);
+}
+
+.mk-hero h1 {
+  margin: 0;
+  max-width: 12ch;
+  font-family: var(--mk-display);
+  font-size: clamp(1.85rem, 4.6vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  color: #1f2a3a;
+}
+
+.mk-hero__lede {
+  margin: 0.9rem 0 0;
+  max-width: 32ch;
+  font-size: 1.12rem;
+  line-height: 1.45;
+  font-weight: 700;
+  color: rgba(31, 42, 58, 0.86);
+}
+
+.mk-hero__actions {
+  margin-top: 1.35rem;
+}
+
+.mk-section {
+  position: relative;
+  padding: 3.5rem 1.25rem 2.5rem;
+}
+
+.mk-section__intro {
+  max-width: 1100px;
+  margin: 0 auto 1.6rem;
+}
+
+.mk-section__intro h2 {
+  margin: 0;
+  font-family: var(--mk-display);
+  font-size: clamp(1.7rem, 3.5vw, 2.3rem);
+  letter-spacing: -0.03em;
+}
+
+.mk-section__intro p {
+  margin: 0.45rem 0 0;
+  max-width: 38ch;
+  color: var(--mk-muted);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.mk-zones {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.mk-zone {
+  display: grid;
+  grid-template-rows: 8.5rem auto;
+  min-height: 15rem;
+  border-radius: 1.35rem;
+  overflow: hidden;
+  border: 3px solid rgba(36, 48, 68, 0.1);
+  background: var(--mk-surface);
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.mk-zone:hover,
+.mk-zone:focus-visible {
+  transform: translateY(-4px);
+  border-color: rgba(224, 112, 32, 0.45);
+  outline: none;
+}
+
+.mk-zone__art {
+  display: block;
+  position: relative;
+  background: linear-gradient(160deg, #9fd4ef, #7ec8ea);
+}
+
+.mk-zone--trucks .mk-zone__art {
+  background:
+    radial-gradient(circle at 70% 70%, rgba(232, 180, 35, 0.55), transparent 40%),
+    linear-gradient(160deg, #f6d56a, #e07020);
+}
+
+.mk-zone--trucks .mk-zone__art::before {
+  content: "";
+  position: absolute;
+  left: 18%;
+  bottom: 18%;
+  width: 58%;
+  height: 38%;
+  border-radius: 0.5rem;
+  background: #2a3344;
+  box-shadow:
+    0.9rem -0.85rem 0 0 #f0c14b,
+    1.7rem -0.85rem 0 0 #e07020;
+}
+
+.mk-zone--build .mk-zone__art {
+  background:
+    radial-gradient(circle at 30% 80%, rgba(201, 138, 60, 0.4), transparent 42%),
+    linear-gradient(160deg, #f7c48a, #d9894a);
+}
+
+.mk-zone--build .mk-zone__art::before {
+  content: "";
+  position: absolute;
+  left: 42%;
+  bottom: 16%;
+  width: 0.45rem;
+  height: 62%;
+  border-radius: 999px;
+  background: #c45512;
+  box-shadow: 0.7rem -1.4rem 0 -0.05rem #f4a261;
+}
+
+.mk-zone--build .mk-zone__art::after {
+  content: "";
+  position: absolute;
+  left: 28%;
+  bottom: 16%;
+  width: 2.2rem;
+  height: 1.5rem;
+  border-radius: 0.3rem;
+  background: #fff4e4;
+}
+
+.mk-zone--farm .mk-zone__art {
+  background:
+    radial-gradient(circle at 65% 35%, rgba(255, 255, 255, 0.35), transparent 28%),
+    linear-gradient(160deg, #9ed89a, #5fa85c);
+}
+
+.mk-zone--farm .mk-zone__art::before {
+  content: "";
+  position: absolute;
+  left: 28%;
+  bottom: 22%;
+  width: 42%;
+  height: 38%;
+  border-radius: 1.4rem;
+  background: #f7f3ea;
+  box-shadow: 1.55rem 0.15rem 0 #3d3a36;
+}
+
+.mk-zone__copy {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.05rem 1.15rem;
+}
+
+.mk-zone__title {
+  font-family: var(--mk-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.mk-zone__blurb {
+  color: var(--mk-muted);
+  font-weight: 700;
+  line-height: 1.35;
+  font-size: 0.98rem;
+}
+
+.mk-zone__cta {
+  margin-top: 0.35rem;
+  font-weight: 800;
+  color: var(--mk-accent-deep);
+  font-size: 0.92rem;
+}
+
+.mk-section--skills {
+  padding-top: 1rem;
+  padding-bottom: 3.5rem;
+}
+
+.mk-skills {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.mk-skill {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1.05rem 1.15rem;
+  border-radius: 1.1rem;
+  background: rgba(255, 252, 245, 0.7);
+  border: 2px solid rgba(36, 48, 68, 0.08);
+}
+
+.mk-skill strong {
+  font-family: var(--mk-display);
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.mk-skill span {
+  color: var(--mk-muted);
+  font-weight: 700;
+}
+
+.mk-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.4rem 1.25rem 2.2rem;
+  color: var(--mk-muted);
+  font-weight: 700;
+}
+
+.mk-footer .mk-brand__name {
+  color: var(--mk-ink);
+}
+
+.mk-play__main,
+.mk-coming {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 6.5rem 1.25rem 3rem;
+}
+
+.mk-play__main h1,
+.mk-coming h1 {
+  margin: 0;
+  font-family: var(--mk-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  letter-spacing: -0.03em;
+}
+
+.mk-play__main > p,
+.mk-coming__lede,
+.mk-coming__status {
+  margin: 0.55rem 0 0;
+  max-width: 40ch;
+  color: var(--mk-muted);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.mk-play__main .mk-zones {
+  margin-top: 1.6rem;
+}
+
+.mk-coming__eyebrow {
+  margin: 0 0 0.35rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: var(--mk-accent-deep);
+}
+
+.mk-coming__status {
+  margin-top: 1.1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 252, 245, 0.8);
+  border: 2px dashed rgba(36, 48, 68, 0.14);
+  color: var(--mk-ink);
+}
+
+.mk-coming__actions {
+  margin-top: 1.4rem;
+}
+
+.mk-coming--trucks {
+  background:
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(232, 180, 35, 0.22), transparent 60%);
+}
+
+.mk-coming--build {
+  background:
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(244, 162, 97, 0.25), transparent 60%);
+}
+
+.mk-coming--farm {
+  background:
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(111, 184, 106, 0.25), transparent 60%);
+}
+
+@keyframes mk-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes mk-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes mk-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .mk-zones,
+  .mk-skills {
+    grid-template-columns: 1fr;
+  }
+
+  .mk-hero {
+    align-items: center;
+    padding-bottom: 42vh;
+  }
+
+  .mk-hero__content {
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .mk-hero__lede {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .mk-hero__actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  .mk-brand-hero {
+    text-shadow: 0 3px 0 rgba(36, 48, 68, 0.16);
+  }
+
+  .mk-hero__truck {
+    left: 6%;
+    width: 7.2rem;
+    height: 4.2rem;
+  }
+
+  .mk-hero__cow {
+    right: 6%;
+  }
+
+  .mk-hero__crane {
+    left: 42%;
+    bottom: 34%;
+    transform: scale(0.85);
+  }
+}
+
+@media (max-width: 560px) {
+  .mk-nav a:not(.mk-btn) {
+    display: none;
+  }
+
+  .mk-hero__crane {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-hero__truck,
+  .mk-hero__truck-block,
+  .mk-hero__crane-block,
+  .mk-hero__cow {
+    animation: none;
+  }
+}
