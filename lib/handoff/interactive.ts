@@ -1,5 +1,52 @@
 export type InteractiveCalloutTone = "tip" | "warn" | "fun";
 
+export type OrderMinigame = {
+  type: "minigame";
+  kind: "order";
+  id: string;
+  title: string;
+  prompt: string;
+  items: string[];
+  correctOrder: number[];
+  success: string;
+};
+
+export type MatchMinigame = {
+  type: "minigame";
+  kind: "match";
+  id: string;
+  title: string;
+  prompt: string;
+  pairs: Array<{ term: string; definition: string }>;
+  success: string;
+};
+
+export type BatonMinigame = {
+  type: "minigame";
+  kind: "baton";
+  id: string;
+  title: string;
+  prompt: string;
+  success: string;
+};
+
+export type RapidMinigame = {
+  type: "minigame";
+  kind: "rapid";
+  id: string;
+  title: string;
+  prompt: string;
+  rounds: Array<{ statement: string; correct: boolean; explanation: string }>;
+  passScore: number;
+  success: string;
+};
+
+export type MinigameBlock =
+  | OrderMinigame
+  | MatchMinigame
+  | BatonMinigame
+  | RapidMinigame;
+
 export type InteractiveBlock =
   | { type: "text"; markdown: string }
   | {
@@ -40,7 +87,8 @@ export type InteractiveBlock =
       choices: string[];
       correctIndex: number;
       explanation: string;
-    };
+    }
+  | MinigameBlock;
 
 export type InteractiveChapter = {
   id: string;

@@ -66,6 +66,28 @@ export const portalCamLesson: InteractiveLesson = {
           explanation:
             "PortalCam data is reconstructed in LCC Studio as 3D Gaussian Splats for immersive walkthroughs, coordination, and sharing — not as traditional measured point-cloud survey deliverables.",
         },
+        {
+          type: "minigame",
+          kind: "match",
+          id: "game-meet-match",
+          title: "Match the toolkit",
+          prompt: "Pair each piece with what it does — clean matches keep the relay alive.",
+          pairs: [
+            {
+              term: "PortalCam",
+              definition: "Handheld spatial camera for site capture",
+            },
+            {
+              term: "LCC Scan",
+              definition: "Mobile app that runs the field mission",
+            },
+            {
+              term: "LCC Studio",
+              definition: "Desktop HQ for reconstruction and sharing",
+            },
+          ],
+          success: "Perfect exchange — you know who carries which leg!",
+        },
       ],
     },
     {
@@ -129,6 +151,41 @@ export const portalCamLesson: InteractiveLesson = {
           description:
             "Official PortalCam tutorial library for field capture and construction workflows.",
         },
+        {
+          type: "minigame",
+          kind: "rapid",
+          id: "game-construction-rapid",
+          title: "Jobsite speed round",
+          prompt: "True or false — answer fast, like a baton coming into the zone.",
+          passScore: 3,
+          rounds: [
+            {
+              statement:
+                "PortalCam walkthroughs can help remote PMs understand site conditions without another trip.",
+              correct: true,
+              explanation: "That’s a core construction win — shared spatial context.",
+            },
+            {
+              statement:
+                "A verbal huddle alone is better documentation than a scanned pour area.",
+              correct: false,
+              explanation: "Spatial capture beats he-said-she-said when embeds go missing.",
+            },
+            {
+              statement:
+                "Naming projects like Building-Level-Zone-Date helps the office handoff.",
+              correct: true,
+              explanation: "Clean names = clean passes into LCC Studio and weekly reports.",
+            },
+            {
+              statement:
+                "PortalCam replaces structural calculations on the job.",
+              correct: false,
+              explanation: "It’s for visualization and coordination context — not engineering calcs.",
+            },
+          ],
+          success: "Speed and accuracy — you’re ready for the next corridor.",
+        },
       ],
     },
     {
@@ -185,6 +242,21 @@ export const portalCamLesson: InteractiveLesson = {
           correctIndex: 1,
           explanation:
             "PortalCam’s field app is LCC Scan. LixelGO is for other XGRIDS devices in a different pipeline.",
+        },
+        {
+          type: "minigame",
+          kind: "order",
+          id: "game-field-order",
+          title: "Field start sequence",
+          prompt: "Tap the steps in the right order before you leave the trailer.",
+          items: [
+            "Charge batteries & open LCC Scan",
+            "Power on PortalCam / pair device",
+            "Initialize still on tripod",
+            "Walk steady loops & save cleanly",
+          ],
+          correctOrder: [0, 1, 2, 3],
+          success: "Sequence locked — no dropped starts on site.",
         },
       ],
     },
@@ -310,6 +382,21 @@ export const portalCamLesson: InteractiveLesson = {
           explanation:
             "LCC Studio expects an NVIDIA GPU on Windows. Confirm workstation specs before promising same-day turnaround.",
         },
+        {
+          type: "minigame",
+          kind: "order",
+          id: "game-studio-order",
+          title: "Office relay order",
+          prompt: "Put the deliverable pipeline in race order.",
+          items: [
+            "Capture in LCC Scan",
+            "Reconstruct in LCC Studio",
+            "Annotate / measure",
+            "Share the walkthrough",
+          ],
+          correctOrder: [0, 1, 2, 3],
+          success: "That’s a championship office handoff.",
+        },
       ],
     },
     {
@@ -365,6 +452,28 @@ export const portalCamLesson: InteractiveLesson = {
           tone: "fun",
           title: "Superintendent slang translation",
           body: "“Map Fusion points” = digital control points that tell LCC Studio “these two walks are the same building, please shake hands.”",
+        },
+        {
+          type: "minigame",
+          kind: "match",
+          id: "game-fusion-match",
+          title: "Fusion vocab sprint",
+          prompt: "Match the Map Fusion ideas before the next floor starts.",
+          pairs: [
+            {
+              term: "Overlap zone",
+              definition: "Shared geometry between adjacent segments",
+            },
+            {
+              term: "Control / fusion points",
+              definition: "Named anchors that stitch segments together",
+            },
+            {
+              term: "Map Fusion job",
+              definition: "LCC Studio mode that combines multiple walks",
+            },
+          ],
+          success: "Seams look good — multi-day sites won’t scare you.",
         },
       ],
     },
@@ -451,6 +560,15 @@ export const portalCamLesson: InteractiveLesson = {
           tone: "fun",
           title: "Hard-hat energy",
           body: "If you can explain PortalCam to a busy superintendent in one sentence — “We walk it once, everyone else can walk it forever” — you’re ready for the test.",
+        },
+        {
+          type: "minigame",
+          kind: "baton",
+          id: "game-debrief-baton",
+          title: "Final baton catch",
+          prompt:
+            "Start the pass, then tap Catch when the baton hits the exchange zone — just like a clean knowledge handoff.",
+          success: "Clean pass! Take the certification test and finish the race.",
         },
         {
           type: "quiz",

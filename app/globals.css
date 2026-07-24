@@ -1679,3 +1679,234 @@ textarea {
   color: var(--ho-warm);
   font-size: 0.92rem;
 }
+
+.ho-game {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 0 0.25rem;
+  border-top: 1px solid var(--ho-line);
+}
+
+.ho-game__header h3 {
+  font-family: var(--ho-display);
+  margin: 0.25rem 0 0.35rem;
+  font-size: 1.2rem;
+}
+
+.ho-game__header p {
+  margin: 0;
+  color: var(--ho-muted);
+  line-height: 1.5;
+}
+
+.ho-game__badge {
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ho-accent-deep);
+}
+
+.ho-game__board {
+  position: relative;
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--ho-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.55)),
+    repeating-linear-gradient(
+      108deg,
+      transparent 0 28px,
+      rgba(20, 24, 36, 0.03) 28px 29px
+    );
+  overflow: hidden;
+}
+
+.ho-game__board.is-won {
+  border-color: rgba(224, 53, 45, 0.35);
+  box-shadow: 0 0 0 1px rgba(212, 160, 23, 0.2);
+}
+
+.ho-game__lane {
+  min-height: 3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  padding: 0.55rem;
+  border: 1px dashed var(--ho-line);
+  background: rgba(20, 24, 36, 0.02);
+}
+
+.ho-game__placeholder {
+  color: var(--ho-muted);
+  font-size: 0.92rem;
+}
+
+.ho-game__chip,
+.ho-game__choices button,
+.ho-match button {
+  border: 1px solid var(--ho-line);
+  background: #fff;
+  color: var(--ho-ink);
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.ho-game__chip.is-locked {
+  background: rgba(224, 53, 45, 0.08);
+  border-color: rgba(224, 53, 45, 0.35);
+}
+
+.ho-game__choices {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ho-game__choices button.is-used,
+.ho-game__choices button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ho-game__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.ho-game__msg {
+  margin: 0;
+  font-weight: 600;
+}
+
+.ho-game__msg.is-won {
+  color: var(--ho-accent-deep);
+}
+
+.ho-game__msg.is-wrong {
+  color: #9a3412;
+}
+
+.ho-match {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.ho-match__col {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ho-match button.is-selected {
+  border-color: rgba(224, 53, 45, 0.5);
+  background: rgba(224, 53, 45, 0.08);
+}
+
+.ho-match button.is-matched {
+  border-color: rgba(30, 140, 90, 0.55);
+  background: rgba(30, 140, 90, 0.12);
+}
+
+.ho-match button.is-wrong {
+  border-color: rgba(180, 83, 9, 0.55);
+  background: rgba(201, 133, 44, 0.14);
+}
+
+.ho-baton-track {
+  position: relative;
+  height: 4.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--ho-line);
+  background:
+    linear-gradient(90deg, rgba(224, 53, 45, 0.08), rgba(212, 160, 23, 0.08)),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 18px,
+      rgba(20, 24, 36, 0.06) 18px 20px
+    );
+  overflow: hidden;
+}
+
+.ho-baton-track__zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 58%;
+  width: 20%;
+  background: rgba(224, 53, 45, 0.18);
+  border-left: 2px solid rgba(224, 53, 45, 0.55);
+  border-right: 2px solid rgba(224, 53, 45, 0.55);
+}
+
+.ho-baton-track__baton {
+  position: absolute;
+  top: 50%;
+  width: 2.4rem;
+  height: 0.55rem;
+  margin-left: -1.2rem;
+  margin-top: -0.28rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ho-warm), #f0c14b 45%, var(--ho-accent));
+  box-shadow: 0 4px 14px rgba(224, 53, 45, 0.25);
+}
+
+.ho-rapid__meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ho-muted);
+  font-size: 0.88rem;
+}
+
+.ho-rapid__statement {
+  margin: 0;
+  font-family: var(--ho-display);
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.ho-burst {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.ho-burst span {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--ho-accent);
+  animation: ho-burst-pop 700ms ease-out forwards;
+  transform: rotate(calc(var(--i) * 36deg)) translateY(0);
+  opacity: 0;
+}
+
+.ho-burst span:nth-child(odd) {
+  background: var(--ho-warm);
+}
+
+@keyframes ho-burst-pop {
+  0% {
+    opacity: 1;
+    transform: rotate(calc(var(--i) * 36deg)) translateY(0) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 36deg)) translateY(-64px) scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .ho-match {
+    grid-template-columns: 1fr;
+  }
+}
