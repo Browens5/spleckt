@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionTemplate, useMotionValue, useTransform } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -15,40 +16,61 @@ export type CertificationMedalData = {
 
 const KIND_THEME: Record<
   string,
-  { label: string; rim: string; face: string; accent: string; glow: string }
+  {
+    label: string;
+    rim: string;
+    accent: string;
+    glow: string;
+    ribbon: [string, string];
+  }
 > = {
   tool: {
     label: "Tool",
     rim: "#b87333",
-    face: "linear-gradient(145deg, #f0c27b 0%, #c68642 45%, #8a4b1f 100%)",
     accent: "#fff1d6",
     glow: "rgba(198, 134, 66, 0.45)",
+    ribbon: ["#8b1e1e", "#d6452e"],
   },
   software: {
     label: "Software",
     rim: "#8a93a3",
-    face: "linear-gradient(145deg, #f7f8fb 0%, #c5ccd8 48%, #7f8898 100%)",
     accent: "#ffffff",
     glow: "rgba(140, 150, 170, 0.45)",
+    ribbon: ["#2f3b52", "#6b7c99"],
   },
   technique: {
     label: "Technique",
     rim: "#c9a227",
-    face: "linear-gradient(145deg, #ffe9a0 0%, #e2b635 42%, #8a6a10 100%)",
     accent: "#fff8d6",
     glow: "rgba(226, 182, 53, 0.5)",
+    ribbon: ["#7a1515", "#e0352d"],
   },
   module: {
     label: "Module",
     rim: "#4f6d8c",
-    face: "linear-gradient(145deg, #d7e7f8 0%, #7ea0c4 48%, #35557a 100%)",
     accent: "#eef6ff",
     glow: "rgba(79, 109, 140, 0.45)",
+    ribbon: ["#1f3b63", "#4f79b0"],
   },
+};
+
+const SLUG_PHOTOS: Record<string, string> = {
+  "xgrids-portalcam-construction": "/handoff/medals/portalcam.png",
+};
+
+const KIND_PHOTOS: Record<string, string> = {
+  tool: "/handoff/medals/portalcam.png",
+  software: "/handoff/medals/software.png",
+  technique: "/handoff/medals/technique.png",
+  module: "/handoff/medals/module.png",
 };
 
 function themeFor(kind: string) {
   return KIND_THEME[kind] ?? KIND_THEME.module;
+}
+
+function photoFor(slug: string, kind: string) {
+  return SLUG_PHOTOS[slug] ?? KIND_PHOTOS[kind] ?? KIND_PHOTOS.module;
 }
 
 function formatIssued(value: Date | string | number) {
@@ -73,6 +95,66 @@ export function CertificationMedalGallery({
   );
 }
 
+function ribbonFill(colors: [string, string]) {
+  const [deep, bright] = colors;
+  return `repeating-linear-gradient(
+    90deg,
+    ${deep} 0 6px,
+    ${bright} 6px 12px,
+    #f4f1e8 12px 16px,
+    ${bright} 16px 22px,
+    ${deep} 22px 28px
+  )`;
+}
+
+function MedalLanyard({ colors }: { colors: [string, string] }) {
+  const fill = ribbonFill(colors);
+  return (
+    <div className="ho-lanyard" aria-hidden>
+      <span className="ho-lanyard__strap ho-lanyard__strap--left" style={{ background: fill }} />
+      <span className="ho-lanyard__strap ho-lanyard__strap--right" style={{ background: fill }} />
+      <span className="ho-lanyard__neck" style={{ background: fill }} />
+      <span className="ho-lanyard__join" />
+      <span className="ho-lanyard__ring" />
+    </div>
+  );
+}
+
+function Medallion({
+  theme,
+  photoSrc,
+  alt,
+  size = "full",
+}: {
+  theme: ReturnType<typeof themeFor>;
+  photoSrc: string;
+  alt: string;
+  size?: "full" | "banner";
+}) {
+  return (
+    <div
+      className={`ho-medal${size === "banner" ? " ho-medal--banner" : ""}`}
+      style={{
+        ["--medal-rim" as string]: theme.rim,
+        ["--medal-accent" as string]: theme.accent,
+        ["--medal-glow" as string]: theme.glow,
+      }}
+    >
+      <div className="ho-medal__bail" aria-hidden />
+      <div className="ho-medal__ring" />
+      <div className="ho-medal__core">
+        <div className="ho-medal__photo">
+          <Image src={photoSrc} alt={alt} fill sizes="160px" className="ho-medal__img" />
+        </div>
+        <div className="ho-medal__caption">
+          <strong>Certified</strong>
+          <em>{theme.label}</em>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CertificationMedalCard({
   cert,
   index = 0,
@@ -84,11 +166,12 @@ export function CertificationMedalCard({
 }) {
   const [flipped, setFlipped] = useState(false);
   const theme = themeFor(cert.moduleKind);
+  const photoSrc = photoFor(cert.moduleSlug, cert.moduleKind);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const rotateX = useTransform(y, [-40, 40], [12, -12]);
-  const rotateY = useTransform(x, [-40, 40], [-14, 14]);
-  const shine = useMotionTemplate`radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.65), transparent 42%)`;
+  const rotateX = useTransform(y, [-40, 40], [10, -10]);
+  const rotateY = useTransform(x, [-40, 40], [-12, 12]);
+  const shine = useMotionTemplate`linear-gradient(${useTransform(x, [-40, 40], [120, 210])}deg, transparent 30%, rgba(255,255,255,0.7) 48%, transparent 62%)`;
 
   function onMove(event: React.MouseEvent<HTMLButtonElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -117,6 +200,7 @@ export function CertificationMedalCard({
         onMouseLeave={onLeave}
         onClick={() => setFlipped((value) => !value)}
       >
+        <MedalLanyard colors={theme.ribbon} />
         <motion.div
           className="ho-medal-tilt"
           style={{
@@ -131,30 +215,18 @@ export function CertificationMedalCard({
             transition={{ type: "spring", stiffness: 120, damping: 14 }}
             style={{ transformStyle: "preserve-3d" }}
           >
-            <div className="ho-medal-face ho-medal-face--front" style={{ ["--medal-glow" as string]: theme.glow }}>
+            <div className="ho-medal-face ho-medal-face--front ho-medal-face--hanging">
               <motion.div className="ho-medal-shine" style={{ background: shine }} />
               <div className="ho-medal-sparks" aria-hidden>
                 {Array.from({ length: 8 }).map((_, spark) => (
                   <span key={spark} style={{ ["--s" as string]: spark }} />
                 ))}
               </div>
-              <div
-                className="ho-medal"
-                style={{
-                  ["--medal-rim" as string]: theme.rim,
-                  ["--medal-face" as string]: theme.face,
-                  ["--medal-accent" as string]: theme.accent,
-                }}
-              >
-                <div className="ho-medal__ring" />
-                <div className="ho-medal__core">
-                  <span className="ho-medal__glyph" aria-hidden>
-                    ★
-                  </span>
-                  <strong>Certified</strong>
-                  <em>{theme.label}</em>
-                </div>
-              </div>
+              <Medallion
+                theme={theme}
+                photoSrc={photoSrc}
+                alt={`${cert.moduleTitle} tool photo`}
+              />
               <p className="ho-medal-hint">Click to inspect</p>
             </div>
 
@@ -196,12 +268,15 @@ export function EarnedMedalBanner({
   code,
   moduleKind = "module",
   moduleTitle,
+  moduleSlug,
 }: {
   code: string;
   moduleKind?: string;
   moduleTitle?: string;
+  moduleSlug?: string;
 }) {
   const theme = themeFor(moduleKind);
+  const photoSrc = photoFor(moduleSlug ?? "", moduleKind);
   return (
     <motion.div
       className="ho-medal-banner"
@@ -209,22 +284,14 @@ export function EarnedMedalBanner({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 160, damping: 14 }}
     >
-      <div
-        className="ho-medal ho-medal--banner"
-        style={{
-          ["--medal-rim" as string]: theme.rim,
-          ["--medal-face" as string]: theme.face,
-          ["--medal-accent" as string]: theme.accent,
-          ["--medal-glow" as string]: theme.glow,
-        }}
-      >
-        <div className="ho-medal__ring" />
-        <div className="ho-medal__core">
-          <span className="ho-medal__glyph" aria-hidden>
-            ★
-          </span>
-          <strong>Certified</strong>
-        </div>
+      <div className="ho-medal-banner__award">
+        <MedalLanyard colors={theme.ribbon} />
+        <Medallion
+          theme={theme}
+          photoSrc={photoSrc}
+          alt={moduleTitle ? `${moduleTitle} medal` : "Certification medal"}
+          size="banner"
+        />
       </div>
       <div>
         <h3>{moduleTitle ? `${moduleTitle} unlocked` : "Certification earned"}</h3>

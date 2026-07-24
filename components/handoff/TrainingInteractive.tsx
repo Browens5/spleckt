@@ -143,6 +143,7 @@ export function CertificationTest({
             code={result.certification.code}
             moduleKind={moduleKind}
             moduleTitle={moduleTitle}
+            moduleSlug={moduleSlug}
           />
         ) : null}
         <div className="handoff-actions">
