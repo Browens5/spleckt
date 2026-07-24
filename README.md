@@ -38,6 +38,7 @@ Separate training product hosted in the same Next.js app. Host-based routing sen
 
 ```bash
 npm run db:seed:handoff
+npm run db:seed:portalcam   # XGRIDS PortalCam interactive construction module
 ```
 
 Point DNS for `handoff.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_HANDOFF_URL`.

@@ -1350,4 +1350,276 @@ textarea {
   .handoff-hero h1 {
     max-width: none;
   }
+
+  .ho-lesson__chapters {
+    grid-template-columns: 1fr;
+  }
+
+  .ho-video__frame {
+    padding-top: 56.25%;
+  }
+}
+
+.handoff-panel--wide {
+  max-width: 920px;
+}
+
+.ho-lesson {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.ho-lesson__progress {
+  height: 4px;
+  background: rgba(20, 32, 28, 0.08);
+  overflow: hidden;
+}
+
+.ho-lesson__progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ho-accent), #2a9d7c);
+  transition: width 220ms ease;
+}
+
+.ho-lesson__chapters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.45rem;
+}
+
+.ho-lesson__chapters button {
+  text-align: left;
+  border: 1px solid var(--ho-line);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ho-muted);
+  padding: 0.55rem 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  cursor: pointer;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ho-lesson__chapters button span {
+  font-family: var(--ho-display);
+  font-weight: 700;
+  color: var(--ho-accent-deep);
+}
+
+.ho-lesson__chapters button.is-active {
+  border-color: rgba(15, 122, 95, 0.45);
+  background: rgba(15, 122, 95, 0.1);
+  color: var(--ho-ink);
+}
+
+.ho-lesson__chapter h2 {
+  font-family: var(--ho-display);
+  letter-spacing: -0.03em;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  margin: 0.2rem 0 1rem;
+}
+
+.ho-lesson__eyebrow {
+  margin: 0;
+  color: var(--ho-accent-deep);
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ho-lesson__blocks {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.ho-video {
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ho-video__frame {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  background: #0f1714;
+  overflow: hidden;
+}
+
+.ho-video__frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.ho-video figcaption {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--ho-muted);
+  font-size: 0.92rem;
+}
+
+.ho-video figcaption a {
+  color: var(--ho-accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  width: fit-content;
+}
+
+.ho-resource {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--ho-line);
+  background: rgba(255, 255, 255, 0.7);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.ho-resource:hover {
+  border-color: rgba(15, 122, 95, 0.45);
+  transform: translateY(-1px);
+}
+
+.ho-resource__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ho-accent-deep);
+  font-weight: 700;
+}
+
+.ho-resource span:last-child {
+  color: var(--ho-muted);
+  font-size: 0.92rem;
+}
+
+.ho-callout {
+  padding: 0.95rem 1rem;
+  border-left: 3px solid var(--ho-accent);
+  background: rgba(15, 122, 95, 0.08);
+}
+
+.ho-callout p {
+  margin: 0.35rem 0 0;
+  color: var(--ho-muted);
+  line-height: 1.55;
+}
+
+.ho-callout--warn {
+  border-left-color: #b45309;
+  background: rgba(201, 133, 44, 0.12);
+}
+
+.ho-callout--fun {
+  border-left-color: var(--ho-warm);
+  background: rgba(201, 133, 44, 0.1);
+}
+
+.ho-checklist {
+  border-top: 1px solid var(--ho-line);
+  padding-top: 0.85rem;
+}
+
+.ho-checklist h3,
+.ho-scenario h3,
+.ho-inline-quiz h3 {
+  font-family: var(--ho-display);
+  margin: 0 0 0.65rem;
+  font-size: 1.15rem;
+}
+
+.ho-checklist ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ho-checklist label {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  color: var(--ho-muted);
+  cursor: pointer;
+}
+
+.ho-scenario,
+.ho-inline-quiz {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--ho-line);
+}
+
+.ho-scenario__situation,
+.ho-inline-quiz > p {
+  margin: 0;
+  color: var(--ho-muted);
+  line-height: 1.55;
+}
+
+.ho-scenario__choices {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ho-scenario__choices button {
+  text-align: left;
+  border: 1px solid var(--ho-line);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ho-ink);
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.ho-scenario__choices button:hover {
+  border-color: rgba(15, 122, 95, 0.4);
+}
+
+.ho-scenario__choices button.is-selected {
+  border-color: rgba(15, 122, 95, 0.55);
+  background: rgba(15, 122, 95, 0.08);
+}
+
+.ho-scenario__choices button.is-correct {
+  border-color: rgba(15, 122, 95, 0.7);
+  background: rgba(15, 122, 95, 0.14);
+}
+
+.ho-scenario__choices button.is-wrong {
+  border-color: rgba(180, 83, 9, 0.55);
+  background: rgba(201, 133, 44, 0.12);
+}
+
+.ho-scenario__feedback {
+  margin: 0;
+  color: var(--ho-ink);
+  line-height: 1.55;
+}
+
+.ho-lesson__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--ho-line);
+}
+
+.ho-lesson__finish {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ho-lesson__hint {
+  margin: 0;
+  color: var(--ho-warm);
+  font-size: 0.92rem;
 }

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ModuleBody, ModuleKindLabel } from "@/components/handoff/ModuleViews";
-import { ModuleActions } from "@/components/handoff/TrainingInteractive";
+import { ModuleKindLabel } from "@/components/handoff/ModuleViews";
+import { ModuleTraining } from "@/components/handoff/ModuleTraining";
 import { ensureSchema } from "@/lib/db/ensure-schema";
+import { parseInteractiveLesson } from "@/lib/handoff/interactive";
 import {
   getCertificationMap,
   getModuleBySlug,
@@ -32,9 +33,10 @@ export default async function HandoffModulePage({
   ]);
   const progress = progressMap.get(mod.id);
   const certified = certMap.has(mod.id);
+  const lesson = parseInteractiveLesson(mod.body);
 
   return (
-    <div className="handoff-panel">
+    <div className={`handoff-panel${lesson ? " handoff-panel--wide" : ""}`}>
       <Link href="/center" className="handoff-back">
         ← All modules
       </Link>
@@ -48,10 +50,10 @@ export default async function HandoffModulePage({
         <p>{mod.summary}</p>
       </header>
 
-      <ModuleBody body={mod.body} />
-
-      <ModuleActions
+      <ModuleTraining
         slug={mod.slug}
+        body={mod.body}
+        lesson={lesson}
         completed={progress?.status === "completed" || certified}
         certified={certified}
       />
