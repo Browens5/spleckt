@@ -71,7 +71,7 @@ export const portalCamLesson: InteractiveLesson = {
           kind: "match",
           id: "game-meet-match",
           title: "Match the toolkit",
-          prompt: "Pair each piece with what it does — clean matches keep the relay alive.",
+          prompt: "Pair each piece with what it does on a construction project.",
           pairs: [
             {
               term: "PortalCam",
@@ -86,7 +86,7 @@ export const portalCamLesson: InteractiveLesson = {
               definition: "Desktop HQ for reconstruction and sharing",
             },
           ],
-          success: "Perfect exchange — you know who carries which leg!",
+          success: "Nice work — you’ve got the toolkit mapped.",
         },
       ],
     },
@@ -156,7 +156,7 @@ export const portalCamLesson: InteractiveLesson = {
           kind: "rapid",
           id: "game-construction-rapid",
           title: "Jobsite speed round",
-          prompt: "True or false — answer fast, like a baton coming into the zone.",
+          prompt: "True or false — pick the right call for a construction crew.",
           passScore: 3,
           rounds: [
             {
@@ -173,9 +173,9 @@ export const portalCamLesson: InteractiveLesson = {
             },
             {
               statement:
-                "Naming projects like Building-Level-Zone-Date helps the office handoff.",
+                "Naming projects like Building-Level-Zone-Date helps the office workflow.",
               correct: true,
-              explanation: "Clean names = clean passes into LCC Studio and weekly reports.",
+              explanation: "Clear names make LCC Studio projects and weekly reports easier to find.",
             },
             {
               statement:
@@ -184,7 +184,7 @@ export const portalCamLesson: InteractiveLesson = {
               explanation: "It’s for visualization and coordination context — not engineering calcs.",
             },
           ],
-          success: "Speed and accuracy — you’re ready for the next corridor.",
+          success: "Solid judgment — ready for the next chapter.",
         },
       ],
     },
@@ -256,7 +256,7 @@ export const portalCamLesson: InteractiveLesson = {
             "Walk steady loops & save cleanly",
           ],
           correctOrder: [0, 1, 2, 3],
-          success: "Sequence locked — no dropped starts on site.",
+          success: "Sequence locked — good field discipline.",
         },
       ],
     },
@@ -386,8 +386,8 @@ export const portalCamLesson: InteractiveLesson = {
           type: "minigame",
           kind: "order",
           id: "game-studio-order",
-          title: "Office relay order",
-          prompt: "Put the deliverable pipeline in race order.",
+          title: "Office deliverable order",
+          prompt: "Put the capture-to-delivery pipeline in the correct order.",
           items: [
             "Capture in LCC Scan",
             "Reconstruct in LCC Studio",
@@ -395,7 +395,7 @@ export const portalCamLesson: InteractiveLesson = {
             "Share the walkthrough",
           ],
           correctOrder: [0, 1, 2, 3],
-          success: "That’s a championship office handoff.",
+          success: "That’s the right office workflow.",
         },
       ],
     },
@@ -457,8 +457,8 @@ export const portalCamLesson: InteractiveLesson = {
           type: "minigame",
           kind: "match",
           id: "game-fusion-match",
-          title: "Fusion vocab sprint",
-          prompt: "Match the Map Fusion ideas before the next floor starts.",
+          title: "Map Fusion vocabulary",
+          prompt: "Match each Map Fusion concept to its meaning.",
           pairs: [
             {
               term: "Overlap zone",
@@ -473,7 +473,7 @@ export const portalCamLesson: InteractiveLesson = {
               definition: "LCC Studio mode that combines multiple walks",
             },
           ],
-          success: "Seams look good — multi-day sites won’t scare you.",
+          success: "Good — multi-day sites will be easier to plan.",
         },
       ],
     },
@@ -564,11 +564,11 @@ export const portalCamLesson: InteractiveLesson = {
         {
           type: "minigame",
           kind: "baton",
-          id: "game-debrief-baton",
-          title: "Final baton catch",
+          id: "game-debrief-timing",
+          title: "Hit the capture window",
           prompt:
-            "Start the pass, then tap Catch when the baton hits the exchange zone — just like a clean knowledge handoff.",
-          success: "Clean pass! Take the certification test and finish the race.",
+            "Start the marker, then tap Capture when it enters the highlighted window — the same timing discipline you need for a clean initialization or detail pass.",
+          success: "Timing looks good. Take the certification test when you’re ready.",
         },
         {
           type: "quiz",

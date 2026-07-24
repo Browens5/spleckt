@@ -145,7 +145,7 @@ export function InteractiveLessonPlayer({
               setChapterIndex((i) => Math.min(lesson.chapters.length - 1, i + 1))
             }
           >
-            {chapterReady ? "Next leg →" : "Finish checks & games first"}
+            {chapterReady ? "Next chapter →" : "Finish checks & games first"}
           </motion.button>
         ) : (
           <div className="ho-lesson__finish">
@@ -156,7 +156,7 @@ export function InteractiveLessonPlayer({
                 disabled={!chapterReady || finishing}
                 onClick={finishModule}
               >
-                {finishing ? "Saving…" : "Complete this leg"}
+                {finishing ? "Saving…" : "Mark module complete"}
               </button>
             ) : null}
             <Link
@@ -176,7 +176,7 @@ export function InteractiveLessonPlayer({
       {error ? <p className="form-error">{error}</p> : null}
       {!chapterReady ? (
         <p className="ho-lesson__hint">
-          Clear the knowledge checks and mini games in this chapter to keep the baton moving.
+          Complete the knowledge checks and mini games in this chapter to continue.
         </p>
       ) : null}
     </div>

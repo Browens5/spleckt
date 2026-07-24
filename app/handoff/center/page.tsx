@@ -21,10 +21,10 @@ export default async function HandoffCenterPage() {
   return (
     <div className="handoff-panel">
       <header className="handoff-panel__header">
-        <h1>Your legs of the relay</h1>
+        <h1>Training modules</h1>
         <p>
-          Train each skill like a baton pass — learn it, prove it, certify it —
-          so the next person can take off without dropping the information.
+          Work through each module, pass its test, and earn a certification for
+          the tool, software, or technique you learned.
         </p>
       </header>
 

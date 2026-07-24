@@ -124,7 +124,7 @@ function OrderGame({
           </button>
         ))}
       </div>
-      {status === "wrong" ? <p className="ho-game__msg is-wrong">Dropped baton — try again!</p> : null}
+      {status === "wrong" ? <p className="ho-game__msg is-wrong">Not quite — try again.</p> : null}
       {status === "won" ? <p className="ho-game__msg is-won">{block.success}</p> : null}
     </div>
   );
@@ -275,7 +275,7 @@ function BatonGame({
       <div className="ho-game__actions">
         {result !== "catch" ? (
           <button type="button" className="btn btn--ghost handoff-btn-ghost" onClick={start}>
-            {running ? "Baton moving…" : "Start pass"}
+            {running ? "Marker moving…" : "Start"}
           </button>
         ) : null}
         <button
@@ -284,11 +284,11 @@ function BatonGame({
           disabled={!running && result !== "catch"}
           onClick={catchBaton}
         >
-          Catch in the exchange zone
+          Capture now
         </button>
       </div>
       {result === "miss" ? (
-        <p className="ho-game__msg is-wrong">Early / late handoff — reset and try again.</p>
+        <p className="ho-game__msg is-wrong">Outside the window — reset and try again.</p>
       ) : null}
       {result === "catch" ? <p className="ho-game__msg is-won">{block.success}</p> : null}
     </div>
@@ -317,7 +317,7 @@ function RapidGame({
     const correct = round.correct === value;
     const nextScore = score + (correct ? 1 : 0);
     setScore(nextScore);
-    setFeedback(correct ? "Clean pass!" : round.explanation);
+    setFeedback(correct ? "Correct." : round.explanation);
     const nextIndex = index + 1;
     if (nextIndex >= block.rounds.length) {
       setDone(true);

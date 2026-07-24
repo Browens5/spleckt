@@ -59,11 +59,8 @@ export default function HandoffSignupPage() {
     <div className="handoff-auth">
       <div className="handoff-auth__card">
         <HandoffBrand compact />
-        <h1>Join the relay</h1>
-        <p>
-          Create your Handoff account and start training for a clean pass to the
-          next teammate.
-        </p>
+        <h1>Create your training account</h1>
+        <p>Join Handoff to study modules and earn certifications.</p>
 
         <form className="form-stack" onSubmit={onSubmit}>
           <label>
@@ -91,7 +88,7 @@ export default function HandoffSignupPage() {
         </form>
 
         <p className="handoff-auth__footer">
-          Already on the team? <Link href="/login">Sign in</Link>
+          Already have an account? <Link href="/login">Sign in</Link>
         </p>
       </div>
     </div>
