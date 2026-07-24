@@ -146,4 +146,5 @@ Without R2, uploads are stored under `.data/uploads` and served from `/api/files
 | `/play` | Play zone hub |
 | `/play/trucks` | Monster Trucks zone (games modules next) |
 | `/play/build` | Construction zone (game modules next) |
-| `/play/farm` | Cow Farm zone (game modules next) |
+| `/play/farm` | Cow Farm zone hub |
+| `/play/farm/count` | Count the cows (numbers 0–100) |

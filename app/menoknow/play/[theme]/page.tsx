@@ -14,11 +14,6 @@ const themes = {
     accent: "build",
     promise: "Number digs, shape stacking, and hard-hat helpers.",
   },
-  farm: {
-    title: "Cow Farm",
-    accent: "farm",
-    promise: "Moo matching, gentle counting, and barn-yard letter finds.",
-  },
 } as const;
 
 type ThemeSlug = keyof typeof themes;

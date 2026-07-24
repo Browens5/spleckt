@@ -12,6 +12,7 @@ const themes = [
     title: "Monster Trucks",
     blurb: "Crash through letters and big loud sounds.",
     accent: "trucks",
+    cta: "Coming soon — peek inside",
   },
   {
     id: "build",
@@ -19,19 +20,24 @@ const themes = [
     title: "Construction",
     blurb: "Stack numbers, dig shapes, build brains.",
     accent: "build",
+    cta: "Coming soon — peek inside",
   },
   {
     id: "farm",
     href: "/play/farm",
     title: "Cow Farm",
-    blurb: "Moo along with counting and matching games.",
+    blurb: "Count cows from zero to one hundred.",
     accent: "farm",
+    cta: "Play count the cows",
   },
 ] as const;
 
 const skills = [
   { label: "Letters", note: "A–Z adventures" },
-  { label: "Numbers", note: "1–10 practice" },
+  {
+    label: "Numbers",
+    note: "0–100 cow counting",
+  },
   { label: "Activities", note: "Simple play skills" },
 ] as const;
 
@@ -152,7 +158,7 @@ export function MenoknowLanding() {
                 <span className="mk-zone__copy">
                   <span className="mk-zone__title">{theme.title}</span>
                   <span className="mk-zone__blurb">{theme.blurb}</span>
-                  <span className="mk-zone__cta">Coming soon — peek inside</span>
+                  <span className="mk-zone__cta">{theme.cta}</span>
                 </span>
               </Link>
             </motion.div>
