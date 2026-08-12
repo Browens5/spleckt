@@ -59,7 +59,8 @@ Browser tool that converts equirectangular 360° MP4 video into cubemap face ima
 
 - Choose input video and output folder via the File System Access API (Chromium); other browsers fall back to downloads
 - Set frames/sec, face size, FOV, faces per frame, top/bottom inclusion, yaw, layout (separate / strip / cross), and image format
-- Processing uses HTML video + WebGL entirely on-device — nothing is uploaded and no extra client dependencies are downloaded
+- Optional photogrammetry masks (people / cars / sky) export as black=exclude, white=keep PNGs beside each face
+- Processing uses HTML video + WebGL entirely on-device — nothing is uploaded; mask export optionally loads a browser segmentation model on first use
 
 Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
 

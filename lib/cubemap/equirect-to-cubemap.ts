@@ -38,8 +38,9 @@ vec2 dirToEquirect(vec3 dir) {
 }
 
 void main() {
+  // Clip-space y=+1 is the top of the output face. Keep uv.y positive upward
+  // so cube faces are not vertically flipped.
   vec2 uv = v_uv * 2.0 - 1.0;
-  uv.y = -uv.y;
   vec3 dir = faceDir(u_face, uv);
   vec2 sampleUv = dirToEquirect(dir);
   gl_FragColor = texture2D(u_equirect, sampleUv);
@@ -127,13 +128,51 @@ export class EquirectCubemapRenderer {
     this.yawLoc = gl.getUniformLocation(program, "u_yaw")!;
   }
 
-  uploadEquirect(source: TexImageSource, width: number, height: number) {
+  uploadEquirect(
+    source: TexImageSource,
+    width: number,
+    height: number,
+    options?: { nearest?: boolean },
+  ) {
     const { gl, texture } = this;
     gl.bindTexture(gl.TEXTURE_2D, texture);
+    // Canvas/video row 0 is the top of the image; keep that at texture v=0 so
+    // equirect v=0 (north pole) samples the top of the source.
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    const filter = options?.nearest ? gl.NEAREST : gl.LINEAR;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     void width;
     void height;
+  }
+
+  /**
+   * Threshold a soft/projected mask face into a crisp photogrammetry mask:
+   * black = masked out, white = keep.
+   */
+  static thresholdMaskCanvas(
+    source: HTMLCanvasElement,
+    faceSize: number,
+    cutoff = 127,
+  ) {
+    const out = document.createElement("canvas");
+    out.width = faceSize;
+    out.height = faceSize;
+    const ctx = out.getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("2D canvas unavailable.");
+    ctx.drawImage(source, 0, 0, faceSize, faceSize);
+    const image = ctx.getImageData(0, 0, faceSize, faceSize);
+    const { data } = image;
+    for (let i = 0; i < data.length; i += 4) {
+      const value = data[i]! >= cutoff ? 255 : 0;
+      data[i] = value;
+      data[i + 1] = value;
+      data[i + 2] = value;
+      data[i + 3] = 255;
+    }
+    ctx.putImageData(image, 0, 0);
+    return out;
   }
 
   renderFace(
