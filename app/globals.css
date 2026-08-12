@@ -4806,6 +4806,29 @@ textarea {
   box-shadow: inset 0 -0.35rem 0 currentColor;
 }
 
+.cm-masks {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.cm-masks__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cm-face__glyph[data-mask="people"] {
+  border-radius: 50%;
+  box-shadow: inset 0 -0.2rem 0 currentColor;
+}
+
+.cm-face__glyph[data-mask="cars"] {
+  box-shadow: inset 0.2rem 0 0 currentColor, inset -0.2rem 0 0 currentColor;
+}
+
+.cm-face__glyph[data-mask="sky"] {
+  background: linear-gradient(180deg, currentColor 0 45%, transparent 45%);
+  opacity: 0.85;
+}
+
 .cm-progress {
   display: grid;
   gap: 0.45rem;

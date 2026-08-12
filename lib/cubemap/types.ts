@@ -13,6 +13,10 @@ export type OutputLayout = "separate" | "strip" | "cross";
 
 export type ImageFormat = "png" | "jpeg" | "webp";
 
+export const MASK_CLASSES = ["people", "cars", "sky"] as const;
+
+export type MaskClass = (typeof MASK_CLASSES)[number];
+
 export type CubemapSettings = {
   /** Frames to extract per second of video. */
   framesPerSecond: number;
@@ -32,6 +36,10 @@ export type CubemapSettings = {
   quality: number;
   /** Optional yaw offset applied to the panorama before projection (degrees). */
   yawDegrees: number;
+  /** When true, also export photogrammetry masks for selected classes. */
+  exportMasks: boolean;
+  /** Classes to paint black (excluded) in mask exports. */
+  maskClasses: MaskClass[];
 };
 
 export type ProcessProgress = {
@@ -57,6 +65,8 @@ export const DEFAULT_CUBEMAP_SETTINGS: CubemapSettings = {
   format: "png",
   quality: 0.92,
   yawDegrees: 0,
+  exportMasks: false,
+  maskClasses: ["people", "cars", "sky"],
 };
 
 export function facesFromPreferences(

@@ -12,10 +12,12 @@ import { processEquirectVideo } from "@/lib/cubemap/process-video";
 import {
   CUBE_FACES,
   DEFAULT_CUBEMAP_SETTINGS,
+  MASK_CLASSES,
   facesFromPreferences,
   type CubeFace,
   type CubemapSettings,
   type ImageFormat,
+  type MaskClass,
   type OutputLayout,
   type ProcessProgress,
 } from "@/lib/cubemap/types";
@@ -50,7 +52,17 @@ export function CubemapTool() {
   const usingDownloadFallback = outputLabel === "Browser downloads (fallback)";
 
   const faceCount = settings.faces.length;
-  const canRun = Boolean(inputFile) && faceCount > 0 && !busy;
+  const masksReady =
+    !settings.exportMasks || settings.maskClasses.length > 0;
+  const canRun = Boolean(inputFile) && faceCount > 0 && masksReady && !busy;
+
+  function toggleMaskClass(maskClass: MaskClass) {
+    const exists = settings.maskClasses.includes(maskClass);
+    const maskClasses = exists
+      ? settings.maskClasses.filter((value) => value !== maskClass)
+      : [...settings.maskClasses, maskClass];
+    updateSettings({ maskClasses });
+  }
 
   const previewFaces = useMemo(() => settings.faces, [settings.faces]);
 
@@ -432,6 +444,50 @@ export function CubemapTool() {
             </div>
           </div>
 
+          <div className="cm-masks">
+            <div className="cm-faces__head">
+              <h2>Photogrammetry masks</h2>
+              <label className="cm-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.exportMasks}
+                  disabled={busy}
+                  onChange={(e) =>
+                    updateSettings({ exportMasks: e.target.checked })
+                  }
+                />
+                <span>Export masks</span>
+              </label>
+            </div>
+            <p className="cm-hint">
+              Optional. Black pixels mark excluded regions (people, cars, sky)
+              for Metashape / RealityCapture. Runs on-device; the segmentation
+              model downloads only when masks are enabled.
+            </p>
+            <div
+              className="cm-faces__grid cm-masks__grid"
+              role="group"
+              aria-label="Mask classes"
+            >
+              {MASK_CLASSES.map((maskClass) => {
+                const checked = settings.maskClasses.includes(maskClass);
+                return (
+                  <button
+                    key={maskClass}
+                    type="button"
+                    className={`cm-face${checked ? " is-active" : ""}${!settings.exportMasks || busy ? " is-disabled" : ""}`}
+                    aria-pressed={checked}
+                    disabled={!settings.exportMasks || busy}
+                    onClick={() => toggleMaskClass(maskClass)}
+                  >
+                    <span className="cm-face__glyph" data-mask={maskClass} />
+                    <span>{maskClass}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <ProgressBar progress={progress} busy={busy} />
 
           {error ? <p className="cm-error">{error}</p> : null}
@@ -460,8 +516,9 @@ export function CubemapTool() {
           <h2>Private by design</h2>
           <p>
             Video decoding, frame extraction, and equirectangular projection run
-            entirely in your browser with WebGL. No cloud workers, no uploads, no
-            extra downloads or plugins.
+            entirely in your browser with WebGL. Nothing is uploaded. Optional
+            mask export loads a small segmentation model into the browser on
+            first use and keeps all inference on-device.
           </p>
         </section>
       </main>
