@@ -40,9 +40,11 @@ export function getTrustedOrigins() {
     "https://www.spleckt.com",
     "https://handoff.spleckt.com",
     "https://menoknow.spleckt.com",
+    "https://cubemap.spleckt.com",
     "http://localhost:3000",
     "http://handoff.localhost:3000",
     "http://menoknow.localhost:3000",
+    "http://cubemap.localhost:3000",
   ]);
 
   if (process.env.NEXT_PUBLIC_HANDOFF_URL) {
@@ -50,6 +52,9 @@ export function getTrustedOrigins() {
   }
   if (process.env.NEXT_PUBLIC_MENOKNOW_URL) {
     origins.add(process.env.NEXT_PUBLIC_MENOKNOW_URL.replace(/\/$/, ""));
+  }
+  if (process.env.NEXT_PUBLIC_CUBEMAP_URL) {
+    origins.add(process.env.NEXT_PUBLIC_CUBEMAP_URL.replace(/\/$/, ""));
   }
 
   try {
@@ -63,12 +68,14 @@ export function getTrustedOrigins() {
     if (/(?:^|\.)spleckt\.com$/i.test(url.hostname)) {
       origins.add(`${url.protocol}//handoff.spleckt.com`);
       origins.add(`${url.protocol}//menoknow.spleckt.com`);
+      origins.add(`${url.protocol}//cubemap.spleckt.com`);
     }
 
     if (url.hostname === "localhost" || url.hostname.endsWith(".localhost")) {
       const port = url.port ? `:${url.port}` : "";
       origins.add(`${url.protocol}//handoff.localhost${port}`);
       origins.add(`${url.protocol}//menoknow.localhost${port}`);
+      origins.add(`${url.protocol}//cubemap.localhost${port}`);
     }
   } catch {
     // ignore invalid app url during build

@@ -20,6 +20,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 5. Self-hosted SuperSplat viewer + editor
 6. **Handoff** training surface on `handoff.spleckt.com` (modules, tests, certifications) — not linked from the main marketing site
 7. **MenoKnow** kids game center on `menoknow.spleckt.com` (letters, numbers, simple activities) — not linked from the main marketing site
+8. **Cubemap** on-device equirect→cubemap tool on `cubemap.spleckt.com` — not linked from the main marketing site
 
 ### Roles
 
@@ -52,6 +53,16 @@ Theme play zones (Monster Trucks, Construction, Cow Farm) are scaffolded on the 
 
 Point DNS for `menoknow.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_MENOKNOW_URL`.
 
+## Cubemap (`cubemap.spleckt.com`)
+
+Browser tool that converts equirectangular 360° MP4 video into cubemap face images. Host-based routing sends `cubemap.spleckt.com` (and `cubemap.localhost:3000` in local dev) to the Cubemap UI. The main Spleckt site does not link to it; `/cubemap` paths return 404 on www/apex.
+
+- Choose input video and output folder via the File System Access API (Chromium); other browsers fall back to downloads
+- Set frames/sec, face size, FOV, faces per frame, top/bottom inclusion, yaw, layout (separate / strip / cross), and image format
+- Processing uses HTML video + WebGL entirely on-device — nothing is uploaded and no extra client dependencies are downloaded
+
+Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
+
 ## Setup
 
 ```bash
@@ -68,6 +79,7 @@ npm run dev
 
 Local Handoff: open `http://handoff.localhost:3000` (same process as `npm run dev`).
 Local MenoKnow: open `http://menoknow.localhost:3000`.
+Local Cubemap: open `http://cubemap.localhost:3000`.
 
 Default admin (change after first login):
 
@@ -81,6 +93,7 @@ Default admin (change after first login):
 | `NEXT_PUBLIC_APP_URL` | Your public site URL — use `https://www.spleckt.com` (apex redirects to www) |
 | `NEXT_PUBLIC_HANDOFF_URL` | Optional Handoff URL — defaults to `https://handoff.spleckt.com` |
 | `NEXT_PUBLIC_MENOKNOW_URL` | Optional MenoKnow URL — defaults to `https://menoknow.spleckt.com` |
+| `NEXT_PUBLIC_CUBEMAP_URL` | Optional Cubemap URL — defaults to `https://cubemap.spleckt.com` |
 | `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
 | `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
 | `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
@@ -149,3 +162,9 @@ Without R2, uploads are stored under `.data/uploads` and served from `/api/files
 | `/play/build` | Construction zone (game modules next) |
 | `/play/farm` | Cow Farm zone hub |
 | `/play/farm/count` | Count the cows (numbers 0–100) |
+
+### Cubemap host (`cubemap.spleckt.com`)
+
+| Route | Purpose |
+| --- | --- |
+| `/` | On-device equirect MP4 → cubemap extractor |
