@@ -1,0 +1,127 @@
+export function supportsFileSystemAccess() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.showOpenFilePicker === "function" &&
+    typeof window.showDirectoryPicker === "function"
+  );
+}
+
+export async function pickInputVideo(): Promise<{
+  file: File;
+  pathLabel: string;
+  handle: FileSystemFileHandle | null;
+}> {
+  if (supportsFileSystemAccess() && window.showOpenFilePicker) {
+    const [handle] = await window.showOpenFilePicker({
+      multiple: false,
+      excludeAcceptAllOption: false,
+      types: [
+        {
+          description: "Equirectangular MP4 video",
+          accept: { "video/mp4": [".mp4"], "video/*": [".mp4", ".webm", ".mov"] },
+        },
+      ],
+    });
+    const file = await handle.getFile();
+    return { file, pathLabel: handle.name, handle };
+  }
+
+  const file = await pickFileWithInput("video/mp4,video/webm,video/quicktime,.mp4");
+  return { file, pathLabel: file.name, handle: null };
+}
+
+export async function pickOutputDirectory(): Promise<{
+  handle: FileSystemDirectoryHandle | null;
+  pathLabel: string;
+}> {
+  if (supportsFileSystemAccess() && window.showDirectoryPicker) {
+    const handle = await window.showDirectoryPicker({
+      mode: "readwrite",
+      id: "cubemap-output",
+    });
+    const permission = await ensureReadWrite(handle);
+    if (permission !== "granted") {
+      throw new Error("Write permission for the output folder was denied.");
+    }
+    return { handle, pathLabel: handle.name };
+  }
+
+  return {
+    handle: null,
+    pathLabel: "Browser downloads (fallback)",
+  };
+}
+
+async function ensureReadWrite(handle: FileSystemDirectoryHandle) {
+  const opts: FileSystemHandlePermissionDescriptor = { mode: "readwrite" };
+  if ((await handle.queryPermission(opts)) === "granted") return "granted";
+  if ((await handle.requestPermission(opts)) === "granted") return "granted";
+  return "denied";
+}
+
+function pickFileWithInput(accept: string) {
+  return new Promise<File>((resolve, reject) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = accept;
+    input.style.display = "none";
+    const cleanup = () => {
+      input.remove();
+    };
+    input.addEventListener(
+      "change",
+      () => {
+        const file = input.files?.[0];
+        cleanup();
+        if (!file) {
+          reject(new Error("No file selected."));
+          return;
+        }
+        resolve(file);
+      },
+      { once: true },
+    );
+    input.addEventListener(
+      "cancel",
+      () => {
+        cleanup();
+        reject(new DOMException("The user aborted a request.", "AbortError"));
+      },
+      { once: true },
+    );
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
+export async function writeBlobToDirectory(
+  dir: FileSystemDirectoryHandle,
+  relativePath: string,
+  blob: Blob,
+) {
+  const parts = relativePath.split("/").filter(Boolean);
+  const fileName = parts.pop();
+  if (!fileName) throw new Error("Invalid output path.");
+
+  let current = dir;
+  for (const part of parts) {
+    current = await current.getDirectoryHandle(part, { create: true });
+  }
+
+  const fileHandle = await current.getFileHandle(fileName, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+}
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}

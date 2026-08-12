@@ -53,9 +53,11 @@ function desiredCorsRules(): CORSRule[] {
       "https://spleckt.com",
       "https://handoff.spleckt.com",
       "https://menoknow.spleckt.com",
+      "https://cubemap.spleckt.com",
       "http://localhost:3000",
       "http://handoff.localhost:3000",
       "http://menoknow.localhost:3000",
+      "http://cubemap.localhost:3000",
     ]),
   );
 

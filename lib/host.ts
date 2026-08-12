@@ -1,4 +1,6 @@
-/** Host helpers for Spleckt product surfaces (handoff, menoknow). */
+/** Host helpers for Spleckt product surfaces (handoff, menoknow, cubemap). */
+
+export type ProductHost = "handoff" | "menoknow" | "cubemap";
 
 export function hostnameFromHostHeader(hostHeader: string | null | undefined) {
   if (!hostHeader) return "";
@@ -23,8 +25,12 @@ export function isMenoknowHostname(hostname: string) {
   return matchesProductHostname(hostname, "menoknow");
 }
 
+export function isCubemapHostname(hostname: string) {
+  return matchesProductHostname(hostname, "cubemap");
+}
+
 function deriveProductUrl(
-  product: "handoff" | "menoknow",
+  product: ProductHost,
   explicitEnv: string | undefined,
   fallbackPortLocal: string,
 ) {
@@ -62,5 +68,13 @@ export function getMenoknowUrl() {
     "menoknow",
     process.env.NEXT_PUBLIC_MENOKNOW_URL,
     "http://menoknow.localhost:3000",
+  );
+}
+
+export function getCubemapUrl() {
+  return deriveProductUrl(
+    "cubemap",
+    process.env.NEXT_PUBLIC_CUBEMAP_URL,
+    "http://cubemap.localhost:3000",
   );
 }

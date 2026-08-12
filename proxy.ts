@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
   hostnameFromHostHeader,
+  isCubemapHostname,
   isHandoffHostname,
   isMenoknowHostname,
+  type ProductHost,
 } from "@/lib/host";
 
 const PASSTHROUGH_PREFIXES = [
@@ -24,7 +26,7 @@ function shouldPassthrough(pathname: string) {
 
 function hideInternalPath(
   pathname: string,
-  product: "handoff" | "menoknow",
+  product: ProductHost,
   onProductHost: boolean,
 ) {
   if (onProductHost) return false;
@@ -35,7 +37,7 @@ function rewriteToProduct(
   request: NextRequest,
   pathname: string,
   search: string,
-  product: "handoff" | "menoknow",
+  product: ProductHost,
 ) {
   if (pathname === `/${product}` || pathname.startsWith(`/${product}/`)) {
     return NextResponse.next();
@@ -52,12 +54,16 @@ export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const handoffHost = isHandoffHostname(hostname);
   const menoknowHost = isMenoknowHostname(hostname);
+  const cubemapHost = isCubemapHostname(hostname);
 
   // Keep product paths invisible on the main Spleckt hosts.
   if (hideInternalPath(pathname, "handoff", handoffHost)) {
     return new NextResponse(null, { status: 404 });
   }
   if (hideInternalPath(pathname, "menoknow", menoknowHost)) {
+    return new NextResponse(null, { status: 404 });
+  }
+  if (hideInternalPath(pathname, "cubemap", cubemapHost)) {
     return new NextResponse(null, { status: 404 });
   }
 
@@ -71,6 +77,10 @@ export function proxy(request: NextRequest) {
 
   if (menoknowHost) {
     return rewriteToProduct(request, pathname, search, "menoknow");
+  }
+
+  if (cubemapHost) {
+    return rewriteToProduct(request, pathname, search, "cubemap");
   }
 
   return NextResponse.next();
