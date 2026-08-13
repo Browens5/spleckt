@@ -6,33 +6,60 @@ export type CameraBeat = {
   fov: number;
 };
 
-/** PlayCanvas/OpenCV → Three.js after mesh quaternion (1,0,0,0) YZ flip. */
-export function flipCvToThree(x: number, y: number, z: number): THREE.Vector3 {
-  return new THREE.Vector3(x, -y, -z);
+/**
+ * SuperSplat stores cameras in the same world frame Spark gets after
+ * `mesh.quaternion.set(1, 0, 0, 0)` (OpenCV → Three). Use values as-is.
+ */
+function beat(
+  px: number,
+  py: number,
+  pz: number,
+  tx: number,
+  ty: number,
+  tz: number,
+  fov: number,
+): CameraBeat {
+  return {
+    position: new THREE.Vector3(px, py, pz),
+    target: new THREE.Vector3(tx, ty, tz),
+    fov,
+  };
 }
 
-/** Short cinematic path through the Weitz outdoor capture. */
+/** Short cinematic path through the Weitz HQ capture (from SuperSplat settings). */
 export const WEITZ_CAMERA_PATH: CameraBeat[] = [
-  {
-    position: flipCvToThree(-214.87, 76.29, 129.79),
-    target: flipCvToThree(-289.52, 30.52, 260.67),
-    fov: 62,
-  },
-  {
-    position: flipCvToThree(-180.84, 86.99, 273.47),
-    target: flipCvToThree(-291.78, 22.82, 264.11),
-    fov: 58,
-  },
-  {
-    position: flipCvToThree(-114.45, 52.34, -122.72),
-    target: flipCvToThree(-75.57, 35.98, -159.67),
-    fov: 64,
-  },
-  {
-    position: flipCvToThree(-20.25, 45.15, -66.94),
-    target: flipCvToThree(-8.26, 18.34, -35.2),
-    fov: 55,
-  },
+  // Exterior establishing — settings "initial"
+  beat(
+    -294.0,
+    75.24,
+    234.84,
+    -285.58,
+    23.05,
+    118.43,
+    62,
+  ),
+  // Sweep along the facade
+  beat(
+    -180.84,
+    86.99,
+    273.47,
+    -291.78,
+    22.82,
+    264.11,
+    58,
+  ),
+  // Approach the entrance volume
+  beat(
+    -114.45,
+    52.34,
+    -122.72,
+    -75.57,
+    35.98,
+    -159.67,
+    64,
+  ),
+  // Closer courtyard / plaza read
+  beat(-20.25, 45.15, -66.94, -8.26, 18.34, -35.2, 55),
 ];
 
 function easeInOut(t: number): number {

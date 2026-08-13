@@ -40,13 +40,14 @@ export function createAssembleModifier(
 
             vec3 origin = ${inputs.gsplat}.center;
             float h = hash31(origin);
-            float radius = mix(18.0, 55.0, h);
+            // Keep scatter tight so the silhouette stays readable mid-reveal.
+            float radius = mix(4.0, 14.0, h);
             vec3 dispersed = origin + scatterDir(origin) * radius * (1.0 - e)
-              + vec3(0.0, (1.0 - e) * (8.0 + h * 14.0), 0.0);
+              + vec3(0.0, (1.0 - e) * (2.0 + h * 5.0), 0.0);
 
             ${outputs.gsplat}.center = mix(dispersed, origin, e);
 
-            float particle = mix(0.045, 0.12, h);
+            float particle = mix(0.08, 0.22, h);
             vec3 particleScale = vec3(particle);
             ${outputs.gsplat}.scales = mix(particleScale, ${inputs.gsplat}.scales, e);
 

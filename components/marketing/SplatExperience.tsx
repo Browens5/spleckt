@@ -2,6 +2,7 @@
 
 import {
   SparkRenderer,
+  SplatFileType,
   SplatMesh,
   dyno,
   isMobile,
@@ -16,6 +17,7 @@ import {
 import * as THREE from "three";
 import { WEITZ_SHOWCASE } from "@/lib/showcase";
 import { sampleCameraPath, WEITZ_CAMERA_PATH } from "@/lib/splat/camera-path";
+import { fetchSogAsZipBytes } from "@/lib/splat/fetch-sog-zip";
 import { createAssembleModifier } from "@/lib/splat/reveal";
 
 type SplatExperienceProps = {
@@ -30,7 +32,7 @@ type Runtime = {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   spark: SparkRenderer;
-  mesh: SplatMesh;
+  mesh: SplatMesh | null;
   progress: ReturnType<typeof dyno.dynoFloat>;
   disposed: boolean;
   revealStartedAt: number | null;
@@ -67,15 +69,17 @@ export function SplatExperience({
     const canvas = canvasRef.current;
     if (!host || !canvas) return;
 
+    const metaUrl = WEITZ_SHOWCASE.contentUrl!;
+
     let raf = 0;
     let runtime: Runtime | null = null;
     let cancelled = false;
+    const abort = new AbortController();
 
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const mobile = isMobile();
-    // Keep assemble snappy on phones; desktop can linger a beat longer.
     const revealDurationSec = mobile ? 1.7 : 2.4;
 
     const renderer = new THREE.WebGLRenderer({
@@ -97,7 +101,6 @@ export function SplatExperience({
     camera.fov = first.fov;
     camera.updateProjectionMatrix();
 
-    // Cap splat budget so ~3M Weitz stays interactive on phones.
     const spark = new SparkRenderer({
       renderer,
       enableLod: true,
@@ -110,32 +113,13 @@ export function SplatExperience({
     scene.add(spark);
 
     const progress = dyno.dynoFloat(reduceMotion ? 1 : 0);
-    // Do not pass fileType: "pcsogs" — Spark's WASM decoder rejects that
-    // token. Point at meta.json and let Spark sniff SOG + fetch sibling webps.
-    const mesh = new SplatMesh({
-      url: WEITZ_SHOWCASE.contentUrl!,
-      // Tiny LoD tree after decode — required to keep 3M gaussians mobile-viable.
-      lod: true,
-      worldModifiers: reduceMotion
-        ? undefined
-        : [createAssembleModifier(progress)],
-      onProgress: (event) => {
-        if (!event.lengthComputable || event.total <= 0) return;
-        setLoadPct(Math.min(99, Math.round((event.loaded / event.total) * 100)));
-      },
-    });
-    // Drop higher-order SH on phones to cut VRAM / decode cost.
-    mesh.maxSh = mobile ? 0 : 2;
-    // OpenCV → OpenGL orientation used by Spark SOG examples
-    mesh.quaternion.set(1, 0, 0, 0);
-    scene.add(mesh);
 
     runtime = {
       renderer,
       scene,
       camera,
       spark,
-      mesh,
+      mesh: null,
       progress,
       disposed: false,
       revealStartedAt: null,
@@ -187,28 +171,81 @@ export function SplatExperience({
     };
     raf = requestAnimationFrame(loop);
 
-    void mesh.initialized
-      .then(() => {
+    void (async () => {
+      try {
+        // Spark WASM accepts SOG zip (pcsogszip), not bare meta.json / "pcsogs".
+        const zipBytes = await fetchSogAsZipBytes({
+          metaUrl,
+          dropShN: mobile,
+          signal: abort.signal,
+          onProgress: (fraction) => {
+            if (!cancelled) {
+              setLoadPct(Math.min(90, Math.round(fraction * 90)));
+            }
+          },
+        });
+
         if (cancelled || !runtime || runtime.disposed) return;
+
+        setLoadPct(92);
+
+        const mesh = new SplatMesh({
+          fileBytes: zipBytes,
+          fileType: SplatFileType.PCSOGSZIP,
+          fileName: "weitz.sog",
+          // Extended encoding — Weitz centers span hundreds of meters.
+          extSplats: true,
+          lod: true,
+          worldModifiers: reduceMotion
+            ? undefined
+            : [createAssembleModifier(progress)],
+        });
+        mesh.maxSh = mobile ? 0 : 2;
+        // OpenCV → Three orientation (Spark SOG convention)
+        mesh.quaternion.set(1, 0, 0, 0);
+        scene.add(mesh);
+        runtime.mesh = mesh;
+
+        await mesh.initialized;
+        if (cancelled || !runtime || runtime.disposed) return;
+
+        // Ensure LoD path is active once the tree exists.
+        mesh.enableLod = true;
+
         runtime.revealStartedAt = performance.now();
-        if (runtime.reduceMotion) runtime.progress.value = 1;
+        if (runtime.reduceMotion) {
+          runtime.progress.value = 1;
+          mesh.worldModifiers = undefined;
+          mesh.updateGenerator();
+        } else {
+          window.setTimeout(() => {
+            if (cancelled || !runtime || runtime.disposed || !runtime.mesh) return;
+            runtime.progress.value = 1;
+            runtime.mesh.worldModifiers = undefined;
+            runtime.mesh.updateGenerator();
+          }, Math.ceil(revealDurationSec * 1000) + 80);
+        }
         setStatus("ready");
         setLoadPct(100);
-      })
-      .catch((error: unknown) => {
+      } catch (error: unknown) {
+        if (abort.signal.aborted || cancelled) return;
         console.error("SplatExperience failed to load", error);
-        if (!cancelled) setStatus("error");
-      });
+        setStatus("error");
+      }
+    })();
 
     return () => {
       cancelled = true;
+      abort.abort();
       cancelAnimationFrame(raf);
       ro.disconnect();
       if (runtime) runtime.disposed = true;
       runtimeRef.current = null;
       try {
-        scene.remove(mesh);
-        mesh.dispose();
+        if (runtime?.mesh) {
+          scene.remove(runtime.mesh);
+          runtime.mesh.dispose();
+        }
       } catch {
         /* ignore */
       }
