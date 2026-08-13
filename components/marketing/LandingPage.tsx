@@ -28,6 +28,7 @@ export function LandingPage() {
             title={WEITZ_SHOWCASE.title}
             className="cinematic-hero__splat"
             noui
+            webgl
           />
           <ParticleField className="cinematic-hero__particles" />
           <div className="cinematic-hero__veil" aria-hidden />

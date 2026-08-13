@@ -103,9 +103,9 @@ export function ParticleField({
         height * 0.45,
         Math.max(width, height) * 0.85,
       );
-      wash.addColorStop(0, "rgba(215, 235, 231, 0.08)");
-      wash.addColorStop(0.45, "rgba(196, 165, 116, 0.04)");
-      wash.addColorStop(1, "rgba(10, 24, 32, 0.18)");
+      wash.addColorStop(0, "rgba(215, 235, 231, 0.04)");
+      wash.addColorStop(0.45, "rgba(196, 165, 116, 0.02)");
+      wash.addColorStop(1, "rgba(10, 24, 32, 0.06)");
       ctx.fillStyle = wash;
       ctx.fillRect(0, 0, width, height);
 

@@ -103,15 +103,35 @@ textarea {
     transparent
   );
   backdrop-filter: blur(8px);
+  transition:
+    background 220ms ease,
+    backdrop-filter 220ms ease,
+    border-color 220ms ease;
+}
+
+.site-header--overlay.is-solid {
+  background: rgba(244, 247, 248, 0.9);
+  backdrop-filter: blur(14px);
+  border-bottom-color: var(--line);
 }
 
 .site-header--overlay .brand-mark__name,
 .site-header--overlay .site-nav a:not(.btn) {
   color: #f4f8f9;
+  transition: color 220ms ease;
+}
+
+.site-header--overlay.is-solid .brand-mark__name,
+.site-header--overlay.is-solid .site-nav a:not(.btn) {
+  color: var(--fg);
 }
 
 .site-header--overlay .site-nav a:not(.btn):hover {
   color: #ffffff;
+}
+
+.site-header--overlay.is-solid .site-nav a:not(.btn):hover {
+  color: var(--fg);
 }
 
 .site-header--overlay .btn--ghost {
@@ -120,8 +140,18 @@ textarea {
   background: rgba(8, 18, 24, 0.18);
 }
 
+.site-header--overlay.is-solid .btn--ghost {
+  border-color: var(--line);
+  color: var(--fg);
+  background: transparent;
+}
+
 .site-header--overlay .btn--ghost:hover {
   background: rgba(255, 255, 255, 0.14);
+}
+
+.site-header--overlay.is-solid .btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .site-header--overlay .nav-toggle {
@@ -129,8 +159,17 @@ textarea {
   border-color: rgba(255, 255, 255, 0.28);
 }
 
+.site-header--overlay.is-solid .nav-toggle {
+  background: var(--surface-solid);
+  border-color: var(--line);
+}
+
 .site-header--overlay .nav-toggle span {
   background: #f4f8f9;
+}
+
+.site-header--overlay.is-solid .nav-toggle span {
+  background: var(--fg);
 }
 
 .site-header__inner {
@@ -275,13 +314,18 @@ textarea {
   z-index: 2;
   background:
     linear-gradient(
-      105deg,
-      rgba(8, 18, 24, 0.72) 0%,
-      rgba(8, 18, 24, 0.42) 34%,
-      rgba(8, 18, 24, 0.12) 58%,
-      rgba(8, 18, 24, 0.28) 100%
+      108deg,
+      rgba(8, 18, 24, 0.55) 0%,
+      rgba(8, 18, 24, 0.22) 32%,
+      rgba(8, 18, 24, 0.04) 55%,
+      rgba(8, 18, 24, 0.18) 100%
     ),
-    linear-gradient(to top, rgba(8, 18, 24, 0.78) 0%, rgba(8, 18, 24, 0.2) 42%, transparent 70%);
+    linear-gradient(
+      to top,
+      rgba(8, 18, 24, 0.62) 0%,
+      rgba(8, 18, 24, 0.12) 38%,
+      transparent 68%
+    );
   pointer-events: none;
 }
 
@@ -992,6 +1036,11 @@ textarea {
   .site-header--overlay .site-nav {
     background: rgba(12, 24, 30, 0.94);
     border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .site-header--overlay.is-solid .site-nav {
+    background: rgba(244, 247, 248, 0.96);
+    border-bottom-color: var(--line);
   }
 
   .site-nav.is-open {
