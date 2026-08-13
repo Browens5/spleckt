@@ -1002,6 +1002,46 @@ textarea {
   background: var(--surface-solid);
 }
 
+.portal-form--wide {
+  max-width: 720px;
+}
+
+.portal-form__fieldset {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.portal-form__fieldset legend {
+  font-weight: 650;
+  margin-bottom: 0.15rem;
+}
+
+.portal-form__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.portal-form__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.form-status {
+  color: var(--accent-deep);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.splat-experience__load--live {
+  z-index: 3;
+  pointer-events: none;
+}
+
 .viewer-page {
   min-height: 100vh;
   display: grid;
@@ -1121,6 +1161,10 @@ textarea {
 
   .portal__nav {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .portal-form__row {
+    grid-template-columns: 1fr;
   }
 
   .nav-toggle {

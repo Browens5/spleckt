@@ -11,6 +11,7 @@ const nav = [
   { href: "/portal/upload", label: "Upload", editorOnly: true },
   { href: "/portal/users", label: "Users", adminOnly: true },
   { href: "/portal/media", label: "Marketing media", adminOnly: true },
+  { href: "/portal/home", label: "Home experience", adminOnly: true },
 ];
 
 function PortalChrome({

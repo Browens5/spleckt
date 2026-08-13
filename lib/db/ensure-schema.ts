@@ -87,6 +87,11 @@ const statements = [
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS site_settings (
+    key TEXT PRIMARY KEY NOT NULL,
+    value_json TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
   `CREATE TABLE IF NOT EXISTS training_modules (
     id TEXT PRIMARY KEY NOT NULL,
     slug TEXT NOT NULL UNIQUE,
