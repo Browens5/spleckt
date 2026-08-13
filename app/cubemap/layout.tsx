@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s · Cubemap",
   },
   description:
-    "Convert equirectangular 360 MP4 video into cubemap face images entirely on-device. Choose FPS, FOV, faces, and output folder — nothing uploads.",
+    "Convert equirectangular 360 MP4 video or a ZIP of still frames into cubemap face images entirely on-device. Choose FPS, FOV, faces, and output folder — nothing uploads.",
 };
 
 export default function CubemapRootLayout({

@@ -5,10 +5,11 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { CubemapBrand } from "@/components/cubemap/CubemapBrand";
 import { ProgressBar } from "@/components/cubemap/ProgressBar";
 import {
-  pickInputVideo,
+  pickInputSource,
   pickOutputDirectory,
 } from "@/lib/cubemap/fs-access";
 import { processEquirectVideo } from "@/lib/cubemap/process-video";
+import { isZipFile } from "@/lib/cubemap/zip-images";
 import {
   CUBE_FACES,
   DEFAULT_CUBEMAP_SETTINGS,
@@ -50,6 +51,7 @@ export function CubemapTool() {
   const [, startTransition] = useTransition();
   const abortRef = useRef<AbortController | null>(null);
   const usingDownloadFallback = outputLabel === "Browser downloads (fallback)";
+  const inputIsZip = Boolean(inputFile && isZipFile(inputFile));
 
   const faceCount = settings.faces.length;
   const masksReady =
@@ -69,7 +71,7 @@ export function CubemapTool() {
   async function onPickInput() {
     setError(null);
     try {
-      const picked = await pickInputVideo();
+      const picked = await pickInputSource();
       setInputFile(picked.file);
       setInputLabel(picked.pathLabel);
     } catch (err) {
@@ -206,7 +208,8 @@ export function CubemapTool() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           >
-            Extract frames at your chosen rate, project selected cube faces with
+            Extract frames from an equirectangular video — or a ZIP of still
+            frames — at your chosen rate, project selected cube faces with
             custom FOV, and write images straight to a local folder — all in the
             browser.
           </motion.p>
@@ -221,18 +224,24 @@ export function CubemapTool() {
         >
           <div className="cm-paths">
             <div className="cm-path">
-              <label htmlFor="cm-input-path">Input video</label>
+              <label htmlFor="cm-input-path">Input video or ZIP</label>
               <div className="cm-path__row">
                 <input
                   id="cm-input-path"
                   readOnly
                   value={inputLabel}
-                  placeholder="Select an equirectangular MP4…"
+                  placeholder="Select an equirectangular MP4 or a ZIP of frames…"
                 />
                 <button type="button" className="cm-btn cm-btn--secondary" onClick={onPickInput} disabled={busy}>
                   Choose file
                 </button>
               </div>
+              {inputIsZip ? (
+                <p className="cm-hint">
+                  ZIP detected — each image is processed as one equirect frame
+                  (sorted by filename). Frames-per-second applies to video only.
+                </p>
+              ) : null}
             </div>
             <div className="cm-path">
               <label htmlFor="cm-output-path">Output folder</label>
@@ -270,13 +279,14 @@ export function CubemapTool() {
                 max={60}
                 step={0.1}
                 value={settings.framesPerSecond}
-                disabled={busy}
+                disabled={busy || inputIsZip}
                 onChange={(e) =>
                   updateSettings({
                     framesPerSecond: Number(e.target.value) || 1,
                   })
                 }
               />
+              {inputIsZip ? <em>Video only</em> : null}
             </label>
 
             <label className="cm-field">
