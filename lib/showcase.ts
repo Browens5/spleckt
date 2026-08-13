@@ -8,6 +8,7 @@ export const WEITZ_SHOWCASE = {
   posterUrl:
     "https://s3-eu-west-1.amazonaws.com/images.playcanvas.com/splat/c0568a51/v1/xl.webp",
   settingsUrl: "/showcase/weitz-settings.json",
+  heroSettingsUrl: "/showcase/weitz-hero-settings.json",
   sourceUrl: "https://superspl.at/scene/c0568a51",
   author: "weitzvdc",
   authorUrl: "https://superspl.at/user/weitzvdc",

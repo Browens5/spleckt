@@ -23,14 +23,15 @@ export function LandingPage() {
         <div className="cinematic-hero__stage">
           <SplatViewerFrame
             contentUrl={WEITZ_SHOWCASE.contentUrl}
-            settingsUrl={WEITZ_SHOWCASE.settingsUrl}
+            settingsUrl={WEITZ_SHOWCASE.heroSettingsUrl}
             posterUrl={WEITZ_SHOWCASE.posterUrl}
             title={WEITZ_SHOWCASE.title}
             className="cinematic-hero__splat"
             noui
+            noanim
             webgl
           />
-          <ParticleField className="cinematic-hero__particles" />
+          <ParticleField className="cinematic-hero__particles" density={1.15} />
           <div className="cinematic-hero__veil" aria-hidden />
         </div>
 
