@@ -53,8 +53,8 @@ export const GILBERT_SHOWCASE: ShowcaseScene = {
 };
 
 export const SHOWCASE_SCENES: ShowcaseScene[] = [
-  GILBERT_SHOWCASE,
   WEITZ_SHOWCASE,
+  GILBERT_SHOWCASE,
 ];
 
 export function viewerHrefFor(scene: ShowcaseScene): string {
