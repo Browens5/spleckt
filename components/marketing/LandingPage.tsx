@@ -1,33 +1,101 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
+import {
+  SHOWCASE_SCENES,
+  viewerHrefFor,
+  type ShowcaseScene,
+} from "@/lib/showcase";
 
-type MediaItem = {
-  id: string;
-  title: string;
-  description: string;
-  kind: "video" | "image" | "splat";
-  fileUrl: string;
-  posterUrl: string | null;
-  splatId: string | null;
-};
-
-type FeaturedSplat = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  fileUrl: string;
-  thumbnailUrl: string | null;
-};
+const SplatExperience = dynamic(
+  () =>
+    import("@/components/marketing/SplatExperience").then(
+      (mod) => mod.SplatExperience,
+    ),
+  { ssr: false },
+);
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 22 },
   show: { opacity: 1, y: 0 },
 };
+
+function ShowcaseCard({ scene }: { scene: ShowcaseScene }) {
+  const href = viewerHrefFor(scene);
+  const external = href.startsWith("http");
+
+  const media = (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={scene.posterUrl}
+        alt={scene.title}
+        className="showcase-poster__image"
+      />
+      <span className="showcase-poster__cta">
+        {scene.kind === "luma" ? "Open on Luma" : "Open interactive viewer"}
+      </span>
+    </>
+  );
+
+  return (
+    <article className="showcase-item">
+      <div className="showcase-item__copy">
+        <h3>{scene.title}</h3>
+        <p>{scene.description}</p>
+      </div>
+
+      {external ? (
+        <a
+          href={href}
+          className="showcase-poster"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {media}
+        </a>
+      ) : (
+        <Link href={href} className="showcase-poster">
+          {media}
+        </Link>
+      )}
+
+      <div className="showcase-item__footer">
+        <p className="showcase-credit">
+          Scene by{" "}
+          {scene.authorUrl ? (
+            <a href={scene.authorUrl} target="_blank" rel="noreferrer">
+              {scene.author}
+            </a>
+          ) : (
+            scene.author
+          )}
+          {" · "}
+          <a href={scene.sourceUrl} target="_blank" rel="noreferrer">
+            {scene.kind === "luma" ? "Luma" : "SuperSplat"}
+          </a>
+          {scene.license && scene.licenseUrl ? (
+            <>
+              {" · "}
+              <a href={scene.licenseUrl} target="_blank" rel="noreferrer">
+                {scene.license}
+              </a>
+            </>
+          ) : null}
+        </p>
+      </div>
+    </article>
+  );
+}
 
 export function LandingPage() {
   const heroRef = useRef<HTMLElement>(null);
@@ -35,235 +103,93 @@ export function LandingPage() {
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroShift = useTransform(scrollYProgress, [0, 1], [0, 80]);
-  const heroFade = useTransform(scrollYProgress, [0, 0.8], [1, 0.35]);
+  const cameraProgress = useTransform(scrollYProgress, [0, 0.9], [0, 1]);
+  const contentFade = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
+  const contentShift = useTransform(scrollYProgress, [0, 0.45], [0, -36]);
+  const [progress, setProgress] = useState(0);
 
-  const [media, setMedia] = useState<MediaItem[]>([]);
-  const [featured, setFeatured] = useState<FeaturedSplat[]>([]);
-
-  useEffect(() => {
-    void Promise.all([
-      fetch("/api/media?published=1").then((r) => r.json()),
-      fetch("/api/featured").then((r) => r.json()),
-    ]).then(([mediaRes, featuredRes]) => {
-      setMedia(mediaRes.media ?? []);
-      setFeatured(featuredRes.splats ?? []);
-    });
-  }, []);
-
-  const videos = media.filter((item) => item.kind === "video");
-  const exampleSplats =
-    featured.length > 0
-      ? featured
-      : media
-          .filter((item) => item.kind === "splat")
-          .map((item) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            category: "scene",
-            fileUrl: item.fileUrl,
-            thumbnailUrl: item.posterUrl,
-          }));
+  useMotionValueEvent(cameraProgress, "change", (latest) => {
+    setProgress(latest);
+  });
 
   return (
-    <div className="marketing">
+    <div className="marketing marketing--cinematic">
       <SiteHeader />
 
-      <section className="hero" ref={heroRef}>
-        <motion.div
-          className="hero__atmosphere"
-          style={{ y: heroShift, opacity: heroFade }}
-          aria-hidden
-        />
-        <div className="hero__veil" aria-hidden />
+      <section
+        className="cinematic-hero"
+        aria-label="Spleckt home"
+        ref={heroRef}
+      >
+        <div className="cinematic-hero__stage">
+          <SplatExperience
+            className="cinematic-hero__splat cinematic-hero__experience"
+            scrollProgress={progress}
+          />
+          <div className="cinematic-hero__veil" aria-hidden />
 
-        <motion.div
-          className="hero__content"
-          initial="hidden"
-          animate="show"
-          transition={{ staggerChildren: 0.12 }}
-        >
-          <motion.p className="hero__brand" variants={fadeUp}>
-            Spleckt
-          </motion.p>
-          <motion.h1 variants={fadeUp}>
-            Lifelike 3D captures for spaces that need to be felt, not just
-            photographed.
-          </motion.h1>
-          <motion.p className="hero__lede" variants={fadeUp}>
-            We turn locations, homes, businesses, and construction sites into
-            lifelike 3D captures people can explore from anywhere — then host
-            them for marketing today and documentation tomorrow.
-          </motion.p>
-          <motion.div className="hero__actions" variants={fadeUp}>
-            <Link href="/#contact" className="btn btn--primary btn--lg">
-              Request a capture
-            </Link>
-            <Link href="/#examples" className="btn btn--ghost btn--lg">
-              View examples
-            </Link>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      <section className="section" id="services">
-        <div className="section__intro">
-          <p className="eyebrow">Built for real estate & construction</p>
-          <h2>Show the space as it truly is.</h2>
-          <p>
-            Spleckt creates lifelike 3D captures your clients, buyers, and
-            project teams can explore from any device.
-          </p>
-        </div>
-
-        <div className="service-grid">
-          {[
-            {
-              title: "Listings that linger",
-              body: "Let buyers walk rooms, study finishes, and share a link that sells the experience — not a slideshow.",
-            },
-            {
-              title: "Jobsite clarity",
-              body: "Document progress with detailed captures teams can revisit for coordination, handoff, and accountability.",
-            },
-            {
-              title: "Hosted & shareable",
-              body: "Every capture lives in your portal with a link you can share with clients, partners, and stakeholders.",
-            },
-          ].map((item, index) => (
-            <motion.article
-              key={item.title}
-              className="service-block"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ delay: index * 0.08, duration: 0.5 }}
-            >
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-            </motion.article>
-          ))}
-        </div>
-      </section>
-
-      <section className="section section--tint" id="process">
-        <div className="section__intro">
-          <p className="eyebrow">From real space to hosted 3D</p>
-          <h2>From site visit to shareable 3D.</h2>
-          <p>
-            Upload process videos and stills from the portal — they appear here
-            automatically as living proof of how Spleckt works.
-          </p>
-        </div>
-
-        <div className="process-rail">
-          {[
-            "On-site capture",
-            "Build the 3D scene",
-            "Edit & refine",
-            "Host & share",
-          ].map((step, index) => (
-            <motion.div
-              key={step}
-              className="process-step"
-              initial={{ opacity: 0, x: -12 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{step}</strong>
+          <motion.div
+            className="cinematic-hero__content"
+            style={{ opacity: contentFade, y: contentShift }}
+            initial="hidden"
+            animate="show"
+            transition={{ staggerChildren: 0.14, delayChildren: 0.2 }}
+          >
+            <motion.p className="cinematic-hero__brand" variants={fadeUp}>
+              Spleckt
+            </motion.p>
+            <motion.h1 variants={fadeUp}>
+              Walk the space in lifelike 3D.
+            </motion.h1>
+            <motion.p className="cinematic-hero__lede" variants={fadeUp}>
+              Captures you can explore, share, and keep — for listings,
+              jobsites, and places that deserve more than photos.
+            </motion.p>
+            <motion.div className="hero__actions" variants={fadeUp}>
+              <Link href="/#showcase" className="btn btn--primary btn--lg">
+                Explore captures
+              </Link>
+              <Link
+                href="/#contact"
+                className="btn btn--ghost btn--lg btn--on-media"
+              >
+                Request a capture
+              </Link>
             </motion.div>
-          ))}
-        </div>
-
-        <div className="media-stage">
-          {videos.length === 0 ? (
-            <div className="media-empty">
-              <p>
-                Process videos will appear here once uploaded from the admin
-                portal.
-              </p>
-            </div>
-          ) : (
-            videos.map((item) => (
-              <figure key={item.id} className="media-frame">
-                <video
-                  controls
-                  playsInline
-                  preload="metadata"
-                  poster={item.posterUrl ?? undefined}
-                  src={item.fileUrl}
-                />
-                <figcaption>
-                  <strong>{item.title}</strong>
-                  {item.description ? <span>{item.description}</span> : null}
-                </figcaption>
-              </figure>
-            ))
-          )}
+          </motion.div>
         </div>
       </section>
 
-      <section className="section" id="examples">
+      <section className="section showcase-section" id="showcase">
         <div className="section__intro">
-          <p className="eyebrow">Example captures</p>
+          <p className="eyebrow">Live showcase</p>
           <h2>Spaces preserved in lifelike detail.</h2>
           <p>
-            Featured captures from the portal appear here so visitors can
-            explore the detail before they book.
+            Scroll the hero to move through headquarters — then open either
+            capture in a full viewer.
           </p>
         </div>
 
-        <div className="example-grid">
-          {exampleSplats.length === 0 ? (
-            <div className="media-empty">
-              <p>Feature a capture from the portal to showcase it here.</p>
-            </div>
-          ) : (
-            exampleSplats.map((splat, index) => (
-              <motion.a
-                key={splat.id}
-                href={`/viewer?content=${encodeURIComponent(splat.fileUrl)}&title=${encodeURIComponent(splat.title)}`}
-                className="example-tile"
-                initial={{ opacity: 0, scale: 0.98 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: index * 0.06 }}
-              >
-                <div
-                  className="example-tile__visual"
-                  style={
-                    splat.thumbnailUrl
-                      ? { backgroundImage: `url(${splat.thumbnailUrl})` }
-                      : undefined
-                  }
-                />
-                <div className="example-tile__meta">
-                  <p className="eyebrow">{splat.category.replace("-", " ")}</p>
-                  <h3>{splat.title}</h3>
-                  <p>{splat.description || "Open the interactive 3D viewer"}</p>
-                </div>
-              </motion.a>
-            ))
-          )}
+        <div className="showcase-list">
+          {SHOWCASE_SCENES.map((scene) => (
+            <ShowcaseCard key={scene.id} scene={scene} />
+          ))}
         </div>
       </section>
 
       <section className="section section--cta" id="contact">
         <motion.div
-          className="cta-panel"
-          initial={{ opacity: 0, y: 20 }}
+          className="cta-panel cta-panel--simple"
+          initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <p className="eyebrow">Ready when the site is</p>
-          <h2>Book a Spleckt capture.</h2>
+          <p className="eyebrow">Book a capture</p>
+          <h2>Ready when the site is.</h2>
           <p>
-            Tell us about the property, jobsite, or space. We&apos;ll handle
-            capture, processing, and hosting — then deliver share-ready links in
-            your portal.
+            Tell us about the property, jobsite, or space. We handle capture,
+            processing, and hosting — then deliver share-ready links in your
+            portal.
           </p>
           <div className="hero__actions">
             <a

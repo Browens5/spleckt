@@ -3,12 +3,15 @@ function firstDefined(...values: Array<string | undefined>) {
 }
 
 export function getDatabaseUrl() {
-  return (
-    firstDefined(
-      process.env.TURSO_DATABASE_URL,
-      process.env.DATABASE_URL,
-    ) ?? "file:.data/spleckt.db"
+  const url = firstDefined(
+    process.env.TURSO_DATABASE_URL,
+    process.env.DATABASE_URL,
   );
+  // Treat the example placeholder as unset so local SQLite still works.
+  if (!url || url.includes("your-db.turso.io")) {
+    return "file:.data/spleckt.db";
+  }
+  return url;
 }
 
 export function getDatabaseAuthToken() {

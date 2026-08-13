@@ -136,6 +136,15 @@ export const mediaAssets = sqliteTable("media_assets", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
 });
 
+/** Site-wide key/value JSON (home experience, etc.). */
+export const siteSettings = sqliteTable("site_settings", {
+  key: text("key").primaryKey(),
+  valueJson: text("value_json").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
 /** Handoff training catalog — modules for tools, software, and techniques. */
 export const trainingModules = sqliteTable("training_modules", {
   id: text("id").primaryKey(),
