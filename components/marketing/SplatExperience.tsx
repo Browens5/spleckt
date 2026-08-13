@@ -145,7 +145,7 @@ export function SplatExperience({
 
     const spark = new SparkRenderer({
       renderer,
-      enableLod: true,
+      enableLod: false,
       lodSplatCount: mobile ? 420_000 : 1_100_000,
       lodSplatScale: mobile ? 0.45 : 0.8,
       lodRenderScale: mobile ? 1.6 : 1.1,
@@ -284,6 +284,7 @@ export function SplatExperience({
         if (cancelled || !runtime || runtime.disposed) return;
 
         mesh.enableLod = true;
+        spark.enableLod = true;
         runtime.revealStartedAt = performance.now();
         if (runtime.reduceMotion) {
           runtime.progress.value = 1;

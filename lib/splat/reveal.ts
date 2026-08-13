@@ -49,7 +49,7 @@ export function createAssembleModifier(
 
             ${outputs.gsplat}.center = mix(fromCloud, dest, e);
 
-            float particle = mix(0.05, 0.16, h);
+            float particle = mix(0.55, 1.8, h);
             ${outputs.gsplat}.scales = mix(vec3(particle), ${inputs.gsplat}.scales, e);
 
             float glow = mix(0.22, 1.0, e);
@@ -118,10 +118,10 @@ export function createSwirlModifier(
             ${outputs.gsplat}.center = spun * pull * cloudR;
 
             float pulse = 0.72 + 0.28 * sin(t * 2.4 + h * 9.0);
-            float size = mix(0.04, 0.11, h) * mix(1.35, 0.75, load) * pulse;
+            float size = mix(0.9, 2.6, h) * mix(1.25, 0.85, load) * pulse;
             ${outputs.gsplat}.scales = vec3(size);
 
-            float a = mix(0.28, 0.95, load) * (0.55 + 0.45 * h);
+            float a = mix(0.45, 0.95, load) * (0.65 + 0.35 * h);
             ${outputs.gsplat}.rgba.a = a;
             ${outputs.gsplat}.rgba.rgb = mix(
               vec3(0.55, 0.86, 0.95),

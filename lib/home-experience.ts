@@ -33,7 +33,7 @@ export const DEFAULT_HOME_EXPERIENCE: HomeExperienceSettings = {
     yawEnd: 48,
     fov: 58,
   },
-  assembleRadius: 22,
+    assembleRadius: 36,
 };
 
 const vec3Schema = z.object({

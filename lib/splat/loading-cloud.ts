@@ -10,7 +10,7 @@ export function buildOriginCloud(
   count: number,
 ): void {
   const center = new THREE.Vector3();
-  const scales = new THREE.Vector3(0.08, 0.08, 0.08);
+  const scales = new THREE.Vector3(1.2, 1.2, 1.2);
   const quat = new THREE.Quaternion();
   const color = new THREE.Color();
 
