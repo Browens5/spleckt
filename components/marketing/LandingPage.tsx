@@ -1,269 +1,112 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { ParticleField } from "@/components/marketing/ParticleField";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
-
-type MediaItem = {
-  id: string;
-  title: string;
-  description: string;
-  kind: "video" | "image" | "splat";
-  fileUrl: string;
-  posterUrl: string | null;
-  splatId: string | null;
-};
-
-type FeaturedSplat = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  fileUrl: string;
-  thumbnailUrl: string | null;
-};
+import { SplatViewerFrame } from "@/components/viewer/SplatViewerFrame";
+import { WEITZ_SHOWCASE } from "@/lib/showcase";
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
+  hidden: { opacity: 0, y: 22 },
   show: { opacity: 1, y: 0 },
 };
 
 export function LandingPage() {
-  const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  const heroShift = useTransform(scrollYProgress, [0, 1], [0, 80]);
-  const heroFade = useTransform(scrollYProgress, [0, 0.8], [1, 0.35]);
-
-  const [media, setMedia] = useState<MediaItem[]>([]);
-  const [featured, setFeatured] = useState<FeaturedSplat[]>([]);
-
-  useEffect(() => {
-    void Promise.all([
-      fetch("/api/media?published=1").then((r) => r.json()),
-      fetch("/api/featured").then((r) => r.json()),
-    ]).then(([mediaRes, featuredRes]) => {
-      setMedia(mediaRes.media ?? []);
-      setFeatured(featuredRes.splats ?? []);
-    });
-  }, []);
-
-  const videos = media.filter((item) => item.kind === "video");
-  const exampleSplats =
-    featured.length > 0
-      ? featured
-      : media
-          .filter((item) => item.kind === "splat")
-          .map((item) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            category: "scene",
-            fileUrl: item.fileUrl,
-            thumbnailUrl: item.posterUrl,
-          }));
+  const viewerHref = `/viewer?content=${encodeURIComponent(WEITZ_SHOWCASE.contentUrl)}&title=${encodeURIComponent(WEITZ_SHOWCASE.title)}&poster=${encodeURIComponent(WEITZ_SHOWCASE.posterUrl)}&settings=${encodeURIComponent(WEITZ_SHOWCASE.settingsUrl)}`;
 
   return (
-    <div className="marketing">
+    <div className="marketing marketing--cinematic">
       <SiteHeader />
 
-      <section className="hero" ref={heroRef}>
-        <motion.div
-          className="hero__atmosphere"
-          style={{ y: heroShift, opacity: heroFade }}
-          aria-hidden
-        />
-        <div className="hero__veil" aria-hidden />
+      <section className="cinematic-hero" aria-label="Spleckt home">
+        <div className="cinematic-hero__stage">
+          <SplatViewerFrame
+            contentUrl={WEITZ_SHOWCASE.contentUrl}
+            settingsUrl={WEITZ_SHOWCASE.settingsUrl}
+            posterUrl={WEITZ_SHOWCASE.posterUrl}
+            title={WEITZ_SHOWCASE.title}
+            className="cinematic-hero__splat"
+            noui
+          />
+          <ParticleField className="cinematic-hero__particles" />
+          <div className="cinematic-hero__veil" aria-hidden />
+        </div>
 
         <motion.div
-          className="hero__content"
+          className="cinematic-hero__content"
           initial="hidden"
           animate="show"
-          transition={{ staggerChildren: 0.12 }}
+          transition={{ staggerChildren: 0.14, delayChildren: 0.15 }}
         >
-          <motion.p className="hero__brand" variants={fadeUp}>
+          <motion.p className="cinematic-hero__brand" variants={fadeUp}>
             Spleckt
           </motion.p>
-          <motion.h1 variants={fadeUp}>
-            Lifelike 3D captures for spaces that need to be felt, not just
-            photographed.
-          </motion.h1>
-          <motion.p className="hero__lede" variants={fadeUp}>
-            We turn locations, homes, businesses, and construction sites into
-            lifelike 3D captures people can explore from anywhere — then host
-            them for marketing today and documentation tomorrow.
+          <motion.h1 variants={fadeUp}>Walk the space in lifelike 3D.</motion.h1>
+          <motion.p className="cinematic-hero__lede" variants={fadeUp}>
+            Captures you can explore, share, and keep — for listings, jobsites,
+            and places that deserve more than photos.
           </motion.p>
           <motion.div className="hero__actions" variants={fadeUp}>
-            <Link href="/#contact" className="btn btn--primary btn--lg">
-              Request a capture
+            <Link href={viewerHref} className="btn btn--primary btn--lg">
+              Explore this capture
             </Link>
-            <Link href="/#examples" className="btn btn--ghost btn--lg">
-              View examples
+            <Link
+              href="/#contact"
+              className="btn btn--ghost btn--lg btn--on-media"
+            >
+              Request a capture
             </Link>
           </motion.div>
         </motion.div>
       </section>
 
-      <section className="section" id="services">
+      <section className="section showcase-section" id="showcase">
         <div className="section__intro">
-          <p className="eyebrow">Built for real estate & construction</p>
-          <h2>Show the space as it truly is.</h2>
-          <p>
-            Spleckt creates lifelike 3D captures your clients, buyers, and
-            project teams can explore from any device.
-          </p>
+          <p className="eyebrow">Live showcase</p>
+          <h2>{WEITZ_SHOWCASE.title}</h2>
+          <p>{WEITZ_SHOWCASE.description}</p>
         </div>
 
-        <div className="service-grid">
-          {[
-            {
-              title: "Listings that linger",
-              body: "Let buyers walk rooms, study finishes, and share a link that sells the experience — not a slideshow.",
-            },
-            {
-              title: "Jobsite clarity",
-              body: "Document progress with detailed captures teams can revisit for coordination, handoff, and accountability.",
-            },
-            {
-              title: "Hosted & shareable",
-              body: "Every capture lives in your portal with a link you can share with clients, partners, and stakeholders.",
-            },
-          ].map((item, index) => (
-            <motion.article
-              key={item.title}
-              className="service-block"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ delay: index * 0.08, duration: 0.5 }}
-            >
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-            </motion.article>
-          ))}
-        </div>
-      </section>
+        <Link href={viewerHref} className="showcase-poster">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={WEITZ_SHOWCASE.posterUrl}
+            alt={WEITZ_SHOWCASE.title}
+            className="showcase-poster__image"
+          />
+          <span className="showcase-poster__cta">Open interactive viewer</span>
+        </Link>
 
-      <section className="section section--tint" id="process">
-        <div className="section__intro">
-          <p className="eyebrow">From real space to hosted 3D</p>
-          <h2>From site visit to shareable 3D.</h2>
-          <p>
-            Upload process videos and stills from the portal — they appear here
-            automatically as living proof of how Spleckt works.
-          </p>
-        </div>
-
-        <div className="process-rail">
-          {[
-            "On-site capture",
-            "Build the 3D scene",
-            "Edit & refine",
-            "Host & share",
-          ].map((step, index) => (
-            <motion.div
-              key={step}
-              className="process-step"
-              initial={{ opacity: 0, x: -12 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{step}</strong>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="media-stage">
-          {videos.length === 0 ? (
-            <div className="media-empty">
-              <p>
-                Process videos will appear here once uploaded from the admin
-                portal.
-              </p>
-            </div>
-          ) : (
-            videos.map((item) => (
-              <figure key={item.id} className="media-frame">
-                <video
-                  controls
-                  playsInline
-                  preload="metadata"
-                  poster={item.posterUrl ?? undefined}
-                  src={item.fileUrl}
-                />
-                <figcaption>
-                  <strong>{item.title}</strong>
-                  {item.description ? <span>{item.description}</span> : null}
-                </figcaption>
-              </figure>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section className="section" id="examples">
-        <div className="section__intro">
-          <p className="eyebrow">Example captures</p>
-          <h2>Spaces preserved in lifelike detail.</h2>
-          <p>
-            Featured captures from the portal appear here so visitors can
-            explore the detail before they book.
-          </p>
-        </div>
-
-        <div className="example-grid">
-          {exampleSplats.length === 0 ? (
-            <div className="media-empty">
-              <p>Feature a capture from the portal to showcase it here.</p>
-            </div>
-          ) : (
-            exampleSplats.map((splat, index) => (
-              <motion.a
-                key={splat.id}
-                href={`/viewer?content=${encodeURIComponent(splat.fileUrl)}&title=${encodeURIComponent(splat.title)}`}
-                className="example-tile"
-                initial={{ opacity: 0, scale: 0.98 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: index * 0.06 }}
-              >
-                <div
-                  className="example-tile__visual"
-                  style={
-                    splat.thumbnailUrl
-                      ? { backgroundImage: `url(${splat.thumbnailUrl})` }
-                      : undefined
-                  }
-                />
-                <div className="example-tile__meta">
-                  <p className="eyebrow">{splat.category.replace("-", " ")}</p>
-                  <h3>{splat.title}</h3>
-                  <p>{splat.description || "Open the interactive 3D viewer"}</p>
-                </div>
-              </motion.a>
-            ))
-          )}
-        </div>
+        <p className="showcase-credit">
+          Scene by{" "}
+          <a href={WEITZ_SHOWCASE.authorUrl} target="_blank" rel="noreferrer">
+            {WEITZ_SHOWCASE.author}
+          </a>
+          {" · "}
+          <a href={WEITZ_SHOWCASE.sourceUrl} target="_blank" rel="noreferrer">
+            SuperSplat
+          </a>
+          {" · "}
+          <a href={WEITZ_SHOWCASE.licenseUrl} target="_blank" rel="noreferrer">
+            {WEITZ_SHOWCASE.license}
+          </a>
+        </p>
       </section>
 
       <section className="section section--cta" id="contact">
         <motion.div
-          className="cta-panel"
-          initial={{ opacity: 0, y: 20 }}
+          className="cta-panel cta-panel--simple"
+          initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <p className="eyebrow">Ready when the site is</p>
-          <h2>Book a Spleckt capture.</h2>
+          <p className="eyebrow">Book a capture</p>
+          <h2>Ready when the site is.</h2>
           <p>
-            Tell us about the property, jobsite, or space. We&apos;ll handle
-            capture, processing, and hosting — then deliver share-ready links in
-            your portal.
+            Tell us about the property, jobsite, or space. We handle capture,
+            processing, and hosting — then deliver share-ready links in your
+            portal.
           </p>
           <div className="hero__actions">
             <a
