@@ -168,7 +168,10 @@ export function SplatExperience({
             createSwirlModifier(time, loadProgress, assembleRadius),
           ],
         });
-    if (cloud) scene.add(cloud);
+    if (cloud) {
+      cloud.enableLod = false;
+      scene.add(cloud);
+    }
 
     runtime = {
       renderer,
@@ -235,7 +238,11 @@ export function SplatExperience({
         }
       }
 
-      renderer.render(scene, camera);
+      try {
+        renderer.render(scene, camera);
+      } catch (error) {
+        console.warn("SplatExperience render skipped", error);
+      }
     };
     raf = requestAnimationFrame(loop);
 
