@@ -299,6 +299,26 @@ textarea {
   pointer-events: none;
 }
 
+.cinematic-hero__luma {
+  pointer-events: auto;
+}
+
+.cinematic-hero__luma .luma-frame__iframe,
+.cinematic-hero__luma .luma-frame__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.showcase-stage__frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #0b151c;
+}
+
 .cinematic-hero__particles {
   position: absolute;
   inset: 0;
@@ -392,6 +412,74 @@ textarea {
 
 .showcase-section {
   padding-top: 4.5rem;
+}
+
+.showcase-list {
+  display: grid;
+  gap: 3.25rem;
+}
+
+.showcase-item {
+  display: grid;
+  gap: 1rem;
+}
+
+.showcase-item__copy h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 3vw, 2.1rem);
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  margin: 0 0 0.45rem;
+}
+
+.showcase-item__copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  max-width: 40rem;
+}
+
+.showcase-item__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+}
+
+.showcase-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 280px;
+  max-height: 72vh;
+  overflow: hidden;
+  background: #0b151c;
+  border-radius: 4px;
+}
+
+.showcase-stage__luma,
+.luma-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #0b151c;
+}
+
+.luma-frame__iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #0b151c;
+}
+
+.luma-frame__poster {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(135deg, rgba(31, 111, 102, 0.2), rgba(196, 165, 116, 0.18)),
+    #1a2a32 center / cover no-repeat;
 }
 
 .showcase-poster {
