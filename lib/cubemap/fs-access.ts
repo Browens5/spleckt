@@ -6,7 +6,11 @@ export function supportsFileSystemAccess() {
   );
 }
 
-export async function pickInputVideo(): Promise<{
+const INPUT_ACCEPT =
+  "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v,application/zip,.zip,image/jpeg,image/png,image/webp";
+
+/** Pick an equirectangular video or a ZIP of individual photos/frames. */
+export async function pickInputSource(): Promise<{
   file: File;
   pathLabel: string;
   handle: FileSystemFileHandle | null;
@@ -17,8 +21,15 @@ export async function pickInputVideo(): Promise<{
       excludeAcceptAllOption: false,
       types: [
         {
-          description: "Equirectangular MP4 video",
-          accept: { "video/mp4": [".mp4"], "video/*": [".mp4", ".webm", ".mov"] },
+          description: "Equirectangular video or ZIP of frames",
+          accept: {
+            "video/mp4": [".mp4"],
+            "video/webm": [".webm"],
+            "video/quicktime": [".mov"],
+            "video/*": [".mp4", ".webm", ".mov", ".m4v"],
+            "application/zip": [".zip"],
+            "application/x-zip-compressed": [".zip"],
+          },
         },
       ],
     });
@@ -26,9 +37,12 @@ export async function pickInputVideo(): Promise<{
     return { file, pathLabel: handle.name, handle };
   }
 
-  const file = await pickFileWithInput("video/mp4,video/webm,video/quicktime,.mp4");
+  const file = await pickFileWithInput(INPUT_ACCEPT);
   return { file, pathLabel: file.name, handle: null };
 }
+
+/** @deprecated Use pickInputSource — kept as an alias for clarity at call sites. */
+export const pickInputVideo = pickInputSource;
 
 export async function pickOutputDirectory(): Promise<{
   handle: FileSystemDirectoryHandle | null;

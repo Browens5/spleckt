@@ -14,6 +14,12 @@ import type {
   CubemapSettings,
   ProcessProgress,
 } from "@/lib/cubemap/types";
+import {
+  extractImagesFromZip,
+  isVideoFile,
+  isZipFile,
+  loadImageBitmapFromBytes,
+} from "@/lib/cubemap/zip-images";
 
 export type ProcessVideoOptions = {
   file: File;
@@ -21,6 +27,14 @@ export type ProcessVideoOptions = {
   outputDirectory: FileSystemDirectoryHandle | null;
   signal?: AbortSignal;
   onProgress?: (progress: ProcessProgress) => void;
+};
+
+type FrameProvider = {
+  kind: "video" | "images";
+  frameCount: number;
+  /** Draw frame index into the shared canvas; may resize the canvas. */
+  drawFrame: (index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => Promise<void>;
+  dispose: () => void;
 };
 
 function padFrame(index: number, total: number) {
@@ -238,6 +252,90 @@ function projectFaces(
   return faceCanvases;
 }
 
+async function createVideoFrameProvider(
+  file: File,
+  settings: CubemapSettings,
+  signal?: AbortSignal,
+): Promise<FrameProvider> {
+  const video = await loadVideo(file, signal);
+  const objectUrl = video.src;
+  const duration = Number.isFinite(video.duration) ? video.duration : 0;
+  if (duration <= 0) {
+    URL.revokeObjectURL(objectUrl);
+    throw new Error("Video duration is unavailable.");
+  }
+  if (!video.videoWidth || !video.videoHeight) {
+    URL.revokeObjectURL(objectUrl);
+    throw new Error("Video dimensions are unavailable.");
+  }
+
+  const fps = Math.max(0.05, settings.framesPerSecond);
+  const interval = 1 / fps;
+  const times: number[] = [];
+  for (let t = 0; t < duration - 1e-4; t += interval) {
+    times.push(Math.min(t, duration - 1e-4));
+  }
+  if (times.length === 0) times.push(0);
+
+  return {
+    kind: "video",
+    frameCount: times.length,
+    async drawFrame(index, canvas, ctx) {
+      await seekVideo(video, times[index]!);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    },
+    dispose() {
+      URL.revokeObjectURL(objectUrl);
+      video.removeAttribute("src");
+      video.load();
+    },
+  };
+}
+
+/**
+ * ZIP of stills: each image is one equirect frame (sorted by name).
+ * All images are used; the FPS control applies to video inputs only.
+ */
+async function createZipFrameProvider(
+  file: File,
+  _settings: CubemapSettings,
+  signal?: AbortSignal,
+  onStatus?: (message: string) => void,
+): Promise<FrameProvider> {
+  onStatus?.("Reading ZIP archive…");
+  const entries = await extractImagesFromZip(file, signal);
+
+  return {
+    kind: "images",
+    frameCount: entries.length,
+    async drawFrame(index, canvas, ctx) {
+      const entry = entries[index]!;
+      const image = await loadImageBitmapFromBytes(entry.bytes, entry.name);
+      try {
+        const width =
+          "width" in image ? image.width : (image as HTMLImageElement).naturalWidth;
+        const height =
+          "height" in image ? image.height : (image as HTMLImageElement).naturalHeight;
+        if (!width || !height) {
+          throw new Error(`Image “${entry.name}” has invalid dimensions.`);
+        }
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(image, 0, 0, width, height);
+      } finally {
+        if (typeof ImageBitmap !== "undefined" && image instanceof ImageBitmap) {
+          image.close();
+        }
+      }
+    },
+    dispose() {
+      // Bytes are GC'd with the closure.
+    },
+  };
+}
+
 export async function processEquirectVideo(options: ProcessVideoOptions) {
   const { file, settings, outputDirectory, signal, onProgress } = options;
   const faces = settings.faces;
@@ -272,61 +370,70 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
     });
   };
 
-  report({ phase: "preparing", message: "Loading video…", totalUnits: 0, completedUnits: 0 });
+  const inputKind = isZipFile(file)
+    ? "zip"
+    : isVideoFile(file)
+      ? "video"
+      : null;
+  if (!inputKind) {
+    throw new Error(
+      "Unsupported input. Choose an equirectangular video (.mp4/.webm/.mov) or a .zip of images.",
+    );
+  }
 
-  const video = await loadVideo(file, signal);
-  const objectUrl = video.src;
+  report({
+    phase: "preparing",
+    message: inputKind === "zip" ? "Loading ZIP frames…" : "Loading video…",
+    totalUnits: 0,
+    completedUnits: 0,
+  });
+
+  const provider =
+    inputKind === "zip"
+      ? await createZipFrameProvider(file, settings, signal, (message) =>
+          report({
+            phase: "preparing",
+            message,
+            totalUnits: 0,
+            completedUnits: 0,
+          }),
+        )
+      : await createVideoFrameProvider(file, settings, signal);
+
   const renderer = new EquirectCubemapRenderer();
   const frameCanvas = document.createElement("canvas");
   const frameCtx = frameCanvas.getContext("2d", { willReadFrequently: false });
   if (!frameCtx) {
     renderer.dispose();
-    URL.revokeObjectURL(objectUrl);
+    provider.dispose();
     throw new Error("2D canvas unavailable.");
   }
 
   try {
     throwIfAborted(signal);
-    const duration = Number.isFinite(video.duration) ? video.duration : 0;
-    if (duration <= 0) throw new Error("Video duration is unavailable.");
-    if (!video.videoWidth || !video.videoHeight) {
-      throw new Error("Video dimensions are unavailable.");
-    }
-
-    const fps = Math.max(0.05, settings.framesPerSecond);
-    const interval = 1 / fps;
-    const times: number[] = [];
-    for (let t = 0; t < duration - 1e-4; t += interval) {
-      times.push(Math.min(t, duration - 1e-4));
-    }
-    if (times.length === 0) times.push(0);
-
+    const frameCount = provider.frameCount;
     const colorOutputsPerFrame =
       settings.layout === "separate" ? faces.length : 1;
     const maskMultiplier = settings.exportMasks ? 2 : 1;
-    totalUnits = times.length * colorOutputsPerFrame * maskMultiplier;
+    totalUnits = frameCount * colorOutputsPerFrame * maskMultiplier;
     const ext = extensionFor(settings.format);
     const maskExt = "png";
     const jobFolder = `cubemap_${file.name.replace(/\.[^.]+$/, "")}_${Date.now()}`;
 
     report({
       phase: "extracting",
-      message: `Extracting ${times.length} frame${times.length === 1 ? "" : "s"}…`,
+      message: `Extracting ${frameCount} frame${frameCount === 1 ? "" : "s"}…`,
       totalUnits,
       completedUnits: 0,
       currentFrame: 0,
-      totalFrames: times.length,
+      totalFrames: frameCount,
     });
 
-    frameCanvas.width = video.videoWidth;
-    frameCanvas.height = video.videoHeight;
-
-    for (let frameIndex = 0; frameIndex < times.length; frameIndex += 1) {
+    for (let frameIndex = 0; frameIndex < frameCount; frameIndex += 1) {
       throwIfAborted(signal);
-      await seekVideo(video, times[frameIndex]!);
+      await provider.drawFrame(frameIndex, frameCanvas, frameCtx);
       throwIfAborted(signal);
 
-      frameCtx.drawImage(video, 0, 0, frameCanvas.width, frameCanvas.height);
       renderer.uploadEquirect(frameCanvas, frameCanvas.width, frameCanvas.height);
 
       const faceCanvases = projectFaces(renderer, faces, settings, false);
@@ -339,11 +446,11 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
           (message) =>
             report({
               phase: "extracting",
-              message: `Frame ${frameIndex + 1}/${times.length} · ${message}`,
+              message: `Frame ${frameIndex + 1}/${frameCount} · ${message}`,
               totalUnits,
               completedUnits,
               currentFrame: frameIndex + 1,
-              totalFrames: times.length,
+              totalFrames: frameCount,
               currentFace: null,
             }),
         );
@@ -362,23 +469,23 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
           const copy = faceCanvases.get(face)!;
           report({
             phase: "extracting",
-            message: `Frame ${frameIndex + 1}/${times.length} · ${face}`,
+            message: `Frame ${frameIndex + 1}/${frameCount} · ${face}`,
             totalUnits,
             completedUnits,
             currentFrame: frameIndex + 1,
-            totalFrames: times.length,
+            totalFrames: frameCount,
             currentFace: face,
           });
 
           const blob = await canvasToBlob(copy, settings.format, settings.quality);
-          const relativePath = `${jobFolder}/frame_${padFrame(frameIndex + 1, times.length)}_${face}.${ext}`;
+          const relativePath = `${jobFolder}/frame_${padFrame(frameIndex + 1, frameCount)}_${face}.${ext}`;
           report({
             phase: "writing",
             message: `Writing ${relativePath}`,
             totalUnits,
             completedUnits,
             currentFrame: frameIndex + 1,
-            totalFrames: times.length,
+            totalFrames: frameCount,
             currentFace: face,
           });
           await writeOutput(blob, relativePath, outputDirectory);
@@ -389,21 +496,21 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
             totalUnits,
             completedUnits,
             currentFrame: frameIndex + 1,
-            totalFrames: times.length,
+            totalFrames: frameCount,
             currentFace: face,
           });
 
           if (maskFaceCanvases) {
             const maskCanvas = maskFaceCanvases.get(face)!;
             const maskBlob = await canvasToBlob(maskCanvas, "png", 1);
-            const maskPath = `${jobFolder}/masks/frame_${padFrame(frameIndex + 1, times.length)}_${face}_mask.${maskExt}`;
+            const maskPath = `${jobFolder}/masks/frame_${padFrame(frameIndex + 1, frameCount)}_${face}_mask.${maskExt}`;
             report({
               phase: "writing",
               message: `Writing ${maskPath}`,
               totalUnits,
               completedUnits,
               currentFrame: frameIndex + 1,
-              totalFrames: times.length,
+              totalFrames: frameCount,
               currentFace: face,
             });
             await writeOutput(maskBlob, maskPath, outputDirectory);
@@ -414,7 +521,7 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
               totalUnits,
               completedUnits,
               currentFrame: frameIndex + 1,
-              totalFrames: times.length,
+              totalFrames: frameCount,
               currentFace: face,
             });
           }
@@ -427,14 +534,14 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
             ? composeStrip(faces, faceCanvases, settings.faceSize)
             : composeCross(faces, faceCanvases, settings.faceSize);
         const blob = await canvasToBlob(composed, settings.format, settings.quality);
-        const relativePath = `${jobFolder}/frame_${padFrame(frameIndex + 1, times.length)}_${settings.layout}.${ext}`;
+        const relativePath = `${jobFolder}/frame_${padFrame(frameIndex + 1, frameCount)}_${settings.layout}.${ext}`;
         report({
           phase: "writing",
           message: `Writing ${relativePath}`,
           totalUnits,
           completedUnits,
           currentFrame: frameIndex + 1,
-          totalFrames: times.length,
+          totalFrames: frameCount,
           currentFace: null,
         });
         await writeOutput(blob, relativePath, outputDirectory);
@@ -445,7 +552,7 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
           totalUnits,
           completedUnits,
           currentFrame: frameIndex + 1,
-          totalFrames: times.length,
+          totalFrames: frameCount,
           currentFace: null,
         });
 
@@ -459,14 +566,14 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
             "png",
             1,
           );
-          const maskPath = `${jobFolder}/masks/frame_${padFrame(frameIndex + 1, times.length)}_${settings.layout}_mask.${maskExt}`;
+          const maskPath = `${jobFolder}/masks/frame_${padFrame(frameIndex + 1, frameCount)}_${settings.layout}_mask.${maskExt}`;
           report({
             phase: "writing",
             message: `Writing ${maskPath}`,
             totalUnits,
             completedUnits,
             currentFrame: frameIndex + 1,
-            totalFrames: times.length,
+            totalFrames: frameCount,
             currentFace: null,
           });
           await writeOutput(maskBlob, maskPath, outputDirectory);
@@ -477,7 +584,7 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
             totalUnits,
             completedUnits,
             currentFrame: frameIndex + 1,
-            totalFrames: times.length,
+            totalFrames: frameCount,
             currentFace: null,
           });
         }
@@ -492,17 +599,15 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
         : `Complete — ${completedUnits} file${completedUnits === 1 ? "" : "s"} downloaded.`,
       totalUnits,
       completedUnits: totalUnits,
-      currentFrame: times.length,
-      totalFrames: times.length,
+      currentFrame: frameCount,
+      totalFrames: frameCount,
       currentFace: null,
     });
 
-    return { frames: times.length, files: completedUnits, folder: jobFolder };
+    return { frames: frameCount, files: completedUnits, folder: jobFolder };
   } finally {
     renderer.dispose();
-    URL.revokeObjectURL(objectUrl);
-    video.removeAttribute("src");
-    video.load();
+    provider.dispose();
   }
 }
 

@@ -29,6 +29,7 @@
     "@playcanvas/supersplat-viewer": "^1.26.0",
     "better-auth": "^1.6.23",
     "drizzle-orm": "^0.45.2",
+    "fflate": "^0.8.2",
     "framer-motion": "^12.42.2",
     "nanoid": "^6.0.0",
     "next": "16.2.6",
