@@ -14,6 +14,7 @@ export type Service = {
   title: string;
   headline: string;
   body: string;
+  image: string;
 };
 
 export const services: Service[] = [
@@ -23,6 +24,7 @@ export const services: Service[] = [
     title: "Marketing photo & video",
     headline: "Cinematic stills and motion from the air",
     body: "Property, campus, and brand films that show scale, context, and finish — not just a roof and a driveway.",
+    image: "/drones/harbor-lofts.webp",
   },
   {
     id: "photogrammetry",
@@ -30,6 +32,7 @@ export const services: Service[] = [
     title: "Photogrammetry",
     headline: "Dense reconstruction from overlapping imagery",
     body: "We fly structured grids and process them into measurable 3D models your team can inspect, share, and archive.",
+    image: "/drones/oakridge-estates.webp",
   },
   {
     id: "orthomosaic",
@@ -37,6 +40,7 @@ export const services: Service[] = [
     title: "2D & 3D orthomosaics",
     headline: "Survey-grade maps you can actually use",
     body: "True-to-scale aerial maps and textured meshes for planning, takeoffs, and stakeholder walkthroughs.",
+    image: "/drones/riverside-commerce.webp",
   },
   {
     id: "stockpile",
@@ -44,6 +48,7 @@ export const services: Service[] = [
     title: "Stockpile measurements",
     headline: "Volumes you can defend",
     body: "Repeatable pile surveys for inventory, billing, and change detection — without putting people on unstable material.",
+    image: "/drones/northridge-quarry.webp",
   },
   {
     id: "progress",
@@ -51,6 +56,7 @@ export const services: Service[] = [
     title: "Site progress documentation",
     headline: "The jobsite, week after week",
     body: "Scheduled aerial records so owners, GCs, and trades see the same truth — what changed, and when.",
+    image: "/drones/westline-tower.webp",
   },
   {
     id: "tours",
@@ -58,6 +64,7 @@ export const services: Service[] = [
     title: "Virtual tours",
     headline: "Walk the site from anywhere",
     body: "Shareable 3D and 360 experiences for marketing, remote inspections, and as-built documentation.",
+    image: "/drones/civic-center.webp",
   },
 ];
 
@@ -70,6 +77,7 @@ export type PortfolioItem = {
   category: ServiceId;
   summary: string;
   deliverable: string;
+  image: string;
 };
 
 export const portfolioItems: PortfolioItem[] = [
@@ -81,6 +89,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "Golden-hour stills and a 45-second aerial film for listing and investor decks — context, circulation, and waterfront amenity in one pass.",
     deliverable: "Photo set + cinematic edit",
+    image: "/drones/harbor-lofts.webp",
   },
   {
     slug: "oakridge-estates",
@@ -90,6 +99,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "Overlapping nadir and oblique captures processed into a dense textured mesh for sales, planning, and as-built archive.",
     deliverable: "Textured 3D mesh",
+    image: "/drones/oakridge-estates.webp",
   },
   {
     slug: "riverside-commerce",
@@ -99,6 +109,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "A 2 cm GSD orthomosaic and DSM covering pads, drives, and storm infrastructure — ready for CAD overlay.",
     deliverable: "2D ortho + DSM",
+    image: "/drones/riverside-commerce.webp",
   },
   {
     slug: "northridge-quarry",
@@ -108,6 +119,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "Monthly volume survey of eight stockpiles with change reports against the prior flight for inventory and billing.",
     deliverable: "Volume report + contours",
+    image: "/drones/northridge-quarry.webp",
   },
   {
     slug: "westline-tower",
@@ -117,6 +129,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "Bi-weekly aerial stills from locked headings so the owner’s report always compares the same angles, month over month.",
     deliverable: "Progress stills + time-lapse",
+    image: "/drones/westline-tower.webp",
   },
   {
     slug: "civic-center",
@@ -126,6 +139,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "A shareable virtual tour combining aerial context with ground 360 nodes for facilities, wayfinding, and public engagement.",
     deliverable: "Hosted virtual tour",
+    image: "/drones/civic-center.webp",
   },
   {
     slug: "mill-creek-solar",
@@ -135,6 +149,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "Full-array orthomosaic used for panel counts, access planning, and as-built documentation after commissioning.",
     deliverable: "GeoTIFF ortho",
+    image: "/drones/mill-creek-solar.webp",
   },
   {
     slug: "ridge-cut-fill",
@@ -144,6 +159,7 @@ export const portfolioItems: PortfolioItem[] = [
     summary:
       "Sequential 3D surfaces compared against design to show remaining cut, fill, and haul distances for the weekly meeting.",
     deliverable: "3D surface + difference map",
+    image: "/drones/ridge-cut-fill.webp",
   },
 ];
 
@@ -159,23 +175,36 @@ export const processSteps = [
     index: "01",
     title: "Plan the flight",
     body: "We align on the site, airspace, deliverables, and a capture grid that will actually support the measurements you need.",
+    image: "/drones/page-atmosphere.webp",
   },
   {
     index: "02",
     title: "Capture the site",
     body: "Licensed pilots fly the mission — marketing passes, mapping grids, or both — with overlap and lighting chosen for the output.",
+    image: "/drones/hero-aerial.webp",
   },
   {
     index: "03",
     title: "Process the data",
     body: "Photogrammetry, orthos, volumes, edits, and tours are built from the same capture program so nothing is one-off.",
+    image: "/drones/oakridge-estates.webp",
   },
   {
     index: "04",
     title: "Deliver & host",
     body: "You receive share-ready files and hosted links. Repeat flights drop into the same record so progress is obvious.",
+    image: "/drones/compare-air.webp",
   },
 ];
+
+export const siteImages = {
+  hero: "/drones/hero-aerial.webp",
+  atmosphere: "/drones/page-atmosphere.webp",
+  drone: "/drones/drone-hover.webp",
+  compareGround: "/drones/compare-ground.webp",
+  compareAir: "/drones/compare-air.webp",
+  cta: "/drones/cta-dusk.webp",
+};
 
 export const groundVsAir = {
   ground: {

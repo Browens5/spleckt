@@ -1,15 +1,24 @@
 "use client";
 
-import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { DronesCard } from "@/components/drones/DronesCard";
+import { DronesPhoto } from "@/components/drones/DronesPhoto";
 import {
   groundVsAir,
   portfolioItems,
   processSteps,
   services,
+  siteImages,
   stats,
-  categoryLabels,
 } from "@/lib/drones/content";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -22,14 +31,19 @@ const fadeUp = {
 export function DronesLanding() {
   const heroRef = useRef<HTMLElement>(null);
   const scaleRef = useRef<HTMLElement>(null);
+  const pointerX = useMotionValue(0.5);
+  const pointerY = useMotionValue(0.5);
+
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const skyShift = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const gridShift = useTransform(scrollYProgress, [0, 1], [0, -80]);
-  const heroFade = useTransform(scrollYProgress, [0, 0.85], [1, 0.15]);
-  const droneY = useTransform(scrollYProgress, [0, 1], [0, -40]);
+  const photoShift = useTransform(scrollYProgress, [0, 1], [0, 140]);
+  const photoScale = useTransform(scrollYProgress, [0, 1], [1.08, 1.18]);
+  const heroFade = useTransform(scrollYProgress, [0, 0.85], [1, 0.35]);
+  const parallaxX = useTransform(pointerX, [0, 1], [18, -18]);
+  const parallaxY = useTransform(pointerY, [0, 1], [12, -12]);
+  const photoTransform = useMotionTemplate`translate3d(${parallaxX}px, calc(${photoShift}px + ${parallaxY}px), 0) scale(${photoScale})`;
 
   const { scrollYProgress: scaleProgress } = useScroll({
     target: scaleRef,
@@ -45,38 +59,32 @@ export function DronesLanding() {
   });
 
   const featured = portfolioItems.slice(0, 4);
+  const active = services[activeService] ?? services[0];
 
   return (
     <>
-      <section className="dr-hero" ref={heroRef}>
-        <motion.div
-          className="dr-hero__sky"
-          style={{ y: skyShift, opacity: heroFade }}
-          aria-hidden
-        >
-          <span className="dr-hero__sun" />
-          <span className="dr-hero__haze" />
+      <section
+        className="dr-hero"
+        ref={heroRef}
+        onMouseMove={(event) => {
+          const bounds = event.currentTarget.getBoundingClientRect();
+          pointerX.set((event.clientX - bounds.left) / bounds.width);
+          pointerY.set((event.clientY - bounds.top) / bounds.height);
+        }}
+      >
+        <motion.div className="dr-hero__photo" style={{ opacity: heroFade }} aria-hidden>
+          <motion.div className="dr-hero__photo-inner" style={{ transform: photoTransform }}>
+            <DronesPhoto src={siteImages.hero} alt="" preload sizes="100vw" />
+          </motion.div>
         </motion.div>
-        <motion.div
-          className="dr-hero__grid"
-          style={{ y: gridShift }}
-          aria-hidden
-        />
-        <motion.div className="dr-hero__drone" style={{ y: droneY }} aria-hidden>
-          <span className="dr-quad">
-            <span className="dr-quad__arm dr-quad__arm--n" />
-            <span className="dr-quad__arm dr-quad__arm--e" />
-            <span className="dr-quad__arm dr-quad__arm--s" />
-            <span className="dr-quad__arm dr-quad__arm--w" />
-            <span className="dr-quad__rotor dr-quad__rotor--nw" />
-            <span className="dr-quad__rotor dr-quad__rotor--ne" />
-            <span className="dr-quad__rotor dr-quad__rotor--sw" />
-            <span className="dr-quad__rotor dr-quad__rotor--se" />
-            <span className="dr-quad__body" />
-            <span className="dr-quad__beam" />
-          </span>
-        </motion.div>
-        <div className="dr-hero__veil" aria-hidden />
+        <div className="dr-hero__grade" aria-hidden />
+        <div className="dr-grain" aria-hidden />
+        <div className="dr-hero__hud" aria-hidden>
+          <span>ALT 247 ft</span>
+          <span>HDG 142°</span>
+          <span>GSD 2.1 cm</span>
+          <span className="dr-hero__rec">REC</span>
+        </div>
 
         <motion.div
           className="dr-hero__content"
@@ -87,7 +95,7 @@ export function DronesLanding() {
             show: { transition: { staggerChildren: 0.1 } },
           }}
         >
-          <motion.p className="dr-kicker" variants={fadeUp}>
+          <motion.p className="dr-kicker dr-kicker--light" variants={fadeUp}>
             Spleckt Drone Services
           </motion.p>
           <motion.h1 variants={fadeUp}>
@@ -103,12 +111,12 @@ export function DronesLanding() {
             <Link href="/portfolio" className="dr-btn dr-btn--primary dr-btn--lg">
               See the work
             </Link>
-            <Link href="/contact" className="dr-btn dr-btn--ghost dr-btn--lg">
+            <Link href="/contact" className="dr-btn dr-btn--light dr-btn--lg">
               Book a flight
             </Link>
           </motion.div>
         </motion.div>
-        <a href="#stack" className="dr-scroll" aria-label="Scroll to services">
+        <a href="#stack" className="dr-scroll dr-scroll--light" aria-label="Scroll to services">
           <span />
           Scroll
         </a>
@@ -122,9 +130,24 @@ export function DronesLanding() {
             One program. Six disciplines. The same site, seen for marketing,
             measurement, and the archive.
           </p>
-          <p className="dr-scale__index" aria-hidden>
-            {services[activeService]?.index}
-          </p>
+          <div className="dr-scale__stage">
+            {services.map((service, index) => (
+              <div
+                key={service.id}
+                className={`dr-scale__frame${index === activeService ? " is-active" : ""}`}
+              >
+                <DronesPhoto
+                  src={service.image}
+                  alt=""
+                  sizes="(max-width: 900px) 100vw, 42vw"
+                />
+              </div>
+            ))}
+            <div className="dr-scale__caption">
+              <span>{active.index}</span>
+              <strong>{active.title}</strong>
+            </div>
+          </div>
         </div>
         <ol className="dr-scale__list">
           {services.map((service, index) => (
@@ -164,31 +187,49 @@ export function DronesLanding() {
         </div>
         <div className="dr-compare__grid">
           <motion.article
-            initial={{ opacity: 0, x: -18 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.55, ease }}
           >
-            <h3>{groundVsAir.ground.title}</h3>
-            <ul>
-              {groundVsAir.ground.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            <div className="dr-compare__photo">
+              <DronesPhoto
+                src={siteImages.compareGround}
+                alt="Street-level view of a jobsite"
+                sizes="(max-width: 900px) 100vw, 50vw"
+              />
+            </div>
+            <div className="dr-compare__copy">
+              <h3>{groundVsAir.ground.title}</h3>
+              <ul>
+                {groundVsAir.ground.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
           </motion.article>
           <motion.article
             className="dr-compare__air"
-            initial={{ opacity: 0, x: 18 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.55, ease }}
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.55, delay: 0.08, ease }}
           >
-            <h3>{groundVsAir.air.title}</h3>
-            <ul>
-              {groundVsAir.air.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            <div className="dr-compare__photo">
+              <DronesPhoto
+                src={siteImages.compareAir}
+                alt="Aerial view of an entire campus"
+                sizes="(max-width: 900px) 100vw, 50vw"
+              />
+            </div>
+            <div className="dr-compare__copy">
+              <h3>{groundVsAir.air.title}</h3>
+              <ul>
+                {groundVsAir.air.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
           </motion.article>
         </div>
       </section>
@@ -212,6 +253,9 @@ export function DronesLanding() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.08, duration: 0.45, ease }}
             >
+              <div className="dr-process__still">
+                <DronesPhoto src={step.image} alt="" sizes="(max-width: 900px) 100vw, 25vw" />
+              </div>
               <span>{step.index}</span>
               <h3>{step.title}</h3>
               <p>{step.body}</p>
@@ -232,23 +276,15 @@ export function DronesLanding() {
         </div>
         <div className="dr-work__grid">
           {featured.map((item, index) => (
-            <motion.article
+            <motion.div
               key={item.slug}
-              className={`dr-card dr-card--${item.category}`}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ delay: index * 0.06, duration: 0.5, ease }}
             >
-              <div className="dr-card__visual" aria-hidden>
-                <span className="dr-card__scan" />
-              </div>
-              <div className="dr-card__meta">
-                <p className="dr-kicker">{categoryLabels[item.category]}</p>
-                <h3>{item.title}</h3>
-                <p>{item.location}</p>
-              </div>
-            </motion.article>
+              <DronesCard item={item} compact />
+            </motion.div>
           ))}
         </div>
       </section>
@@ -261,19 +297,24 @@ export function DronesLanding() {
           viewport={{ once: true }}
           transition={{ duration: 0.55, ease }}
         >
-          <p className="dr-kicker">Ready when the site is</p>
-          <h2>Put a Spleckt drone over it.</h2>
-          <p>
-            Tell us the property, the jobsite, or the question you need
-            answered. We&apos;ll propose a flight plan and a deliverable stack.
-          </p>
-          <div className="dr-hero__actions">
-            <Link href="/contact" className="dr-btn dr-btn--primary dr-btn--lg">
-              Start a mission
-            </Link>
-            <Link href="/portfolio" className="dr-btn dr-btn--ghost dr-btn--lg">
-              Review the work
-            </Link>
+          <div className="dr-cta__photo" aria-hidden>
+            <DronesPhoto src={siteImages.cta} alt="" sizes="100vw" />
+          </div>
+          <div className="dr-cta__copy">
+            <p className="dr-kicker dr-kicker--light">Ready when the site is</p>
+            <h2>Put a Spleckt drone over it.</h2>
+            <p>
+              Tell us the property, the jobsite, or the question you need
+              answered. We&apos;ll propose a flight plan and a deliverable stack.
+            </p>
+            <div className="dr-hero__actions">
+              <Link href="/contact" className="dr-btn dr-btn--primary dr-btn--lg">
+                Start a mission
+              </Link>
+              <Link href="/portfolio" className="dr-btn dr-btn--light dr-btn--lg">
+                Review the work
+              </Link>
+            </div>
           </div>
         </motion.div>
       </section>

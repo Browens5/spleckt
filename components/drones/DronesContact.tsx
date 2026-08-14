@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import { FormEvent, useState } from "react";
-import { DRONES_EMAIL, services } from "@/lib/drones/content";
+import { DronesPhoto } from "@/components/drones/DronesPhoto";
+import { DRONES_EMAIL, services, siteImages } from "@/lib/drones/content";
 
 type FormState = {
   name: string;
@@ -58,26 +59,30 @@ export function DronesContact() {
 
   return (
     <section className="dr-page dr-page--contact">
-      <header className="dr-page__hero">
-        <p className="dr-kicker">Contact</p>
-        <motion.h1
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
-          Tell us what to fly.
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-        >
-          Share the site, the question, and the deliverable you need. We reply
-          with a flight plan — not a generic brochure.
-        </motion.p>
-      </header>
+      <div className="dr-page__banner">
+        <DronesPhoto src={siteImages.drone} alt="" preload sizes="100vw" />
+        <div className="dr-page__banner-grade" />
+        <header className="dr-page__hero">
+          <p className="dr-kicker dr-kicker--light">Contact</p>
+          <motion.h1
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          >
+            Tell us what to fly.
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          >
+            Share the site, the question, and the deliverable you need. We reply
+            with a flight plan — not a generic brochure.
+          </motion.p>
+        </header>
+      </div>
 
-      <div className="dr-contact">
+      <div className="dr-page__body dr-contact">
         <motion.aside
           className="dr-contact__aside"
           initial={{ opacity: 0, y: 16 }}
