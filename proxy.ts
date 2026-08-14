@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import {
   hostnameFromHostHeader,
   isCubemapHostname,
+  isDronesHostname,
   isHandoffHostname,
   isMenoknowHostname,
   type ProductHost,
@@ -55,6 +56,7 @@ export function proxy(request: NextRequest) {
   const handoffHost = isHandoffHostname(hostname);
   const menoknowHost = isMenoknowHostname(hostname);
   const cubemapHost = isCubemapHostname(hostname);
+  const dronesHost = isDronesHostname(hostname);
 
   // Keep product paths invisible on the main Spleckt hosts.
   if (hideInternalPath(pathname, "handoff", handoffHost)) {
@@ -64,6 +66,9 @@ export function proxy(request: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
   if (hideInternalPath(pathname, "cubemap", cubemapHost)) {
+    return new NextResponse(null, { status: 404 });
+  }
+  if (hideInternalPath(pathname, "drones", dronesHost)) {
     return new NextResponse(null, { status: 404 });
   }
 
@@ -81,6 +86,10 @@ export function proxy(request: NextRequest) {
 
   if (cubemapHost) {
     return rewriteToProduct(request, pathname, search, "cubemap");
+  }
+
+  if (dronesHost) {
+    return rewriteToProduct(request, pathname, search, "drones");
   }
 
   return NextResponse.next();

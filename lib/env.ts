@@ -41,10 +41,12 @@ export function getTrustedOrigins() {
     "https://handoff.spleckt.com",
     "https://menoknow.spleckt.com",
     "https://cubemap.spleckt.com",
+    "https://drones.spleckt.com",
     "http://localhost:3000",
     "http://handoff.localhost:3000",
     "http://menoknow.localhost:3000",
     "http://cubemap.localhost:3000",
+    "http://drones.localhost:3000",
   ]);
 
   if (process.env.NEXT_PUBLIC_HANDOFF_URL) {
@@ -55,6 +57,9 @@ export function getTrustedOrigins() {
   }
   if (process.env.NEXT_PUBLIC_CUBEMAP_URL) {
     origins.add(process.env.NEXT_PUBLIC_CUBEMAP_URL.replace(/\/$/, ""));
+  }
+  if (process.env.NEXT_PUBLIC_DRONES_URL) {
+    origins.add(process.env.NEXT_PUBLIC_DRONES_URL.replace(/\/$/, ""));
   }
 
   try {
@@ -69,6 +74,7 @@ export function getTrustedOrigins() {
       origins.add(`${url.protocol}//handoff.spleckt.com`);
       origins.add(`${url.protocol}//menoknow.spleckt.com`);
       origins.add(`${url.protocol}//cubemap.spleckt.com`);
+      origins.add(`${url.protocol}//drones.spleckt.com`);
     }
 
     if (url.hostname === "localhost" || url.hostname.endsWith(".localhost")) {
@@ -76,6 +82,7 @@ export function getTrustedOrigins() {
       origins.add(`${url.protocol}//handoff.localhost${port}`);
       origins.add(`${url.protocol}//menoknow.localhost${port}`);
       origins.add(`${url.protocol}//cubemap.localhost${port}`);
+      origins.add(`${url.protocol}//drones.localhost${port}`);
     }
   } catch {
     // ignore invalid app url during build
