@@ -20,6 +20,7 @@ export function DronesPhoto({
       fill
       sizes={sizes}
       preload={preload}
+      unoptimized
       className={className ?? "dr-photo"}
     />
   );
