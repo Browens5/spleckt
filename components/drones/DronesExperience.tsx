@@ -30,12 +30,12 @@ export function DronesExperience() {
     progressRef.current = scrollT;
   }, [scrollT]);
 
-  const panelOpacity =
-    local < 0.12
-      ? local / 0.12
-      : local > 0.88
-        ? (1 - local) / 0.12
-        : 1;
+  // First scene shows immediately at the top; last scene stays visible at
+  // the bottom; middle scenes crossfade at their edges.
+  const fadeIn = sceneIndex === 0 ? 1 : Math.min(1, local / 0.12);
+  const fadeOut =
+    sceneIndex === SCENES.length - 1 ? 1 : Math.min(1, (1 - local) / 0.12);
+  const panelOpacity = Math.min(fadeIn, fadeOut);
 
   const jumpToScene = (i: number) => {
     const max = Math.max(
