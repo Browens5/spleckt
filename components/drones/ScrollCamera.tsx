@@ -18,13 +18,13 @@ const KEYS: Key[] = [
   { t: 0.22, cam: [0.6, 4.1, -18], look: [1.2, 1.8, ANCHOR.construction.z + 10] },
   {
     t: 0.32,
-    cam: [6.2, 5.6, ANCHOR.construction.z + 11],
-    look: [ANCHOR.construction.x, 2.3, ANCHOR.construction.z],
+    cam: [8.8, 6.8, ANCHOR.construction.z + 16],
+    look: [ANCHOR.construction.x, 2.2, ANCHOR.construction.z],
   },
   {
     t: 0.42,
-    cam: [7.4, 6.2, ANCHOR.construction.z + 1],
-    look: [ANCHOR.construction.x, 2.5, ANCHOR.construction.z],
+    cam: [9.2, 7.2, ANCHOR.construction.z + 5],
+    look: [ANCHOR.construction.x, 2.4, ANCHOR.construction.z],
   },
   {
     t: 0.52,
