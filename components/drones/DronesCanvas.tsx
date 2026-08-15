@@ -85,7 +85,7 @@ export function DronesCanvas({ progress, lean, snapToken }: CanvasProps) {
         stencil: false,
       }}
       shadows={quality.shadows}
-      camera={{ fov: 42, near: 0.1, far: 80, position: [0, 3.2, 8.5] }}
+      camera={{ fov: 42, near: 0.1, far: 220, position: [0, 3.4, 12] }}
       style={{ pointerEvents: "none" }}
       onCreated={({ gl }) => {
         gl.setClearColor(SCENES[0].sky);

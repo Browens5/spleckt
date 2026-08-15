@@ -69,8 +69,8 @@ Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www. Option
 
 Scroll-driven Three.js marketing experience for Spleckt aerial services. Host-based routing sends `drones.spleckt.com` (and `drones.localhost:3000` in local dev) to the Drones UI. The main Spleckt site does not link to it; `/drones` paths return 404 on www/apex.
 
-- Procedural downtown → construction → orthomosaic → neighborhood scenes scrubbed by scroll
-- Stylized Matrice-class drone with pointer lean
+- Procedural downtown → construction → survey → neighborhood scenes scrubbed by scroll
+- Stylized Inspire-class drone with pointer lean
 - Per-scene theme rotation for overlays and lighting
 
 Point DNS for `drones.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_DRONES_URL`.

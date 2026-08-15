@@ -3,21 +3,24 @@
 import { useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { ANCHOR } from "./layout";
 
 const CAM_POINTS = [
-  new THREE.Vector3(0, 3.2, 8.5),
-  new THREE.Vector3(0.4, 3.4, 2.5),
-  new THREE.Vector3(7, 5.2, -7.5),
-  new THREE.Vector3(0.5, 14, -10),
-  new THREE.Vector3(-2.5, 7.5, -18),
+  new THREE.Vector3(0, 3.4, 12),
+  new THREE.Vector3(0.3, 3.6, -6),
+  new THREE.Vector3(1, 4.2, -28),
+  new THREE.Vector3(8, 6.4, ANCHOR.construction.z + 6),
+  new THREE.Vector3(0.4, 18, ANCHOR.ortho.z + 2),
+  new THREE.Vector3(-5, 9.2, ANCHOR.neighborhood.z + 14),
 ];
 
 const LOOK_POINTS = [
-  new THREE.Vector3(0, 1.2, 0),
-  new THREE.Vector3(0.2, 1.6, -4),
-  new THREE.Vector3(2.5, 2.6, -17),
-  new THREE.Vector3(0, 0.2, -12),
-  new THREE.Vector3(-1, 1.4, -22),
+  new THREE.Vector3(0, 1.2, 2),
+  new THREE.Vector3(0, 1.4, -14),
+  new THREE.Vector3(0, 1.8, -40),
+  new THREE.Vector3(ANCHOR.construction.x, 2.4, ANCHOR.construction.z),
+  new THREE.Vector3(ANCHOR.ortho.x, 0.2, ANCHOR.ortho.z),
+  new THREE.Vector3(ANCHOR.neighborhood.x, 1.2, ANCHOR.neighborhood.z - 4),
 ];
 
 const tmpCam = new THREE.Vector3();
@@ -32,7 +35,7 @@ export function ScrollCamera({
   snapToken: MutableRefObject<number>;
 }) {
   const { camera } = useThree();
-  const look = useRef(new THREE.Vector3(0, 1.2, 0));
+  const look = useRef(new THREE.Vector3(0, 1.2, 2));
   const lastSnap = useRef(0);
   const camCurve = useMemo(() => new THREE.CatmullRomCurve3(CAM_POINTS), []);
   const lookCurve = useMemo(() => new THREE.CatmullRomCurve3(LOOK_POINTS), []);
@@ -42,9 +45,9 @@ export function ScrollCamera({
     camCurve.getPoint(Math.min(0.999, Math.max(0, t)), tmpCam);
     lookCurve.getPoint(Math.min(0.999, Math.max(0, t)), tmpLook);
 
-    if (t > 0.45 && t < 0.72) {
-      const ortho = THREE.MathUtils.smoothstep(t, 0.45, 0.62);
-      tmpCam.y = THREE.MathUtils.lerp(tmpCam.y, 16, ortho * 0.55);
+    if (t > 0.48 && t < 0.76) {
+      const ortho = THREE.MathUtils.smoothstep(t, 0.5, 0.64);
+      tmpCam.y = THREE.MathUtils.lerp(tmpCam.y, 20, ortho * 0.55);
     }
 
     const shouldSnap = snapToken.current !== lastSnap.current;
@@ -53,10 +56,8 @@ export function ScrollCamera({
       camera.position.copy(tmpCam);
       look.current.copy(tmpLook);
     } else {
-      // Adaptive smoothing: track tightly when the target races ahead
-      // (fast scrolls) so the camera never cuts corners through geometry.
       const dist = camera.position.distanceTo(tmpCam);
-      const alpha = Math.min(1, 0.16 + dist * 0.09);
+      const alpha = Math.min(1, 0.16 + dist * 0.08);
       camera.position.lerp(tmpCam, alpha);
       look.current.lerp(tmpLook, alpha);
     }

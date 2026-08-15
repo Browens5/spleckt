@@ -7,17 +7,22 @@ import {
   makeAsphaltTexture,
   makeConcreteTexture,
 } from "../textures";
+import { ANCHOR } from "../layout";
+import { Car, FACE_NEG_Z, FACE_POS_Z, Streetlight, Tree } from "../kit";
 
 function Building({
   position,
   size,
   facade,
   accent,
+  /** Which side faces the street. */
+  street: streetSide,
 }: {
   position: [number, number, number];
   size: [number, number, number];
   facade: THREE.Texture;
   accent: string;
+  street: "left" | "right";
 }) {
   const [w, h, d] = size;
   const map = useMemo(() => {
@@ -26,6 +31,9 @@ function Building({
     t.repeat.set(Math.max(1, Math.round(w / 2.2)), Math.max(1, Math.round(h / 3)));
     return t;
   }, [facade, w, h]);
+
+  const faceX = streetSide === "left" ? w / 2 : -w / 2;
+  const sign = streetSide === "left" ? 1 : -1;
 
   return (
     <group position={position}>
@@ -38,33 +46,25 @@ function Building({
         <meshStandardMaterial attach="material-4" map={map} emissiveMap={map} emissive="#ffffff" emissiveIntensity={0.55} roughness={0.85} />
         <meshStandardMaterial attach="material-5" map={map} emissiveMap={map} emissive="#ffffff" emissiveIntensity={0.55} roughness={0.85} />
       </mesh>
-      {/* Rooftop mechanicals */}
-      <mesh castShadow position={[w * 0.2, h + 0.12, -d * 0.15]}>
-        <boxGeometry args={[w * 0.3, 0.24, d * 0.3]} />
+      <mesh castShadow position={[w * 0.18, h + 0.14, -d * 0.12]}>
+        <boxGeometry args={[w * 0.28, 0.28, d * 0.28]} />
         <meshStandardMaterial color="#262e38" roughness={0.9} />
       </mesh>
-      <mesh position={[-w * 0.25, h + 0.2, d * 0.1]}>
-        <cylinderGeometry args={[0.05, 0.05, 0.4, 6]} />
+      <mesh position={[-w * 0.22, h + 0.22, d * 0.08]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.44, 6]} />
         <meshStandardMaterial color="#3a424e" roughness={0.8} />
       </mesh>
-      {/* Awning / storefront strip */}
-      <mesh position={[0, 0.55, d / 2 + 0.12]}>
-        <boxGeometry args={[w * 0.92, 0.08, 0.28]} />
+      {/* Street-facing storefront */}
+      <mesh position={[faceX + sign * 0.12, 0.55, 0]}>
+        <boxGeometry args={[0.28, 0.08, d * 0.88]} />
         <meshStandardMaterial color={accent} roughness={0.5} emissive={accent} emissiveIntensity={0.12} />
       </mesh>
-      {/* Glowing shop sign */}
-      <mesh position={[0, 0.85, d / 2 + 0.03]}>
-        <boxGeometry args={[w * 0.5, 0.14, 0.03]} />
-        <meshStandardMaterial
-          color={accent}
-          emissive={accent}
-          emissiveIntensity={0.9}
-          roughness={0.4}
-        />
+      <mesh position={[faceX + sign * 0.03, 0.88, 0]}>
+        <boxGeometry args={[0.04, 0.16, d * 0.42]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.9} roughness={0.4} />
       </mesh>
-      {/* Storefront glass */}
-      <mesh position={[0, 0.25, d / 2 + 0.01]}>
-        <boxGeometry args={[w * 0.7, 0.45, 0.04]} />
+      <mesh position={[faceX + sign * 0.01, 0.26, 0]}>
+        <boxGeometry args={[0.04, 0.48, d * 0.62]} />
         <meshStandardMaterial
           color="#101820"
           metalness={0.5}
@@ -77,73 +77,34 @@ function Building({
   );
 }
 
-function Streetlight({ position }: { position: [number, number, number] }) {
-  return (
-    <group position={position}>
-      <mesh castShadow position={[0, 1.4, 0]}>
-        <cylinderGeometry args={[0.04, 0.05, 2.8, 6]} />
-        <meshStandardMaterial color="#2c3440" metalness={0.6} roughness={0.4} />
-      </mesh>
-      <mesh position={[0.35, 2.7, 0]} rotation={[0, 0, -0.6]}>
-        <boxGeometry args={[0.55, 0.04, 0.04]} />
-        <meshStandardMaterial color="#2c3440" metalness={0.6} roughness={0.4} />
-      </mesh>
-      <mesh position={[0.55, 2.55, 0]}>
-        <boxGeometry args={[0.2, 0.08, 0.12]} />
-        <meshStandardMaterial
-          color="#f0e6c8"
-          emissive="#f0d080"
-          emissiveIntensity={1.1}
-        />
-      </mesh>
-      <pointLight position={[0.55, 2.4, 0]} intensity={0.4} distance={6} color="#ffd9a0" />
-    </group>
-  );
-}
-
-function Car({
+function TrafficLight({
   position,
-  color,
   rotation = 0,
 }: {
   position: [number, number, number];
-  color: string;
   rotation?: number;
 }) {
   return (
     <group position={position} rotation={[0, rotation, 0]}>
-      <mesh castShadow position={[0, 0.22, 0]}>
-        <boxGeometry args={[0.9, 0.24, 0.42]} />
-        <meshStandardMaterial color={color} roughness={0.35} metalness={0.5} />
+      <mesh castShadow position={[0, 1.1, 0]}>
+        <cylinderGeometry args={[0.035, 0.045, 2.2, 6]} />
+        <meshStandardMaterial color="#2a323c" />
       </mesh>
-      <mesh castShadow position={[0.05, 0.42, 0]}>
-        <boxGeometry args={[0.45, 0.2, 0.38]} />
-        <meshStandardMaterial color="#1a222c" metalness={0.6} roughness={0.15} />
+      <mesh position={[0.18, 2.15, 0]}>
+        <boxGeometry args={[0.16, 0.42, 0.14]} />
+        <meshStandardMaterial color="#1a1e24" />
       </mesh>
-      {/* Wheels */}
-      {([
-        [0.28, 0.19],
-        [0.28, -0.19],
-        [-0.28, 0.19],
-        [-0.28, -0.19],
-      ] as const).map(([wx, wz], i) => (
-        <mesh key={i} position={[wx, 0.09, wz]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.09, 0.09, 0.06, 10]} />
-          <meshStandardMaterial color="#0c0e12" roughness={0.8} />
-        </mesh>
-      ))}
-      {/* Headlights + taillights */}
-      <mesh position={[0.46, 0.22, 0.13]}>
-        <boxGeometry args={[0.02, 0.05, 0.08]} />
-        <meshStandardMaterial color="#fff8d8" emissive="#ffedb0" emissiveIntensity={1.6} />
+      <mesh position={[0.26, 2.28, 0]}>
+        <sphereGeometry args={[0.035, 8, 8]} />
+        <meshStandardMaterial color="#3a1010" emissive="#ff2020" emissiveIntensity={1.6} />
       </mesh>
-      <mesh position={[0.46, 0.22, -0.13]}>
-        <boxGeometry args={[0.02, 0.05, 0.08]} />
-        <meshStandardMaterial color="#fff8d8" emissive="#ffedb0" emissiveIntensity={1.6} />
+      <mesh position={[0.26, 2.15, 0]}>
+        <sphereGeometry args={[0.035, 8, 8]} />
+        <meshStandardMaterial color="#3a3010" />
       </mesh>
-      <mesh position={[-0.46, 0.22, 0]}>
-        <boxGeometry args={[0.02, 0.05, 0.3]} />
-        <meshStandardMaterial color="#a02020" emissive="#e03030" emissiveIntensity={1.2} />
+      <mesh position={[0.26, 2.02, 0]}>
+        <sphereGeometry args={[0.035, 8, 8]} />
+        <meshStandardMaterial color="#103a18" />
       </mesh>
     </group>
   );
@@ -153,96 +114,126 @@ export function DowntownScene() {
   const facades = useMemo(() => getFacadeTextures(), []);
   const asphalt = useMemo(() => {
     const t = makeAsphaltTexture();
-    t.repeat.set(3, 13);
+    t.repeat.set(3, 18);
     return t;
   }, []);
   const concrete = useMemo(() => {
     const t = makeConcreteTexture();
-    t.repeat.set(1.2, 18);
+    t.repeat.set(1.2, 22);
     return t;
   }, []);
 
-  const buildingsL = useMemo(
+  const left = useMemo(
     () =>
       [
-        { z: 6, h: 4.2, w: 2.2, f: 0, a: "#3ec7c0" },
-        { z: 2.5, h: 5.5, w: 2.6, f: 1, a: "#e07050" },
-        { z: -1, h: 3.6, w: 2.0, f: 2, a: "#6a9fd0" },
-        { z: -4.5, h: 6.2, w: 2.8, f: 3, a: "#d4a05a" },
-        { z: -8, h: 4.8, w: 2.3, f: 0, a: "#5ec0b0" },
+        { z: 10, h: 4.4, w: 2.3, d: 2.6, f: 0, a: "#3ec7c0" },
+        { z: 6.2, h: 6.1, w: 2.5, d: 2.8, f: 1, a: "#e07050" },
+        { z: 2.2, h: 3.8, w: 2.1, d: 2.4, f: 2, a: "#6a9fd0" },
+        { z: -1.6, h: 7.2, w: 2.8, d: 3.0, f: 3, a: "#d4a05a" },
+        { z: -5.6, h: 5.0, w: 2.4, d: 2.6, f: 0, a: "#5ec0b0" },
+        { z: -9.4, h: 4.2, w: 2.2, d: 2.5, f: 1, a: "#c07090" },
+        { z: -13.2, h: 6.4, w: 2.6, d: 2.8, f: 2, a: "#70b0d0" },
+        { z: -17.2, h: 5.4, w: 2.3, d: 2.6, f: 3, a: "#e8b060" },
       ] as const,
     [],
   );
-  const buildingsR = useMemo(
+  const right = useMemo(
     () =>
       [
-        { z: 7, h: 3.8, w: 2.1, f: 2, a: "#c07090" },
-        { z: 3.5, h: 5.0, w: 2.4, f: 3, a: "#70b0d0" },
-        { z: 0, h: 6.8, w: 2.7, f: 1, a: "#e8b060" },
-        { z: -3.5, h: 4.0, w: 2.2, f: 0, a: "#50c0a0" },
-        { z: -7, h: 5.6, w: 2.5, f: 2, a: "#8090c0" },
+        { z: 11, h: 3.6, w: 2.2, d: 2.4, f: 2, a: "#8090c0" },
+        { z: 7.2, h: 5.4, w: 2.4, d: 2.6, f: 3, a: "#50c0a0" },
+        { z: 3.2, h: 7.0, w: 2.7, d: 2.9, f: 1, a: "#e8b060" },
+        { z: -0.8, h: 4.6, w: 2.2, d: 2.5, f: 0, a: "#70b0d0" },
+        { z: -4.8, h: 6.0, w: 2.5, d: 2.7, f: 2, a: "#c07090" },
+        { z: -8.8, h: 3.9, w: 2.1, d: 2.4, f: 3, a: "#5ec0b0" },
+        { z: -12.6, h: 5.8, w: 2.6, d: 2.8, f: 0, a: "#d4a05a" },
+        { z: -16.6, h: 4.8, w: 2.3, d: 2.5, f: 1, a: "#6a9fd0" },
       ] as const,
     [],
   );
 
   return (
-    <group>
-      {/* Road */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -1]} receiveShadow>
-        <planeGeometry args={[7, 28]} />
+    <group position={[ANCHOR.downtown.x, 0, ANCHOR.downtown.z]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -4]} receiveShadow>
+        <planeGeometry args={[8, 42]} />
         <meshStandardMaterial map={asphalt} roughness={0.95} />
       </mesh>
-      {/* Center dashes */}
-      {[-9, -6, -3, 0, 3, 6, 9].map((z) => (
-        <mesh key={z} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, z - 1]}>
-          <planeGeometry args={[0.12, 1.4]} />
+      {[-18, -14, -10, -6, -2, 2, 6, 10, 14].map((z) => (
+        <mesh key={z} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, z]}>
+          <planeGeometry args={[0.12, 1.5]} />
           <meshStandardMaterial color="#d8c070" emissive="#806020" emissiveIntensity={0.25} />
         </mesh>
       ))}
-      {/* Crosswalk */}
-      {[-1.2, -0.6, 0, 0.6, 1.2].map((x) => (
-        <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.02, 5.2]}>
-          <planeGeometry args={[0.35, 1.4]} />
+      {[-1.4, -0.7, 0, 0.7, 1.4].map((x) => (
+        <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.02, 8.4]}>
+          <planeGeometry args={[0.38, 1.6]} />
           <meshStandardMaterial color="#c8ccd4" roughness={0.9} />
         </mesh>
       ))}
-      {/* Sidewalks */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.2, 0.03, -1]} receiveShadow>
-        <planeGeometry args={[1.6, 28]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.5, 0.03, -4]} receiveShadow>
+        <planeGeometry args={[1.8, 42]} />
         <meshStandardMaterial map={concrete} roughness={0.9} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[3.2, 0.03, -1]} receiveShadow>
-        <planeGeometry args={[1.6, 28]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[3.5, 0.03, -4]} receiveShadow>
+        <planeGeometry args={[1.8, 42]} />
         <meshStandardMaterial map={concrete} roughness={0.9} />
       </mesh>
 
-      {buildingsL.map((b, i) => (
+      {left.map((b, i) => (
         <Building
           key={`l${i}`}
-          position={[-4.6, 0, b.z]}
-          size={[b.w, b.h, 2.4]}
+          position={[-5.0, 0, b.z]}
+          size={[b.w, b.h, b.d]}
           facade={facades[b.f]}
           accent={b.a}
+          street="left"
         />
       ))}
-      {buildingsR.map((b, i) => (
+      {right.map((b, i) => (
         <Building
           key={`r${i}`}
-          position={[4.6, 0, b.z]}
-          size={[b.w, b.h, 2.4]}
+          position={[5.0, 0, b.z]}
+          size={[b.w, b.h, b.d]}
           facade={facades[b.f]}
           accent={b.a}
+          street="right"
         />
       ))}
 
-      <Streetlight position={[-2.6, 0, 4]} />
-      <Streetlight position={[2.6, 0, 1]} />
-      <Streetlight position={[-2.6, 0, -3]} />
-      <Streetlight position={[2.6, 0, -7]} />
+      {/* Background towers so the block feels deeper */}
+      <mesh castShadow position={[-8.4, 4.2, -3]}>
+        <boxGeometry args={[2.2, 8.4, 2.4]} />
+        <meshStandardMaterial map={facades[1]} emissiveMap={facades[1]} emissive="#ffffff" emissiveIntensity={0.4} roughness={0.9} />
+      </mesh>
+      <mesh castShadow position={[8.6, 5.1, -8]}>
+        <boxGeometry args={[2.4, 10.2, 2.6]} />
+        <meshStandardMaterial map={facades[2]} emissiveMap={facades[2]} emissive="#ffffff" emissiveIntensity={0.4} roughness={0.9} />
+      </mesh>
 
-      <Car position={[-1.1, 0, 3]} color="#3a6a90" />
-      <Car position={[1.2, 0, -2]} color="#8a4040" rotation={Math.PI} />
-      <Car position={[-1.0, 0, -6]} color="#3a7050" />
+      {/* Left curb: arm +X toward the road. Right curb: yaw PI so arm aims −X. */}
+      <Streetlight position={[-2.7, 0, 8]} />
+      <Streetlight position={[-2.7, 0, 2]} />
+      <Streetlight position={[-2.7, 0, -5]} />
+      <Streetlight position={[-2.7, 0, -12]} />
+      <Streetlight position={[2.7, 0, 6]} rotation={Math.PI} />
+      <Streetlight position={[2.7, 0, -1]} rotation={Math.PI} />
+      <Streetlight position={[2.7, 0, -8]} rotation={Math.PI} />
+      <Streetlight position={[2.7, 0, -15]} rotation={Math.PI} />
+
+      <TrafficLight position={[-2.5, 0, 7.2]} />
+      <TrafficLight position={[2.5, 0, 9.4]} rotation={Math.PI} />
+
+      {/* Right-hand traffic on a −Z street: right lane faces −Z, left faces +Z */}
+      <Car position={[1.15, 0, 5]} color="#3a6a90" rotation={FACE_NEG_Z} />
+      <Car position={[1.2, 0, -3]} color="#8a4040" rotation={FACE_NEG_Z} />
+      <Car position={[1.1, 0, -11]} color="#c4a050" rotation={FACE_NEG_Z} />
+      <Car position={[-1.15, 0, 2]} color="#3a7050" rotation={FACE_POS_Z} />
+      <Car position={[-1.1, 0, -7]} color="#5a4a80" rotation={FACE_POS_Z} />
+      <Car position={[-1.2, 0, -16]} color="#704030" rotation={FACE_POS_Z} />
+
+      <Tree position={[-3.4, 0, 4.5]} scale={0.7} />
+      <Tree position={[3.5, 0, -6]} scale={0.75} />
+      <Tree position={[-3.5, 0, -14]} scale={0.65} />
     </group>
   );
 }

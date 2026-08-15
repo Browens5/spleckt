@@ -15,11 +15,11 @@ const sans = IBM_Plex_Sans({
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Spleckt Drones — Aerial Photo, Video & Reality Capture",
+    absolute: "Spleckt Drones — Photo, Survey & Tours",
     template: "%s · Spleckt Drones",
   },
   description:
-    "Aerial photography, construction documentation, orthomosaics, and virtual tours from Spleckt.",
+    "Quality drone services from Spleckt: cinema-grade aerials, construction progress, survey-grade maps, and virtual tours.",
 };
 
 export default function DronesRootLayout({

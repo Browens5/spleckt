@@ -111,13 +111,13 @@ export function DronesExperience() {
         <h1 className="drones-panel__title">{scene.title}</h1>
         <p className="drones-panel__body">{scene.body}</p>
         {sceneIndex === 0 ? (
-          <p className="drones-panel__hint">Scroll to fly forward</p>
+          <p className="drones-panel__hint">Scroll to fly</p>
         ) : null}
       </div>
 
       <footer className="drones-footer">
         <a className="drones-cta" href={appUrl}>
-          Explore Spleckt
+          Start a project
         </a>
       </footer>
     </div>
