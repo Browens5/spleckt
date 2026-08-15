@@ -91,7 +91,7 @@ export function ConstructionScene() {
   }, []);
 
   return (
-    <group position={[1, 0, -8]}>
+    <group position={[2.5, 0, -13]}>
       {/* Dirt pad */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
         <planeGeometry args={[18, 16]} />
@@ -101,8 +101,31 @@ export function ConstructionScene() {
       {/* Core building under construction */}
       <mesh castShadow receiveShadow position={[0, 2.4, 0]}>
         <boxGeometry args={[4.2, 4.8, 3.6]} />
-        <meshStandardMaterial map={concrete} color="#b0a894" roughness={0.9} />
+        <meshStandardMaterial map={concrete} color="#cabfa8" roughness={0.9} />
       </mesh>
+      {/* Warm work lights glowing inside open floors */}
+      {[0.9, 2.1, 3.3].map((y) => (
+        <group key={y}>
+          <mesh position={[0, y, 1.82]}>
+            <boxGeometry args={[3.6, 0.5, 0.03]} />
+            <meshStandardMaterial
+              color="#3a2c18"
+              emissive="#ffb860"
+              emissiveIntensity={0.5}
+              roughness={0.9}
+            />
+          </mesh>
+          <mesh position={[2.12, y, 0]}>
+            <boxGeometry args={[0.03, 0.5, 3.0]} />
+            <meshStandardMaterial
+              color="#3a2c18"
+              emissive="#ffb860"
+              emissiveIntensity={0.35}
+              roughness={0.9}
+            />
+          </mesh>
+        </group>
+      ))}
       {/* Floor plates */}
       {[1.2, 2.4, 3.6].map((y) => (
         <mesh key={y} position={[0, y, 0]}>

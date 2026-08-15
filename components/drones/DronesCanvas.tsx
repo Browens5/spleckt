@@ -13,11 +13,11 @@ import { Dust, SkyDome } from "./effects";
 function Lights({ quality }: { quality: QualityTier }) {
   return (
     <>
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={0.48} />
       <directionalLight
         castShadow={quality.shadows}
         position={[8, 14, 6]}
-        intensity={1.15}
+        intensity={1.35}
         color="#fff2e0"
         shadow-mapSize-width={quality.shadowMapSize}
         shadow-mapSize-height={quality.shadowMapSize}

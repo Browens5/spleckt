@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type MutableRefObject } from "react";
 import * as THREE from "three";
 import { makeOrthoMapTexture } from "../textures";
 import { ScanGrid } from "../effects";
 
-export function OrthoScene() {
+export function OrthoScene({
+  progress,
+}: {
+  progress: MutableRefObject<number>;
+}) {
   const orthoMap = useMemo(() => makeOrthoMapTexture(), []);
 
   const markers = useMemo(() => {
@@ -26,8 +30,13 @@ export function OrthoScene() {
         <meshStandardMaterial map={orthoMap} roughness={0.95} />
       </mesh>
 
-      {/* Animated survey scan overlay */}
-      <ScanGrid size={26} color="#4fd0e8" position={[0, 0.07, 0]} />
+      {/* Animated survey scan overlay — only during the ortho segment */}
+      <ScanGrid
+        size={26}
+        color="#4fd0e8"
+        position={[0, 0.07, 0]}
+        progress={progress}
+      />
 
       {/* Elevation pads reading as processed terrain */}
       {[

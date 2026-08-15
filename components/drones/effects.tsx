@@ -43,10 +43,10 @@ const SKY_FRAG = /* glsl */ `
 
     // Stars with subtle twinkle
     if (dir.y > 0.08) {
-      vec2 sp = dir.xz / max(0.15, dir.y) * 14.0;
+      vec2 sp = dir.xz / max(0.15, dir.y) * 17.0;
       vec2 cell = floor(sp);
       float rnd = hash(cell);
-      if (rnd > 0.976) {
+      if (rnd > 0.962) {
         vec2 f = fract(sp) - 0.5;
         float d = length(f);
         float tw = 0.7 + 0.3 * sin(uTime * (1.5 + rnd * 3.0) + rnd * 40.0);
@@ -120,6 +120,7 @@ const SCAN_VERT = /* glsl */ `
 const SCAN_FRAG = /* glsl */ `
   varying vec2 vUv;
   uniform float uTime;
+  uniform float uOpacity;
   uniform vec3 uColor;
 
   void main() {
@@ -140,24 +141,35 @@ const SCAN_FRAG = /* glsl */ `
     float sweep = pow(max(0.0, cos(ang - uTime * 0.5)), 24.0) * 0.3 * smoothstep(0.5, 0.1, d);
 
     float edge = smoothstep(0.5, 0.4, d);
-    float a = (grid + major + ring * 0.85 + sweep) * edge;
+    float a = (grid + major + ring * 0.85 + sweep) * edge * uOpacity;
     gl_FragColor = vec4(uColor, a);
   }
 `;
+
+function fadeWindow(t: number, start: number, end: number, feather: number) {
+  const rise = Math.min(1, Math.max(0, (t - start) / feather));
+  const fall = Math.min(1, Math.max(0, (end - t) / feather));
+  return Math.min(rise, fall);
+}
 
 export function ScanGrid({
   size,
   color,
   position,
+  progress,
+  window: fadeRange = [0.45, 0.82],
 }: {
   size: number;
   color: string;
   position: [number, number, number];
+  progress: { current: number };
+  window?: [number, number];
 }) {
   const material = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
+      uOpacity: { value: 0 },
       uColor: { value: new THREE.Color(color) },
     }),
     [color],
@@ -165,7 +177,14 @@ export function ScanGrid({
 
   useFrame((state) => {
     if (!material.current) return;
-    material.current.uniforms.uTime.value = state.clock.elapsedTime;
+    const u = material.current.uniforms;
+    u.uTime.value = state.clock.elapsedTime;
+    u.uOpacity.value = fadeWindow(
+      progress.current,
+      fadeRange[0],
+      fadeRange[1],
+      0.06,
+    );
   });
 
   return (

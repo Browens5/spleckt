@@ -7,7 +7,7 @@ import * as THREE from "three";
 const CAM_POINTS = [
   new THREE.Vector3(0, 3.2, 8.5),
   new THREE.Vector3(0.4, 3.4, 2.5),
-  new THREE.Vector3(5.5, 4.8, -6),
+  new THREE.Vector3(7, 5.2, -7.5),
   new THREE.Vector3(0.5, 14, -10),
   new THREE.Vector3(-2.5, 7.5, -18),
 ];
@@ -15,7 +15,7 @@ const CAM_POINTS = [
 const LOOK_POINTS = [
   new THREE.Vector3(0, 1.2, 0),
   new THREE.Vector3(0.2, 1.6, -4),
-  new THREE.Vector3(1.5, 2.2, -8),
+  new THREE.Vector3(2.5, 2.4, -12),
   new THREE.Vector3(0, 0.2, -12),
   new THREE.Vector3(-1, 1.4, -22),
 ];
