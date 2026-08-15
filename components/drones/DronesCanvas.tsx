@@ -13,22 +13,22 @@ import { Dust, SkyDome } from "./effects";
 function Lights({ quality }: { quality: QualityTier }) {
   return (
     <>
-      <ambientLight intensity={0.58} />
+      <ambientLight intensity={0.72} />
       <directionalLight
         castShadow={quality.shadows}
-        position={[18, 36, -48]}
-        intensity={1.25}
+        position={[14, 34, -40]}
+        intensity={1.35}
         color="#fff2e0"
         shadow-mapSize-width={quality.shadowMapSize}
         shadow-mapSize-height={quality.shadowMapSize}
-        shadow-camera-far={160}
-        shadow-camera-left={-40}
-        shadow-camera-right={40}
-        shadow-camera-top={40}
-        shadow-camera-bottom={-40}
+        shadow-camera-far={180}
+        shadow-camera-left={-50}
+        shadow-camera-right={50}
+        shadow-camera-top={50}
+        shadow-camera-bottom={-50}
       />
-      <directionalLight position={[-14, 12, -70]} intensity={0.4} color="#80c0e0" />
-      <hemisphereLight args={["#8ab0c8", "#1a1810", 0.5]} />
+      <directionalLight position={[-12, 14, -60]} intensity={0.45} color="#80c0e0" />
+      <hemisphereLight args={["#9ec4d8", "#2a2618", 0.62]} />
     </>
   );
 }
@@ -58,7 +58,7 @@ function Atmosphere({
   return (
     <>
       <color attach="background" args={[SCENES[0].sky]} />
-      <fog attach="fog" args={[SCENES[0].fog, 14, 58]} />
+      <fog attach="fog" args={[SCENES[0].fog, 28, 110]} />
     </>
   );
 }
@@ -85,12 +85,12 @@ export function DronesCanvas({ progress, lean, snapToken }: CanvasProps) {
         stencil: false,
       }}
       shadows={quality.shadows}
-      camera={{ fov: 42, near: 0.1, far: 220, position: [0, 3.4, 12] }}
+      camera={{ fov: 42, near: 0.1, far: 420, position: [0, 3.4, 12] }}
       style={{ pointerEvents: "none" }}
       onCreated={({ gl }) => {
         gl.setClearColor(SCENES[0].sky);
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.05;
+        gl.toneMappingExposure = 1.12;
       }}
     >
       <Atmosphere fogRef={fogRef} />

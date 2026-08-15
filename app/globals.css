@@ -5041,8 +5041,8 @@ textarea {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.55) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, transparent 18%, transparent 70%, rgba(0, 0, 0, 0.45) 100%);
+    radial-gradient(ellipse at center, transparent 48%, rgba(0, 0, 0, 0.32) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0%, transparent 16%, transparent 74%, rgba(0, 0, 0, 0.28) 100%);
 }
 
 .drones-scan {

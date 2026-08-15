@@ -3,7 +3,7 @@
 import { useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { ANCHOR } from "./layout";
+import { FOCUS } from "./layout";
 
 type Key = {
   t: number;
@@ -11,46 +11,28 @@ type Key = {
   look: [number, number, number];
 };
 
-/** Poses keyed to scroll so each copy window frames its own site. */
+const D = FOCUS.downtown;
+const C = FOCUS.construction;
+const O = FOCUS.ortho;
+const N = FOCUS.neighborhood;
+
+/**
+ * Hold on each district for its copy window, then fly along the street.
+ * Look-ats stay on the visual center so the drone (camera-parented) sits
+ * over the scene instead of empty fog.
+ */
 const KEYS: Key[] = [
-  { t: 0, cam: [0, 3.25, 9], look: [0, 1.15, -5] },
-  { t: 0.12, cam: [0.15, 3.45, -3], look: [0, 1.25, -16] },
-  { t: 0.22, cam: [0.6, 4.1, -18], look: [1.2, 1.8, ANCHOR.construction.z + 10] },
-  {
-    t: 0.32,
-    cam: [8.8, 6.8, ANCHOR.construction.z + 16],
-    look: [ANCHOR.construction.x, 2.2, ANCHOR.construction.z],
-  },
-  {
-    t: 0.42,
-    cam: [9.2, 7.2, ANCHOR.construction.z + 5],
-    look: [ANCHOR.construction.x, 2.4, ANCHOR.construction.z],
-  },
-  {
-    t: 0.52,
-    cam: [3.2, 11.5, ANCHOR.ortho.z + 14],
-    look: [ANCHOR.ortho.x, 0.3, ANCHOR.ortho.z],
-  },
-  {
-    t: 0.62,
-    cam: [0.15, 16.5, ANCHOR.ortho.z + 0.5],
-    look: [ANCHOR.ortho.x, 0.05, ANCHOR.ortho.z],
-  },
-  {
-    t: 0.74,
-    cam: [-2.4, 10.5, ANCHOR.neighborhood.z + 20],
-    look: [ANCHOR.neighborhood.x, 1.1, ANCHOR.neighborhood.z],
-  },
-  {
-    t: 0.88,
-    cam: [-5.2, 8.4, ANCHOR.neighborhood.z + 12],
-    look: [0, 1.15, ANCHOR.neighborhood.z - 2],
-  },
-  {
-    t: 1,
-    cam: [-4.6, 8.1, ANCHOR.neighborhood.z + 10],
-    look: [0, 1.2, ANCHOR.neighborhood.z - 3],
-  },
+  { t: 0, cam: [0, 3.35, 9.2], look: [D.x, D.y, D.z] },
+  { t: 0.18, cam: [0.18, 3.55, 1.8], look: [D.x, D.y + 0.08, D.z - 4] },
+  { t: 0.26, cam: [4.6, 5.7, C.z + 16], look: [C.x, C.y, C.z] },
+  { t: 0.34, cam: [6.2, 6.4, C.z + 14.5], look: [C.x, C.y, C.z] },
+  { t: 0.44, cam: [6.6, 6.8, C.z + 13.2], look: [C.x, C.y + 0.12, C.z] },
+  { t: 0.5, cam: [2.2, 10.6, O.z + 13], look: [O.x, O.y, O.z] },
+  { t: 0.58, cam: [0.7, 13.4, O.z + 6], look: [O.x, O.y, O.z] },
+  { t: 0.7, cam: [0.1, 16.1, O.z + 0.35], look: [O.x, 0.04, O.z] },
+  { t: 0.76, cam: [-1.8, 9.1, N.z + 16], look: [N.x, N.y, N.z] },
+  { t: 0.88, cam: [-3.6, 7.55, N.z + 12], look: [N.x, N.y, N.z - 1] },
+  { t: 1, cam: [-3.2, 7.35, N.z + 11], look: [N.x, N.y, N.z - 2] },
 ];
 
 const tmpCam = new THREE.Vector3();
@@ -84,7 +66,7 @@ export function ScrollCamera({
   snapToken: MutableRefObject<number>;
 }) {
   const { camera } = useThree();
-  const look = useRef(new THREE.Vector3(0, 1.15, -5));
+  const look = useRef(new THREE.Vector3(D.x, D.y, D.z));
   const lastSnap = useRef(0);
 
   useFrame(() => {
@@ -97,7 +79,7 @@ export function ScrollCamera({
       look.current.copy(tmpLook);
     } else {
       const dist = camera.position.distanceTo(tmpCam);
-      const alpha = Math.min(1, 0.2 + dist * 0.1);
+      const alpha = Math.min(1, 0.22 + dist * 0.12);
       camera.position.lerp(tmpCam, alpha);
       look.current.lerp(tmpLook, alpha);
     }

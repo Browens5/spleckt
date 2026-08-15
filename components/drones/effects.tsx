@@ -78,6 +78,8 @@ export function SkyDome() {
     horizon: new THREE.Color(SCENES[0].fog),
   });
 
+  const mesh = useRef<THREE.Mesh>(null);
+
   useFrame((state) => {
     const mat = material.current;
     if (!mat) return;
@@ -94,11 +96,14 @@ export function SkyDome() {
     const starTarget = STAR_INTENSITY[themeId] ?? 0.5;
     u.uStar.value += (starTarget - (u.uStar.value as number)) * 0.05;
     u.uTime.value = state.clock.elapsedTime;
+
+    // Stay around the camera so later districts never fly out of the sky.
+    if (mesh.current) mesh.current.position.copy(state.camera.position);
   });
 
   return (
-    <mesh renderOrder={-10} frustumCulled={false}>
-      <sphereGeometry args={[58, 24, 16]} />
+    <mesh ref={mesh} renderOrder={-10} frustumCulled={false}>
+      <sphereGeometry args={[240, 24, 16]} />
       <shaderMaterial
         ref={material}
         vertexShader={SKY_VERT}
@@ -218,9 +223,9 @@ export function Dust({ count = 260 }: { count?: number }) {
       return x - Math.floor(x);
     };
     for (let i = 0; i < count; i++) {
-      positions[i * 3] = (rand(i) - 0.5) * 30;
-      positions[i * 3 + 1] = rand(i + count) * 14 + 0.5;
-      positions[i * 3 + 2] = (rand(i + count * 2) - 0.5) * 46 - 8;
+      positions[i * 3] = (rand(i) - 0.5) * 28;
+      positions[i * 3 + 1] = rand(i + count) * 12 + 0.4;
+      positions[i * 3 + 2] = rand(i + count * 2) * -110 + 12;
     }
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     return geo;
