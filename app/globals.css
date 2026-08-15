@@ -4997,3 +4997,303 @@ textarea {
     font-size: 2.6rem;
   }
 }
+
+/* ——— Drones (drones.spleckt.com) ——— */
+
+.drones {
+  --drones-accent: #3ec7c0;
+  --drones-overlay: rgba(8, 18, 28, 0.55);
+  --drones-text: #e8f4f6;
+  --drones-muted: rgba(200, 220, 228, 0.78);
+  --dr-display: var(--drones-display), "Chakra Petch", sans-serif;
+  --dr-sans: var(--drones-sans), "IBM Plex Sans", sans-serif;
+  min-height: 100vh;
+  background: #0a121a;
+  color: var(--drones-text);
+  font-family: var(--dr-sans);
+}
+
+.drones-experience {
+  position: relative;
+  color: var(--drones-text);
+  transition: color 0.6s ease;
+}
+
+.drones-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.drones-canvas,
+.drones-canvas-fallback {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(62, 199, 192, 0.12), transparent 55%),
+    linear-gradient(180deg, #132536 0%, #0b1a28 100%);
+}
+
+.drones-vignette {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.55) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, transparent 18%, transparent 70%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+.drones-scan {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.04) 3px
+  );
+  mix-blend-mode: soft-light;
+  animation: drones-scan 10s linear infinite;
+}
+
+@keyframes drones-scan {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(4px);
+  }
+}
+
+.drones-scroll {
+  height: 450vh;
+  pointer-events: none;
+}
+
+.drones-chrome {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem;
+  pointer-events: none;
+}
+
+.drones-brand {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  color: var(--drones-text);
+}
+
+.drones-brand__mark {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--drones-accent), #ffffff88);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--drones-accent) 25%, transparent);
+  transform: translateY(-0.12rem);
+}
+
+.drones-brand__name {
+  font-family: var(--dr-display);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 4vw, 2.15rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.drones-brand__sub {
+  font-family: var(--dr-sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--drones-muted);
+}
+
+.drones-dots {
+  pointer-events: auto;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.drones-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--drones-text) 35%, transparent);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 0.35s ease,
+    transform 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.drones-dot--active {
+  background: var(--drones-accent);
+  border-color: var(--drones-accent);
+  transform: scale(1.25);
+}
+
+.drones-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: clamp(4.5rem, 12vh, 7rem);
+  z-index: 15;
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+  pointer-events: none;
+  transition: opacity 0.2s linear;
+}
+
+.drones-panel__label {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--drones-accent);
+  font-weight: 600;
+}
+
+.drones-panel__title {
+  margin: 0 0 0.7rem;
+  font-family: var(--dr-display);
+  font-weight: 600;
+  font-size: clamp(1.55rem, 4.2vw, 2.35rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.drones-panel__body {
+  margin: 0;
+  font-size: clamp(0.95rem, 2.2vw, 1.08rem);
+  line-height: 1.55;
+  color: var(--drones-muted);
+  max-width: 34ch;
+}
+
+.drones-panel__hint {
+  margin: 1rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--drones-accent) 80%, white);
+  animation: drones-hint 2.4s ease-in-out infinite;
+}
+
+@keyframes drones-hint {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(3px);
+  }
+}
+
+.drones-footer {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 20;
+}
+
+.drones-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.7rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--drones-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--drones-overlay) 80%, black);
+  color: var(--drones-text);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.drones-cta:hover {
+  border-color: var(--drones-accent);
+  background: color-mix(in srgb, var(--drones-accent) 18%, var(--drones-overlay));
+}
+
+.drones-experience[data-scene="downtown"] {
+  --drones-accent: #3ec7c0;
+}
+
+.drones-experience[data-scene="construction"] {
+  --drones-accent: #f0a050;
+}
+
+.drones-experience[data-scene="ortho"] {
+  --drones-accent: #4fd0e8;
+}
+
+.drones-experience[data-scene="neighborhood"] {
+  --drones-accent: #8fbf6a;
+}
+
+@media (max-width: 720px) {
+  .drones-chrome {
+    padding: 0.9rem 1rem;
+  }
+
+  .drones-brand__sub {
+    display: none;
+  }
+
+  .drones-panel {
+    bottom: 5.5rem;
+    padding: 1rem 1.15rem;
+    max-width: none;
+  }
+
+  .drones-panel__body {
+    max-width: none;
+  }
+
+  .drones-footer {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .drones-cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .drones-scan {
+    opacity: 0.04;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drones-scan,
+  .drones-panel__hint {
+    animation: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+

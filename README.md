@@ -21,6 +21,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 6. **Handoff** training surface on `handoff.spleckt.com` (modules, tests, certifications) — not linked from the main marketing site
 7. **MenoKnow** kids game center on `menoknow.spleckt.com` (letters, numbers, simple activities) — not linked from the main marketing site
 8. **Cubemap** on-device equirect→cubemap tool on `cubemap.spleckt.com` — not linked from the main marketing site
+9. **Drones** scroll-driven Three.js services experience on `drones.spleckt.com` — not linked from the main marketing site
 
 ### Roles
 
@@ -64,6 +65,16 @@ Browser tool that converts equirectangular 360° MP4 video into cubemap face ima
 
 Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
 
+## Drones (`drones.spleckt.com`)
+
+Scroll-driven Three.js marketing experience for Spleckt aerial services. Host-based routing sends `drones.spleckt.com` (and `drones.localhost:3000` in local dev) to the Drones UI. The main Spleckt site does not link to it; `/drones` paths return 404 on www/apex.
+
+- Procedural downtown → construction → orthomosaic → neighborhood scenes scrubbed by scroll
+- Stylized Matrice-class drone with pointer lean
+- Per-scene theme rotation for overlays and lighting
+
+Point DNS for `drones.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_DRONES_URL`.
+
 ## Setup
 
 ```bash
@@ -81,6 +92,7 @@ npm run dev
 Local Handoff: open `http://handoff.localhost:3000` (same process as `npm run dev`).
 Local MenoKnow: open `http://menoknow.localhost:3000`.
 Local Cubemap: open `http://cubemap.localhost:3000`.
+Local Drones: open `http://drones.localhost:3000`.
 
 Default admin (change after first login):
 
@@ -95,6 +107,7 @@ Default admin (change after first login):
 | `NEXT_PUBLIC_HANDOFF_URL` | Optional Handoff URL — defaults to `https://handoff.spleckt.com` |
 | `NEXT_PUBLIC_MENOKNOW_URL` | Optional MenoKnow URL — defaults to `https://menoknow.spleckt.com` |
 | `NEXT_PUBLIC_CUBEMAP_URL` | Optional Cubemap URL — defaults to `https://cubemap.spleckt.com` |
+| `NEXT_PUBLIC_DRONES_URL` | Optional Drones URL — defaults to `https://drones.spleckt.com` |
 | `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
 | `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
 | `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
@@ -169,3 +182,9 @@ Without R2, uploads are stored under `.data/uploads` and served from `/api/files
 | Route | Purpose |
 | --- | --- |
 | `/` | On-device equirect MP4 → cubemap extractor |
+
+### Drones host (`drones.spleckt.com`)
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Scroll-driven aerial services Three.js experience |
