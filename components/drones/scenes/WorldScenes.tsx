@@ -17,7 +17,7 @@ import type { QualityTier } from "../quality";
  */
 const WINDOWS: [number, number][] = [
   [0, 0.3],
-  [0.1, 0.58],
+  [0.12, 0.58],
   [0.42, 0.83],
   [0.62, 1.01],
 ];

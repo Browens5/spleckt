@@ -91,7 +91,7 @@ export function ConstructionScene() {
   }, []);
 
   return (
-    <group position={[2.5, 0, -13]}>
+    <group position={[2.5, 0, -19]}>
       {/* Dirt pad */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
         <planeGeometry args={[18, 16]} />

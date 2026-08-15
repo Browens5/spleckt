@@ -15,7 +15,7 @@ const CAM_POINTS = [
 const LOOK_POINTS = [
   new THREE.Vector3(0, 1.2, 0),
   new THREE.Vector3(0.2, 1.6, -4),
-  new THREE.Vector3(2.5, 2.4, -12),
+  new THREE.Vector3(2.5, 2.6, -17),
   new THREE.Vector3(0, 0.2, -12),
   new THREE.Vector3(-1, 1.4, -22),
 ];
