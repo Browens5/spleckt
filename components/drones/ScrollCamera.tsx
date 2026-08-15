@@ -27,10 +27,12 @@ const KEYS: Key[] = [
   { t: 0.26, cam: [3.6, 5.1, C.z + 15], look: [C.x, 2.0, C.z] },
   { t: 0.34, cam: [4.8, 5.4, C.z + 13], look: [C.x, 2.1, C.z] },
   { t: 0.44, cam: [5.0, 5.6, C.z + 12], look: [C.x, 2.2, C.z] },
-  { t: 0.5, cam: [2.0, 9.6, O.z + 12], look: [O.x, O.y, O.z] },
-  { t: 0.58, cam: [0.55, 12.2, O.z + 5], look: [O.x, O.y, O.z] },
+  // Climb in front of the tower so the path never clips the roof
+  { t: 0.48, cam: [4.4, 10.2, C.z + 11], look: [1.0, 1.4, O.z + 8] },
+  { t: 0.52, cam: [2.0, 11.4, O.z + 12], look: [O.x, O.y, O.z] },
+  { t: 0.6, cam: [0.55, 12.6, O.z + 5], look: [O.x, O.y, O.z] },
   { t: 0.7, cam: [0.08, 14.2, O.z + 0.3], look: [O.x, 0.04, O.z] },
-  { t: 0.76, cam: [-1.1, 6.0, N.z + 14], look: [N.x, 1.1, N.z] },
+  { t: 0.76, cam: [-1.1, 7.2, N.z + 16], look: [N.x, 1.1, N.z] },
   { t: 0.88, cam: [-2.2, 5.3, N.z + 10], look: [N.x, 1.05, N.z - 1] },
   { t: 1, cam: [-2.0, 5.1, N.z + 9], look: [N.x, 1.1, N.z - 2] },
 ];
