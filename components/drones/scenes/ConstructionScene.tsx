@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { makeConcreteTexture, makeDirtTexture } from "../textures";
 import { ANCHOR } from "../layout";
+import { Dozer, Excavator, TowerCrane, WorkLight } from "./equipment";
 
 function Scaffold({
   position,
@@ -63,46 +64,11 @@ function Scaffold({
   );
 }
 
-function Crane({
-  position,
-  rotation = 0,
-  height = 9,
+export function ConstructionScene({
+  reducedMotion = false,
 }: {
-  position: [number, number, number];
-  rotation?: number;
-  height?: number;
+  reducedMotion?: boolean;
 }) {
-  return (
-    <group position={position} rotation={[0, rotation, 0]}>
-      <mesh castShadow position={[0, height / 2, 0]}>
-        <boxGeometry args={[0.38, height, 0.38]} />
-        <meshStandardMaterial color="#d8a040" metalness={0.4} roughness={0.45} />
-      </mesh>
-      <mesh castShadow position={[2.6, height - 0.25, 0]}>
-        <boxGeometry args={[6.2, 0.24, 0.3]} />
-        <meshStandardMaterial color="#e0b050" metalness={0.45} roughness={0.4} />
-      </mesh>
-      <mesh position={[5.4, height - 2.2, 0]}>
-        <boxGeometry args={[0.04, 3.6, 0.04]} />
-        <meshStandardMaterial color="#666" />
-      </mesh>
-      <mesh position={[5.4, height - 4.1, 0]}>
-        <boxGeometry args={[0.55, 0.4, 0.55]} />
-        <meshStandardMaterial color="#333" />
-      </mesh>
-      <mesh position={[-1.4, height - 0.45, 0]}>
-        <boxGeometry args={[1.0, 0.75, 0.75]} />
-        <meshStandardMaterial color="#2a3038" />
-      </mesh>
-      <mesh position={[0, height + 0.18, 0]}>
-        <sphereGeometry args={[0.09, 8, 8]} />
-        <meshStandardMaterial color="#ff4030" emissive="#ff2020" emissiveIntensity={2.4} />
-      </mesh>
-    </group>
-  );
-}
-
-export function ConstructionScene() {
   const dirt = useMemo(() => {
     const t = makeDirtTexture();
     t.repeat.set(7, 6);
@@ -174,8 +140,20 @@ export function ConstructionScene() {
       <Scaffold position={[-3.2, 0, -1.4]} floors={5} width={3.0} depth={2.4} />
       <Scaffold position={[3.2, 0, -1.4]} floors={4} width={3.0} depth={2.4} />
       <Scaffold position={[-8, 0, -6.2]} floors={3} width={2.4} depth={2.0} />
-      <Crane position={[7.2, 0, 3]} rotation={-0.4} height={10} />
-      <Crane position={[-11, 0, 2]} rotation={1.1} height={7.5} />
+      <TowerCrane
+        position={[7.2, 0, 3]}
+        rotation={-0.4}
+        height={10}
+        phase={0.4}
+        reducedMotion={reducedMotion}
+      />
+      <TowerCrane
+        position={[-11, 0, 2]}
+        rotation={1.1}
+        height={7.5}
+        phase={2.2}
+        reducedMotion={reducedMotion}
+      />
 
       {/* Brick pallets */}
       {[0, 1, 2, 3].map((i) => (
@@ -207,29 +185,13 @@ export function ConstructionScene() {
         </mesh>
       ))}
 
-      {/* Excavator */}
-      <group position={[-9, 0, 4]} rotation={[0, 0.6, 0]}>
-        <mesh castShadow position={[0, 0.28, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.38, 0.38, 1.6, 8]} />
-          <meshStandardMaterial color="#2a2a2a" />
-        </mesh>
-        <mesh castShadow position={[0, 0.7, 0]}>
-          <boxGeometry args={[1.7, 0.7, 1.15]} />
-          <meshStandardMaterial color="#d07020" metalness={0.3} roughness={0.5} />
-        </mesh>
-        <mesh position={[0.15, 1.15, 0.15]}>
-          <boxGeometry args={[0.7, 0.55, 0.7]} />
-          <meshStandardMaterial color="#2a3038" />
-        </mesh>
-        <mesh position={[1.3, 1.15, 0]} rotation={[0, 0, -0.45]}>
-          <boxGeometry args={[1.9, 0.16, 0.16]} />
-          <meshStandardMaterial color="#333" />
-        </mesh>
-        <mesh position={[2.3, 0.55, 0]}>
-          <boxGeometry args={[0.45, 0.55, 0.55]} />
-          <meshStandardMaterial color="#444" />
-        </mesh>
-      </group>
+      <Excavator
+        position={[-9, 0, 4]}
+        rotation={0.6}
+        phase={0.8}
+        reducedMotion={reducedMotion}
+      />
+      <Dozer position={[4.2, 0, -8]} phase={1.4} reducedMotion={reducedMotion} />
 
       {/* Dumpster + porta */}
       <mesh castShadow position={[9.5, 0.55, -6]}>
@@ -241,28 +203,8 @@ export function ConstructionScene() {
         <meshStandardMaterial color="#d8d0b8" roughness={0.8} />
       </mesh>
 
-      <group position={[9.2, 0, -8]}>
-        <mesh castShadow position={[0, 1.7, 0]}>
-          <cylinderGeometry args={[0.05, 0.07, 3.4, 6]} />
-          <meshStandardMaterial color="#3a4048" />
-        </mesh>
-        <mesh position={[0, 3.4, 0]} rotation={[0.55, -0.7, 0]}>
-          <boxGeometry args={[0.55, 0.32, 0.16]} />
-          <meshStandardMaterial color="#f5e8c8" emissive="#ffe0a0" emissiveIntensity={1.8} />
-        </mesh>
-        <pointLight position={[0, 3.1, 0]} intensity={1.0} distance={16} color="#ffd9a0" />
-      </group>
-      <group position={[-12, 0, -7]}>
-        <mesh castShadow position={[0, 1.5, 0]}>
-          <cylinderGeometry args={[0.05, 0.07, 3.0, 6]} />
-          <meshStandardMaterial color="#3a4048" />
-        </mesh>
-        <mesh position={[0, 3.05, 0]} rotation={[0.4, 0.9, 0]}>
-          <boxGeometry args={[0.5, 0.3, 0.15]} />
-          <meshStandardMaterial color="#f5e8c8" emissive="#ffe0a0" emissiveIntensity={1.6} />
-        </mesh>
-        <pointLight position={[0, 2.8, 0]} intensity={0.7} distance={12} color="#ffd9a0" />
-      </group>
+      <WorkLight position={[9.2, 0, -8]} rotation={[0.55, -0.7, 0]} height={3.4} />
+      <WorkLight position={[-12, 0, -7]} rotation={[0.4, 0.9, 0]} height={3.0} />
     </group>
   );
 }

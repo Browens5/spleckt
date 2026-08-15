@@ -9,6 +9,7 @@ import { OrthoScene } from "./OrthoScene";
 import { NeighborhoodScene } from "./NeighborhoodScene";
 import { Corridor } from "./Corridor";
 import { SCENES } from "../themes";
+import { sunState } from "../daylight";
 import type { QualityTier } from "../quality";
 
 export function WorldScenes({
@@ -34,16 +35,17 @@ export function WorldScenes({
       fogA.current.set(SCENES[idx].fog);
       fogB.current.set(SCENES[next].fog);
       fogRef.current.color.copy(fogA.current).lerp(fogB.current, blend);
-      fogRef.current.near = 32;
-      fogRef.current.far = 130;
+      const day = sunState.factor;
+      fogRef.current.near = THREE.MathUtils.lerp(28, 40, day);
+      fogRef.current.far = THREE.MathUtils.lerp(110, 160, day);
     }
   });
 
   return (
     <group>
-      <Corridor />
-      <DowntownScene />
-      <ConstructionScene />
+      <Corridor reducedMotion={quality.reducedMotion} />
+      <DowntownScene reducedMotion={quality.reducedMotion} />
+      <ConstructionScene reducedMotion={quality.reducedMotion} />
       <OrthoScene progress={progress} />
       <NeighborhoodScene density={quality.density} />
     </group>

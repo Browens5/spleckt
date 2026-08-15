@@ -2,10 +2,14 @@
 
 import { useMemo } from "react";
 import { makeAsphaltTexture, makeGrassTexture } from "../textures";
-import { Car, FACE_NEG_Z, FACE_POS_Z, Streetlight, Tree } from "../kit";
+import { DrivingCar, Streetlight, Tree } from "../kit";
 
 /** Continuous street + roadside filler so districts read as one city. */
-export function Corridor() {
+export function Corridor({
+  reducedMotion = false,
+}: {
+  reducedMotion?: boolean;
+}) {
   const asphalt = useMemo(() => {
     const t = makeAsphaltTexture(3);
     t.repeat.set(2, 40);
@@ -70,7 +74,8 @@ export function Corridor() {
       {/* Downtown → jobsite seam */}
       <Tree position={[-3.6, 0, -21]} scale={0.8} />
       <Tree position={[3.8, 0, -23]} scale={0.7} />
-      <Car position={[1.15, 0, -22]} color="#4a6078" rotation={FACE_NEG_Z} />
+      <DrivingCar x={1.15} color="#4a6078" zStart={-18} zEnd={-90} speed={4.2} dir={-1} reducedMotion={reducedMotion} />
+      <DrivingCar x={1.2} color="#5a7088" zStart={-40} zEnd={-90} speed={3.6} dir={-1} reducedMotion={reducedMotion} />
 
       {/* Jobsite → survey seam */}
       <Tree position={[-4.2, 0, -46]} scale={0.75} />
@@ -81,7 +86,8 @@ export function Corridor() {
       <Tree position={[-3.8, 0, -68]} scale={0.9} />
       <Tree position={[3.6, 0, -70]} scale={0.8} />
       <Tree position={[-4.0, 0, -72]} scale={0.7} />
-      <Car position={[-1.15, 0, -69]} color="#6a5040" rotation={FACE_POS_Z} />
+      <DrivingCar x={-1.15} color="#6a5040" zStart={-90} zEnd={-18} speed={3.8} dir={1} reducedMotion={reducedMotion} />
+      <DrivingCar x={-1.2} color="#8a6048" zStart={-70} zEnd={-18} speed={3.2} dir={1} reducedMotion={reducedMotion} />
 
       {backdrop.map((b, i) => (
         <mesh key={i} castShadow position={[b.x, b.h / 2, b.z]}>

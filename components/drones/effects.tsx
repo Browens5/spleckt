@@ -1,16 +1,10 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SCENES } from "./themes";
-
-const STAR_INTENSITY: Record<string, number> = {
-  downtown: 1.0,
-  construction: 0.35,
-  ortho: 0.55,
-  neighborhood: 0.45,
-};
+import { sunState } from "./daylight";
 
 const SKY_VERT = /* glsl */ `
   varying vec3 vWorldPosition;
@@ -67,7 +61,31 @@ const SKY_FRAG = /* glsl */ `
   }
 `;
 
-export function SkyDome() {
+const SKY_KEYS = [
+  { t: 0, top: "#152238", horizon: "#1a3048", star: 1 },
+  { t: 0.2, top: "#24344e", horizon: "#c06838", star: 0.35 },
+  { t: 0.36, top: "#4a6088", horizon: "#e09050", star: 0.06 },
+  { t: 0.58, top: "#5a98c8", horizon: "#f0c8a0", star: 0 },
+  { t: 1, top: "#4aa4e4", horizon: "#d0e4f0", star: 0 },
+] as const;
+
+function sampleSky(t: number, top: THREE.Color, horizon: THREE.Color) {
+  const x = Math.min(1, Math.max(0, t));
+  let i = 0;
+  while (i < SKY_KEYS.length - 2 && x > SKY_KEYS[i + 1].t) i += 1;
+  const a = SKY_KEYS[i];
+  const b = SKY_KEYS[i + 1];
+  const u = THREE.MathUtils.smoothstep(x, a.t, b.t);
+  top.set(a.top).lerp(new THREE.Color(b.top), u);
+  horizon.set(a.horizon).lerp(new THREE.Color(b.horizon), u);
+  return THREE.MathUtils.lerp(a.star, b.star, u);
+}
+
+export function SkyDome({
+  progress,
+}: {
+  progress?: MutableRefObject<number>;
+}) {
   const material = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({
@@ -88,21 +106,15 @@ export function SkyDome() {
   useFrame((state) => {
     const mat = material.current;
     if (!mat) return;
-    const root = document.querySelector(".drones-experience");
-    const themeId = root?.getAttribute("data-scene") ?? "downtown";
-    const theme = SCENES.find((s) => s.id === themeId) ?? SCENES[0];
-    const t = target.current;
-    t.top.set(theme.sky);
-    t.horizon.set(theme.fog);
+    const t = progress?.current ?? sunState.factor;
+    const starTarget = sampleSky(t, target.current.top, target.current.horizon);
 
     const u = mat.uniforms;
-    (u.uTop.value as THREE.Color).lerp(t.top, 0.05);
-    (u.uHorizon.value as THREE.Color).lerp(t.horizon, 0.05);
-    const starTarget = STAR_INTENSITY[themeId] ?? 0.5;
-    u.uStar.value += (starTarget - (u.uStar.value as number)) * 0.05;
+    (u.uTop.value as THREE.Color).lerp(target.current.top, 0.08);
+    (u.uHorizon.value as THREE.Color).lerp(target.current.horizon, 0.08);
+    u.uStar.value += (starTarget - (u.uStar.value as number)) * 0.06;
     u.uTime.value = state.clock.elapsedTime;
 
-    // Stay around the camera so later districts never fly out of the sky.
     if (mesh.current) mesh.current.position.copy(state.camera.position);
   });
 
