@@ -96,6 +96,13 @@ export function DronesExperience() {
 
       <div className="drones-scroll" aria-hidden />
 
+      <div className="drones-rail" aria-hidden>
+        <div
+          className="drones-rail__fill"
+          style={{ height: `${Math.round(scrollT * 100)}%` }}
+        />
+      </div>
+
       <div
         className="drones-panel"
         style={{ opacity: Math.min(1, Math.max(0, panelOpacity)) }}

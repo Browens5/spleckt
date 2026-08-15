@@ -2,39 +2,17 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
-
-function Lot({
-  position,
-  size,
-  color,
-}: {
-  position: [number, number, number];
-  size: [number, number];
-  color: string;
-}) {
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={position} receiveShadow>
-      <planeGeometry args={[size[0], size[1]]} />
-      <meshStandardMaterial color={color} roughness={0.95} />
-    </mesh>
-  );
-}
+import { makeOrthoMapTexture } from "../textures";
+import { ScanGrid } from "../effects";
 
 export function OrthoScene() {
-  const gridLines = useMemo(() => {
-    const lines: { pos: [number, number, number]; size: [number, number] }[] = [];
-    for (let i = -6; i <= 6; i++) {
-      lines.push({ pos: [i * 2.2, 0.04, 0], size: [0.04, 28] });
-      lines.push({ pos: [0, 0.04, i * 2.2], size: [28, 0.04] });
-    }
-    return lines;
-  }, []);
+  const orthoMap = useMemo(() => makeOrthoMapTexture(), []);
 
   const markers = useMemo(() => {
     const pts: [number, number, number][] = [];
     for (let x = -5; x <= 5; x += 2) {
       for (let z = -5; z <= 5; z += 2) {
-        if ((x + z) % 4 === 0) pts.push([x * 1.8, 0.08, z * 1.8 - 12]);
+        if ((x + z) % 4 === 0) pts.push([x * 1.8, 0.08, z * 1.8]);
       }
     }
     return pts;
@@ -42,79 +20,67 @@ export function OrthoScene() {
 
   return (
     <group position={[0, 0, -12]}>
-      {/* Base site */}
+      {/* Orthomosaic base — procedurally drawn survey map */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} receiveShadow>
-        <planeGeometry args={[30, 30]} />
-        <meshStandardMaterial color="#1a3038" roughness={1} />
+        <planeGeometry args={[26, 26]} />
+        <meshStandardMaterial map={orthoMap} roughness={0.95} />
       </mesh>
 
-      <Lot position={[-4, 0.02, -2]} size={[6, 5]} color="#2a4a40" />
-      <Lot position={[4, 0.02, 1]} size={[5.5, 6]} color="#3a4830" />
-      <Lot position={[0, 0.02, 5]} size={[8, 4]} color="#4a4030" />
-      <Lot position={[-5, 0.02, 5]} size={[3.5, 3.5]} color="#305060" />
+      {/* Animated survey scan overlay */}
+      <ScanGrid size={26} color="#4fd0e8" position={[0, 0.07, 0]} />
 
-      {/* Roads */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
-        <planeGeometry args={[2.2, 28]} />
-        <meshStandardMaterial color="#2a3038" />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
-        <planeGeometry args={[28, 2.0]} />
-        <meshStandardMaterial color="#2a3038" />
-      </mesh>
-
-      {/* Survey grid */}
-      {gridLines.map((g, i) => (
-        <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={g.pos}>
-          <planeGeometry args={g.size} />
-          <meshStandardMaterial
-            color="#4fd0e8"
-            transparent
-            opacity={0.35}
-            emissive="#2a8090"
-            emissiveIntensity={0.3}
-          />
-        </mesh>
-      ))}
-
-      {/* Contour-ish pads */}
+      {/* Elevation pads reading as processed terrain */}
       {[
         [2.5, 0.15, -4, 3.5, "#5a7060"],
         [-3, 0.2, 2, 2.8, "#6a6050"],
         [5, 0.12, 4, 2.2, "#4a6870"],
       ].map(([x, y, z, s, c], i) => (
-        <mesh key={i} position={[x as number, y as number, z as number]}>
-          <cylinderGeometry args={[s as number, (s as number) * 1.05, 0.25, 8]} />
+        <mesh key={i} position={[x as number, y as number, z as number]} castShadow>
+          <cylinderGeometry args={[s as number, (s as number) * 1.05, 0.25, 10]} />
           <meshStandardMaterial color={c as string} roughness={0.95} />
         </mesh>
       ))}
 
-      {/* Measurement ticks / GCPs */}
+      {/* Ground control point crosses */}
       {markers.map((p, i) => (
         <group key={i} position={p}>
           <mesh>
             <boxGeometry args={[0.35, 0.02, 0.06]} />
-            <meshStandardMaterial color="#4fd0e8" emissive="#2a90a0" emissiveIntensity={0.6} />
+            <meshStandardMaterial color="#4fd0e8" emissive="#2a90a0" emissiveIntensity={0.8} />
           </mesh>
           <mesh>
             <boxGeometry args={[0.06, 0.02, 0.35]} />
-            <meshStandardMaterial color="#4fd0e8" emissive="#2a90a0" emissiveIntensity={0.6} />
+            <meshStandardMaterial color="#4fd0e8" emissive="#2a90a0" emissiveIntensity={0.8} />
           </mesh>
         </group>
       ))}
 
-      {/* Volume pile */}
+      {/* Stockpile with measured volume ring */}
       <mesh position={[6, 0.6, -5]} castShadow>
-        <coneGeometry args={[1.8, 1.4, 7]} />
+        <coneGeometry args={[1.8, 1.4, 8]} />
         <meshStandardMaterial color="#8a7060" roughness={1} />
       </mesh>
-      <mesh position={[6.2, 0.05, -3.2]}>
-        <ringGeometry args={[1.5, 1.65, 24]} />
+      <mesh position={[6, 0.05, -5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.9, 2.05, 28]} />
         <meshStandardMaterial
           color="#4fd0e8"
           emissive="#208090"
-          emissiveIntensity={0.5}
+          emissiveIntensity={0.8}
           side={THREE.DoubleSide}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
+
+      {/* Vertical measurement beam on the pile */}
+      <mesh position={[6, 1.5, -5]}>
+        <cylinderGeometry args={[0.012, 0.012, 3, 4]} />
+        <meshStandardMaterial
+          color="#4fd0e8"
+          emissive="#4fd0e8"
+          emissiveIntensity={1.2}
+          transparent
+          opacity={0.7}
         />
       </mesh>
     </group>

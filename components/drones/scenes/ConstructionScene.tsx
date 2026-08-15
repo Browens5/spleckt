@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { makeConcreteTexture, makeDirtTexture } from "../textures";
 
 function Scaffold({
   position,
@@ -68,23 +69,39 @@ function Crane({ position }: { position: [number, number, number] }) {
         <boxGeometry args={[0.9, 0.7, 0.7]} />
         <meshStandardMaterial color="#2a3038" />
       </mesh>
+      {/* Aviation beacon */}
+      <mesh position={[0, 8.15, 0]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshStandardMaterial color="#ff4030" emissive="#ff2020" emissiveIntensity={2.2} />
+      </mesh>
     </group>
   );
 }
 
 export function ConstructionScene() {
+  const dirt = useMemo(() => {
+    const t = makeDirtTexture();
+    t.repeat.set(5, 4.5);
+    return t;
+  }, []);
+  const concrete = useMemo(() => {
+    const t = makeConcreteTexture(13);
+    t.repeat.set(3, 3.2);
+    return t;
+  }, []);
+
   return (
     <group position={[1, 0, -8]}>
       {/* Dirt pad */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
         <planeGeometry args={[18, 16]} />
-        <meshStandardMaterial color="#5a4028" roughness={1} />
+        <meshStandardMaterial map={dirt} roughness={1} />
       </mesh>
 
       {/* Core building under construction */}
       <mesh castShadow receiveShadow position={[0, 2.4, 0]}>
         <boxGeometry args={[4.2, 4.8, 3.6]} />
-        <meshStandardMaterial color="#8a8578" roughness={0.9} />
+        <meshStandardMaterial map={concrete} color="#b0a894" roughness={0.9} />
       </mesh>
       {/* Floor plates */}
       {[1.2, 2.4, 3.6].map((y) => (
@@ -141,6 +158,19 @@ export function ConstructionScene() {
           <boxGeometry args={[0.4, 0.5, 0.5]} />
           <meshStandardMaterial color="#444" />
         </mesh>
+      </group>
+
+      {/* Floodlight tower washing the site in warm work light */}
+      <group position={[6.5, 0, -4]}>
+        <mesh castShadow position={[0, 1.6, 0]}>
+          <cylinderGeometry args={[0.05, 0.07, 3.2, 6]} />
+          <meshStandardMaterial color="#3a4048" />
+        </mesh>
+        <mesh position={[0, 3.25, 0]} rotation={[0.5, -0.8, 0]}>
+          <boxGeometry args={[0.5, 0.3, 0.15]} />
+          <meshStandardMaterial color="#f5e8c8" emissive="#ffe0a0" emissiveIntensity={1.8} />
+        </mesh>
+        <pointLight position={[0, 3, 0]} intensity={0.9} distance={14} color="#ffd9a0" />
       </group>
     </group>
   );

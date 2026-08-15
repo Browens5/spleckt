@@ -8,6 +8,7 @@ import { ScrollCamera } from "./ScrollCamera";
 import { WorldScenes } from "./scenes/WorldScenes";
 import { detectQuality, type QualityTier } from "./quality";
 import { SCENES } from "./themes";
+import { Dust, SkyDome } from "./effects";
 
 function Lights({ quality }: { quality: QualityTier }) {
   return (
@@ -93,9 +94,11 @@ export function DronesCanvas({ progress, lean, snapToken }: CanvasProps) {
       }}
     >
       <Atmosphere fogRef={fogRef} />
+      <SkyDome />
       <Lights quality={quality} />
       <ScrollCamera progress={progress} snapToken={snapToken} />
       <WorldScenes progress={progress} quality={quality} fogRef={fogRef} />
+      {quality.density !== "low" ? <Dust /> : null}
       <Drone
         lean={lean}
         progress={progress}

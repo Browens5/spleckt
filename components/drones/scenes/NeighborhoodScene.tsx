@@ -1,28 +1,44 @@
 "use client";
 
 import { useMemo } from "react";
+import * as THREE from "three";
+import {
+  makeAsphaltTexture,
+  makeGrassTexture,
+  makeShingleTexture,
+  makeSidingTexture,
+} from "../textures";
 
 function House({
   position,
   rotation = 0,
   body = "#d8c8b0",
   roof = "#7a4030",
+  siding,
+  shingles,
 }: {
   position: [number, number, number];
   rotation?: number;
   body?: string;
   roof?: string;
+  siding: THREE.Texture;
+  shingles: THREE.Texture;
 }) {
   return (
     <group position={position} rotation={[0, rotation, 0]}>
       <mesh castShadow receiveShadow position={[0, 0.7, 0]}>
         <boxGeometry args={[1.8, 1.4, 1.5]} />
-        <meshStandardMaterial color={body} roughness={0.85} />
+        <meshStandardMaterial map={siding} color={body} roughness={0.85} />
       </mesh>
       {/* Roof */}
       <mesh castShadow position={[0, 1.65, 0]} rotation={[0, Math.PI / 4, 0]}>
         <coneGeometry args={[1.45, 0.85, 4]} />
-        <meshStandardMaterial color={roof} roughness={0.75} />
+        <meshStandardMaterial map={shingles} color={roof} roughness={0.75} />
+      </mesh>
+      {/* Chimney */}
+      <mesh castShadow position={[0.5, 1.9, -0.3]}>
+        <boxGeometry args={[0.18, 0.5, 0.18]} />
+        <meshStandardMaterial color="#8a5a48" roughness={0.9} />
       </mesh>
       {/* Door */}
       <mesh position={[0, 0.45, 0.76]}>
@@ -105,36 +121,65 @@ export function NeighborhoodScene({
     return density === "low" ? pts.slice(0, 4) : pts;
   }, [density]);
 
+  const grass = useMemo(() => {
+    const t = makeGrassTexture();
+    t.repeat.set(7, 6);
+    return t;
+  }, []);
+  const street = useMemo(() => {
+    const t = makeAsphaltTexture(9);
+    t.repeat.set(1.4, 7);
+    return t;
+  }, []);
+  const siding = useMemo(() => {
+    const t = makeSidingTexture();
+    t.repeat.set(3, 1.6);
+    return t;
+  }, []);
+  const shingles = useMemo(() => {
+    const t = makeShingleTexture();
+    t.repeat.set(2.4, 1.4);
+    return t;
+  }, []);
+
   return (
     <group>
       {/* Ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -24]} receiveShadow>
         <planeGeometry args={[24, 20]} />
-        <meshStandardMaterial color="#3a5a38" roughness={1} />
+        <meshStandardMaterial map={grass} roughness={1} />
       </mesh>
 
       {/* Street */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -23]}>
         <planeGeometry args={[3.2, 16]} />
-        <meshStandardMaterial color="#3a4048" />
+        <meshStandardMaterial map={street} roughness={0.95} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[0, 0.02, -24]}>
         <planeGeometry args={[2.4, 18]} />
-        <meshStandardMaterial color="#3a4048" />
+        <meshStandardMaterial map={street} roughness={0.95} />
       </mesh>
 
-      {/* Sidewalks / yards */}
+      {/* Warm porch-lit yards */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4, 0.015, -23]}>
         <planeGeometry args={[4, 14]} />
-        <meshStandardMaterial color="#4a6a42" />
+        <meshStandardMaterial map={grass} color="#c8dcc0" roughness={1} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4, 0.015, -23]}>
         <planeGeometry args={[4, 14]} />
-        <meshStandardMaterial color="#4a6a42" />
+        <meshStandardMaterial map={grass} color="#c8dcc0" roughness={1} />
       </mesh>
 
       {houses.map((h, i) => (
-        <House key={i} position={h.p} rotation={h.r} body={h.b} roof={h.roof} />
+        <House
+          key={i}
+          position={h.p}
+          rotation={h.r}
+          body={h.b}
+          roof={h.roof}
+          siding={siding}
+          shingles={shingles}
+        />
       ))}
       {trees.map((t, i) => (
         <Tree key={i} position={t.p} scale={t.s} />
@@ -148,9 +193,22 @@ export function NeighborhoodScene({
           position={[h.p[0] + 1.2, 0.03, h.p[2] + 1.4]}
         >
           <planeGeometry args={[1.1, 1.8]} />
-          <meshStandardMaterial color="#5a5850" />
+          <meshStandardMaterial color="#5a5850" roughness={0.95} />
         </mesh>
       ))}
+
+      {/* Street lamp for evening warmth */}
+      <group position={[1.9, 0, -19]}>
+        <mesh castShadow position={[0, 1.2, 0]}>
+          <cylinderGeometry args={[0.035, 0.045, 2.4, 6]} />
+          <meshStandardMaterial color="#2c3440" />
+        </mesh>
+        <mesh position={[0, 2.45, 0]}>
+          <sphereGeometry args={[0.09, 8, 8]} />
+          <meshStandardMaterial color="#ffe8c0" emissive="#ffd9a0" emissiveIntensity={1.4} />
+        </mesh>
+        <pointLight position={[0, 2.3, 0]} intensity={0.5} distance={7} color="#ffd9a0" />
+      </group>
     </group>
   );
 }
