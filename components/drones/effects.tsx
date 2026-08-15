@@ -37,8 +37,11 @@ const SKY_FRAG = /* glsl */ `
     float h = clamp(dir.y, -1.0, 1.0);
     vec3 col = mix(uHorizon, uTop, smoothstep(-0.06, 0.55, h));
 
+    // Ambient sky lift so the zenith never crushes to pure black
+    col += vec3(0.012, 0.018, 0.028);
+
     // Horizon glow band
-    float glow = exp(-abs(h - 0.02) * 14.0) * 0.25;
+    float glow = exp(-abs(h - 0.02) * 14.0) * 0.3;
     col += uHorizon * glow;
 
     // Stars with subtle twinkle
@@ -50,8 +53,8 @@ const SKY_FRAG = /* glsl */ `
         vec2 f = fract(sp) - 0.5;
         float d = length(f);
         float tw = 0.7 + 0.3 * sin(uTime * (1.5 + rnd * 3.0) + rnd * 40.0);
-        float star = smoothstep(0.12, 0.0, d) * smoothstep(0.1, 0.5, dir.y);
-        col += star * tw * uStar * vec3(0.75, 0.85, 1.0);
+        float star = smoothstep(0.16, 0.0, d) * smoothstep(0.08, 0.4, dir.y);
+        col += star * tw * uStar * 1.6 * vec3(0.78, 0.87, 1.0);
       }
     }
 

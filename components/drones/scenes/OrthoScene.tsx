@@ -38,14 +38,14 @@ export function OrthoScene({
         progress={progress}
       />
 
-      {/* Elevation pads reading as processed terrain */}
+      {/* Low terraced elevation pads — subtle relief that doesn't bury the map */}
       {[
-        [2.5, 0.15, -4, 3.5, "#5a7060"],
-        [-3, 0.2, 2, 2.8, "#6a6050"],
-        [5, 0.12, 4, 2.2, "#4a6870"],
+        [4, 0.05, -7, 1.6, "#2c463e"],
+        [-6.5, 0.07, 3.5, 1.3, "#3c3a2c"],
+        [7.5, 0.04, 6.5, 1.1, "#2a4048"],
       ].map(([x, y, z, s, c], i) => (
         <mesh key={i} position={[x as number, y as number, z as number]} castShadow>
-          <cylinderGeometry args={[s as number, (s as number) * 1.05, 0.25, 10]} />
+          <cylinderGeometry args={[s as number, (s as number) * 1.12, 0.1, 10]} />
           <meshStandardMaterial color={c as string} roughness={0.95} />
         </mesh>
       ))}
