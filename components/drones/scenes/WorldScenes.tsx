@@ -34,8 +34,8 @@ export function WorldScenes({
       fogA.current.set(SCENES[idx].fog);
       fogB.current.set(SCENES[next].fog);
       fogRef.current.color.copy(fogA.current).lerp(fogB.current, blend);
-      fogRef.current.near = 28;
-      fogRef.current.far = 110;
+      fogRef.current.near = 32;
+      fogRef.current.far = 130;
     }
   });
 

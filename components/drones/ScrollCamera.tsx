@@ -24,15 +24,15 @@ const N = FOCUS.neighborhood;
 const KEYS: Key[] = [
   { t: 0, cam: [0, 3.35, 9.2], look: [D.x, D.y, D.z] },
   { t: 0.18, cam: [0.18, 3.55, 1.8], look: [D.x, D.y + 0.08, D.z - 4] },
-  { t: 0.26, cam: [4.6, 5.7, C.z + 16], look: [C.x, C.y, C.z] },
-  { t: 0.34, cam: [6.2, 6.4, C.z + 14.5], look: [C.x, C.y, C.z] },
-  { t: 0.44, cam: [6.6, 6.8, C.z + 13.2], look: [C.x, C.y + 0.12, C.z] },
-  { t: 0.5, cam: [2.2, 10.6, O.z + 13], look: [O.x, O.y, O.z] },
-  { t: 0.58, cam: [0.7, 13.4, O.z + 6], look: [O.x, O.y, O.z] },
-  { t: 0.7, cam: [0.1, 16.1, O.z + 0.35], look: [O.x, 0.04, O.z] },
-  { t: 0.76, cam: [-1.8, 9.1, N.z + 16], look: [N.x, N.y, N.z] },
-  { t: 0.88, cam: [-3.6, 7.55, N.z + 12], look: [N.x, N.y, N.z - 1] },
-  { t: 1, cam: [-3.2, 7.35, N.z + 11], look: [N.x, N.y, N.z - 2] },
+  { t: 0.26, cam: [3.6, 5.1, C.z + 15], look: [C.x, 2.0, C.z] },
+  { t: 0.34, cam: [4.8, 5.4, C.z + 13], look: [C.x, 2.1, C.z] },
+  { t: 0.44, cam: [5.0, 5.6, C.z + 12], look: [C.x, 2.2, C.z] },
+  { t: 0.5, cam: [2.0, 9.6, O.z + 12], look: [O.x, O.y, O.z] },
+  { t: 0.58, cam: [0.55, 12.2, O.z + 5], look: [O.x, O.y, O.z] },
+  { t: 0.7, cam: [0.08, 14.2, O.z + 0.3], look: [O.x, 0.04, O.z] },
+  { t: 0.76, cam: [-1.1, 6.0, N.z + 14], look: [N.x, 1.1, N.z] },
+  { t: 0.88, cam: [-2.2, 5.3, N.z + 10], look: [N.x, 1.05, N.z - 1] },
+  { t: 1, cam: [-2.0, 5.1, N.z + 9], look: [N.x, 1.1, N.z - 2] },
 ];
 
 const tmpCam = new THREE.Vector3();

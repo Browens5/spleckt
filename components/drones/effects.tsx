@@ -35,14 +35,19 @@ const SKY_FRAG = /* glsl */ `
   void main() {
     vec3 dir = normalize(vWorldPosition - cameraPosition);
     float h = clamp(dir.y, -1.0, 1.0);
-    vec3 col = mix(uHorizon, uTop, smoothstep(-0.06, 0.55, h));
+    vec3 col = mix(uHorizon, uTop, smoothstep(-0.12, 0.62, h));
 
-    // Ambient sky lift so the zenith never crushes to pure black
-    col += vec3(0.012, 0.018, 0.028);
+    // Keep the dome readable as dusk, never a crushed black void
+    col += vec3(0.055, 0.06, 0.075);
 
-    // Horizon glow band
-    float glow = exp(-abs(h - 0.02) * 14.0) * 0.3;
+    // Wide horizon band
+    float glow = exp(-abs(h - 0.05) * 8.0) * 0.55;
     col += uHorizon * glow;
+
+    // Below-horizon wash so open views still have ground-colored sky
+    if (h < 0.02) {
+      col = mix(col, uHorizon * 1.35, smoothstep(0.02, -0.22, h) * 0.65);
+    }
 
     // Stars with subtle twinkle
     if (dir.y > 0.08) {

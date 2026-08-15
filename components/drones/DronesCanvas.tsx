@@ -13,7 +13,7 @@ import { Dust, SkyDome } from "./effects";
 function Lights({ quality }: { quality: QualityTier }) {
   return (
     <>
-      <ambientLight intensity={0.72} />
+      <ambientLight intensity={0.82} />
       <directionalLight
         castShadow={quality.shadows}
         position={[14, 34, -40]}
@@ -58,7 +58,7 @@ function Atmosphere({
   return (
     <>
       <color attach="background" args={[SCENES[0].sky]} />
-      <fog attach="fog" args={[SCENES[0].fog, 28, 110]} />
+      <fog attach="fog" args={[SCENES[0].fog, 32, 130]} />
     </>
   );
 }

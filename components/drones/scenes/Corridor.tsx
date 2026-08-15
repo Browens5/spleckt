@@ -13,15 +13,40 @@ export function Corridor() {
   }, []);
   const grass = useMemo(() => {
     const t = makeGrassTexture(19);
-    t.repeat.set(14, 36);
+    t.repeat.set(22, 48);
     return t;
+  }, []);
+
+  const backdrop = useMemo(() => {
+    const blocks: { x: number; z: number; w: number; h: number; d: number; c: string }[] = [];
+    const colors = ["#243040", "#2a2830", "#203038", "#2c3028"];
+    for (let i = 0; i < 18; i++) {
+      const z = 8 - i * 6.4;
+      blocks.push({
+        x: -16 - (i % 3) * 1.4,
+        z,
+        w: 2.4 + (i % 3) * 0.4,
+        h: 3.2 + (i % 5) * 1.1,
+        d: 2.2,
+        c: colors[i % colors.length],
+      });
+      blocks.push({
+        x: 16 + (i % 3) * 1.2,
+        z: z - 2,
+        w: 2.2 + (i % 4) * 0.35,
+        h: 2.8 + (i % 4) * 1.3,
+        d: 2.0,
+        c: colors[(i + 2) % colors.length],
+      });
+    }
+    return blocks;
   }, []);
 
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, -44]} receiveShadow>
-        <planeGeometry args={[56, 130]} />
-        <meshStandardMaterial map={grass} color="#2a3328" roughness={1} />
+        <planeGeometry args={[90, 160]} />
+        <meshStandardMaterial map={grass} color="#3a4434" roughness={1} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, -44]} receiveShadow>
         <planeGeometry args={[7.2, 120]} />
@@ -57,6 +82,13 @@ export function Corridor() {
       <Tree position={[3.6, 0, -70]} scale={0.8} />
       <Tree position={[-4.0, 0, -72]} scale={0.7} />
       <Car position={[-1.15, 0, -69]} color="#6a5040" rotation={FACE_POS_Z} />
+
+      {backdrop.map((b, i) => (
+        <mesh key={i} castShadow position={[b.x, b.h / 2, b.z]}>
+          <boxGeometry args={[b.w, b.h, b.d]} />
+          <meshStandardMaterial color={b.c} roughness={0.95} />
+        </mesh>
+      ))}
     </group>
   );
 }
