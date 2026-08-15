@@ -42,10 +42,12 @@ export function DronesExperience() {
       1,
       document.documentElement.scrollHeight - window.innerHeight,
     );
-    const target = max * ((i + 0.5) * 0.25);
-    progressRef.current = Math.min(1, Math.max(0, target / max));
+    const t = Math.min(1, Math.max(0, (i + 0.5) * 0.25));
+    const target = max * t;
+    progressRef.current = t;
     snapToken.current += 1;
     window.scrollTo({ top: target, behavior: "auto" });
+    window.dispatchEvent(new Event("scroll"));
   };
 
   return (

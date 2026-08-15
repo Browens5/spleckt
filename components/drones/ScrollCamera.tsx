@@ -73,12 +73,13 @@ export function ScrollCamera({
     sampleKeys(progress.current, tmpCam, tmpLook);
 
     const shouldSnap = snapToken.current !== lastSnap.current;
-    if (shouldSnap) {
-      lastSnap.current = snapToken.current;
+    if (shouldSnap) lastSnap.current = snapToken.current;
+    const dist = camera.position.distanceTo(tmpCam);
+    // Fast scroll / dot jumps would otherwise lerp through buildings and voids.
+    if (shouldSnap || dist > 7) {
       camera.position.copy(tmpCam);
       look.current.copy(tmpLook);
     } else {
-      const dist = camera.position.distanceTo(tmpCam);
       const alpha = Math.min(1, 0.22 + dist * 0.12);
       camera.position.lerp(tmpCam, alpha);
       look.current.lerp(tmpLook, alpha);
