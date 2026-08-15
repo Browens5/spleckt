@@ -53,8 +53,12 @@ export function ScrollCamera({
       camera.position.copy(tmpCam);
       look.current.copy(tmpLook);
     } else {
-      camera.position.lerp(tmpCam, 0.18);
-      look.current.lerp(tmpLook, 0.18);
+      // Adaptive smoothing: track tightly when the target races ahead
+      // (fast scrolls) so the camera never cuts corners through geometry.
+      const dist = camera.position.distanceTo(tmpCam);
+      const alpha = Math.min(1, 0.16 + dist * 0.09);
+      camera.position.lerp(tmpCam, alpha);
+      look.current.lerp(tmpLook, alpha);
     }
 
     camera.up.copy(tmpUp);
