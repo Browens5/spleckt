@@ -32,9 +32,9 @@ const KEYS: Key[] = [
   { t: 0.52, cam: [2.0, 11.4, O.z + 12], look: [O.x, O.y, O.z] },
   { t: 0.6, cam: [0.55, 12.6, O.z + 5], look: [O.x, O.y, O.z] },
   { t: 0.7, cam: [0.08, 14.2, O.z + 0.3], look: [O.x, 0.04, O.z] },
-  { t: 0.76, cam: [-1.1, 7.2, N.z + 16], look: [N.x, 1.1, N.z] },
-  { t: 0.88, cam: [-2.2, 5.3, N.z + 10], look: [N.x, 1.05, N.z - 1] },
-  { t: 1, cam: [-2.0, 5.1, N.z + 9], look: [N.x, 1.1, N.z - 2] },
+  { t: 0.76, cam: [-0.8, 5.4, N.z + 12], look: [N.x, 1.05, N.z + 2] },
+  { t: 0.88, cam: [-1.6, 4.6, N.z + 8], look: [N.x, 1.0, N.z] },
+  { t: 1, cam: [-1.4, 4.4, N.z + 7], look: [N.x, 1.0, N.z - 1] },
 ];
 
 const tmpCam = new THREE.Vector3();
