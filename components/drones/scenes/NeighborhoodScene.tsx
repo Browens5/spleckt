@@ -122,7 +122,7 @@ export function NeighborhoodScene({
   return (
     <group position={[ANCHOR.neighborhood.x, 0, ANCHOR.neighborhood.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -4]} receiveShadow>
-        <planeGeometry args={[36, 40]} />
+        <planeGeometry args={[28, 32]} />
         <meshStandardMaterial map={grass} roughness={1} />
       </mesh>
 
