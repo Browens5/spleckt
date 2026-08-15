@@ -26,11 +26,14 @@ const tmpUp = new THREE.Vector3(0, 1, 0);
 
 export function ScrollCamera({
   progress,
+  snapToken,
 }: {
   progress: MutableRefObject<number>;
+  snapToken: MutableRefObject<number>;
 }) {
   const { camera } = useThree();
-  const look = useRef(new THREE.Vector3());
+  const look = useRef(new THREE.Vector3(0, 1.2, 0));
+  const lastSnap = useRef(0);
   const camCurve = useMemo(() => new THREE.CatmullRomCurve3(CAM_POINTS), []);
   const lookCurve = useMemo(() => new THREE.CatmullRomCurve3(LOOK_POINTS), []);
 
@@ -44,8 +47,16 @@ export function ScrollCamera({
       tmpCam.y = THREE.MathUtils.lerp(tmpCam.y, 16, ortho * 0.55);
     }
 
-    camera.position.lerp(tmpCam, 0.14);
-    look.current.lerp(tmpLook, 0.14);
+    const shouldSnap = snapToken.current !== lastSnap.current;
+    if (shouldSnap) {
+      lastSnap.current = snapToken.current;
+      camera.position.copy(tmpCam);
+      look.current.copy(tmpLook);
+    } else {
+      camera.position.lerp(tmpCam, 0.18);
+      look.current.lerp(tmpLook, 0.18);
+    }
+
     camera.up.copy(tmpUp);
     camera.lookAt(look.current);
   });

@@ -65,9 +65,10 @@ function Atmosphere({
 type CanvasProps = {
   progress: MutableRefObject<number>;
   lean: MutableRefObject<{ x: number; y: number; tx: number; ty: number }>;
+  snapToken: MutableRefObject<number>;
 };
 
-export function DronesCanvas({ progress, lean }: CanvasProps) {
+export function DronesCanvas({ progress, lean, snapToken }: CanvasProps) {
   const quality = useMemo(() => detectQuality(), []);
   const fogRef = useRef<THREE.Fog | null>(null);
 
@@ -93,7 +94,7 @@ export function DronesCanvas({ progress, lean }: CanvasProps) {
     >
       <Atmosphere fogRef={fogRef} />
       <Lights quality={quality} />
-      <ScrollCamera progress={progress} />
+      <ScrollCamera progress={progress} snapToken={snapToken} />
       <WorldScenes progress={progress} quality={quality} fogRef={fogRef} />
       <Drone
         lean={lean}

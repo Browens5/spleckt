@@ -19,10 +19,6 @@ export function WorldScenes({
   quality: QualityTier;
   fogRef: MutableRefObject<THREE.Fog | null>;
 }) {
-  const downtown = useRef<THREE.Group>(null);
-  const construction = useRef<THREE.Group>(null);
-  const ortho = useRef<THREE.Group>(null);
-  const neighborhood = useRef<THREE.Group>(null);
   const fogA = useRef(new THREE.Color(SCENES[0].fog));
   const fogB = useRef(new THREE.Color(SCENES[0].fog));
 
@@ -40,32 +36,14 @@ export function WorldScenes({
       fogRef.current.near = 6 + t * 4;
       fogRef.current.far = 28 + t * 12;
     }
-
-    const groups = [downtown, construction, ortho, neighborhood];
-    groups.forEach((g, i) => {
-      if (!g.current) return;
-      const center = 0.08 + i * 0.25;
-      const dist = Math.abs(t - center);
-      g.current.visible = dist < 0.38;
-      const s = THREE.MathUtils.clamp(1 - dist * 0.35, 0.85, 1);
-      g.current.scale.setScalar(s);
-    });
   });
 
   return (
     <group>
-      <group ref={downtown}>
-        <DowntownScene />
-      </group>
-      <group ref={construction}>
-        <ConstructionScene />
-      </group>
-      <group ref={ortho}>
-        <OrthoScene />
-      </group>
-      <group ref={neighborhood}>
-        <NeighborhoodScene density={quality.density} />
-      </group>
+      <DowntownScene />
+      <ConstructionScene />
+      <OrthoScene />
+      <NeighborhoodScene density={quality.density} />
     </group>
   );
 }

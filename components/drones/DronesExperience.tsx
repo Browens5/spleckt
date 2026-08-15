@@ -17,6 +17,7 @@ const DronesCanvas = dynamic(
 export function DronesExperience() {
   const scrollT = useScrollProgress();
   const progressRef = useRef(0);
+  const snapToken = useRef(0);
   const lean = usePointerLean();
   const sceneIndex = sceneIndexFromProgress(scrollT);
   const scene = SCENES[sceneIndex];
@@ -36,6 +37,17 @@ export function DronesExperience() {
         ? (1 - local) / 0.12
         : 1;
 
+  const jumpToScene = (i: number) => {
+    const max = Math.max(
+      1,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
+    const target = max * ((i + 0.5) * 0.25);
+    progressRef.current = Math.min(1, Math.max(0, target / max));
+    snapToken.current += 1;
+    window.scrollTo({ top: target, behavior: "auto" });
+  };
+
   return (
     <div
       className="drones-experience"
@@ -50,7 +62,11 @@ export function DronesExperience() {
       }
     >
       <div className="drones-stage" aria-hidden>
-        <DronesCanvas progress={progressRef} lean={lean} />
+        <DronesCanvas
+          progress={progressRef}
+          lean={lean}
+          snapToken={snapToken}
+        />
         <div className="drones-vignette" />
         <div className="drones-scan" />
       </div>
@@ -72,12 +88,7 @@ export function DronesExperience() {
                   : "drones-dot"
               }
               aria-label={s.label}
-              onClick={() => {
-                const target =
-                  (document.documentElement.scrollHeight - window.innerHeight) *
-                  ((i + 0.5) * 0.25);
-                window.scrollTo({ top: target, behavior: "smooth" });
-              }}
+              onClick={() => jumpToScene(i)}
             />
           ))}
         </nav>
