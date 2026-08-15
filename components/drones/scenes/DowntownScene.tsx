@@ -112,24 +112,36 @@ function Car({
 }) {
   return (
     <group position={position} rotation={[0, rotation, 0]}>
-      <mesh castShadow position={[0, 0.28, 0]}>
-        <boxGeometry args={[0.9, 0.28, 0.42]} />
+      <mesh castShadow position={[0, 0.22, 0]}>
+        <boxGeometry args={[0.9, 0.24, 0.42]} />
         <meshStandardMaterial color={color} roughness={0.35} metalness={0.5} />
       </mesh>
-      <mesh castShadow position={[0.05, 0.48, 0]}>
-        <boxGeometry args={[0.45, 0.22, 0.38]} />
+      <mesh castShadow position={[0.05, 0.42, 0]}>
+        <boxGeometry args={[0.45, 0.2, 0.38]} />
         <meshStandardMaterial color="#1a222c" metalness={0.6} roughness={0.15} />
       </mesh>
+      {/* Wheels */}
+      {([
+        [0.28, 0.19],
+        [0.28, -0.19],
+        [-0.28, 0.19],
+        [-0.28, -0.19],
+      ] as const).map(([wx, wz], i) => (
+        <mesh key={i} position={[wx, 0.09, wz]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.09, 0.09, 0.06, 10]} />
+          <meshStandardMaterial color="#0c0e12" roughness={0.8} />
+        </mesh>
+      ))}
       {/* Headlights + taillights */}
-      <mesh position={[0.46, 0.28, 0.13]}>
+      <mesh position={[0.46, 0.22, 0.13]}>
         <boxGeometry args={[0.02, 0.05, 0.08]} />
         <meshStandardMaterial color="#fff8d8" emissive="#ffedb0" emissiveIntensity={1.6} />
       </mesh>
-      <mesh position={[0.46, 0.28, -0.13]}>
+      <mesh position={[0.46, 0.22, -0.13]}>
         <boxGeometry args={[0.02, 0.05, 0.08]} />
         <meshStandardMaterial color="#fff8d8" emissive="#ffedb0" emissiveIntensity={1.6} />
       </mesh>
-      <mesh position={[-0.46, 0.28, 0]}>
+      <mesh position={[-0.46, 0.22, 0]}>
         <boxGeometry args={[0.02, 0.05, 0.3]} />
         <meshStandardMaterial color="#a02020" emissive="#e03030" emissiveIntensity={1.2} />
       </mesh>
