@@ -65,8 +65,9 @@ const SKY_KEYS = [
   { t: 0, top: "#152238", horizon: "#1a3048", star: 1 },
   { t: 0.2, top: "#24344e", horizon: "#c06838", star: 0.35 },
   { t: 0.36, top: "#4a6088", horizon: "#e09050", star: 0.06 },
-  { t: 0.58, top: "#5a98c8", horizon: "#f0c8a0", star: 0 },
-  { t: 1, top: "#4aa4e4", horizon: "#d0e4f0", star: 0 },
+  { t: 0.52, top: "#6ab0e0", horizon: "#f2d4a8", star: 0 },
+  { t: 0.7, top: "#4eb4f2", horizon: "#c8e8fc", star: 0 },
+  { t: 1, top: "#38a4f0", horizon: "#d8f0ff", star: 0 },
 ] as const;
 
 function sampleSky(t: number, top: THREE.Color, horizon: THREE.Color) {

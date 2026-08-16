@@ -31,11 +31,11 @@ function SunRig({
   useFrame(({ gl }) => {
     const t = progress.current;
     // Night in the city → sunrise as we leave → overhead by the neighborhood.
-    const rise = THREE.MathUtils.smoothstep(t, 0.18, 0.42);
-    const climb = THREE.MathUtils.smoothstep(t, 0.42, 0.92);
-    const factor = THREE.MathUtils.clamp(rise * 0.45 + climb * 0.55, 0, 1);
+    const rise = THREE.MathUtils.smoothstep(t, 0.18, 0.4);
+    const climb = THREE.MathUtils.smoothstep(t, 0.38, 0.76);
+    const factor = THREE.MathUtils.clamp(rise * 0.4 + climb * 0.6, 0, 1);
     sunState.factor = factor;
-    const elev = THREE.MathUtils.lerp(-0.08, 1.22, factor);
+    const elev = THREE.MathUtils.lerp(-0.08, 1.35, factor);
     sunState.elev = elev;
 
     const z = THREE.MathUtils.lerp(FOCUS.downtown.z, FOCUS.neighborhood.z, t);
@@ -55,7 +55,7 @@ function SunRig({
         sun.current.intensity = THREE.MathUtils.lerp(0.55, 1.55, (factor - 0.12) / 0.33);
       } else {
         sunColor.current.set("#ffd0a0").lerp(fillColor.current.set("#fff6e0"), (factor - 0.45) / 0.55);
-        sun.current.intensity = THREE.MathUtils.lerp(1.55, 1.9, (factor - 0.45) / 0.55);
+        sun.current.intensity = THREE.MathUtils.lerp(1.55, 2.15, (factor - 0.45) / 0.55);
       }
       sun.current.color.copy(sunColor.current);
     }
@@ -67,14 +67,14 @@ function SunRig({
       fill.current.color.copy(fillColor.current);
     }
     if (ambient.current) {
-      ambient.current.intensity = THREE.MathUtils.lerp(0.38, 0.88, factor);
+      ambient.current.intensity = THREE.MathUtils.lerp(0.38, 1.05, factor);
     }
     if (hemi.current) {
       hemiSky.current.set(factor < 0.25 ? "#3a5070" : factor < 0.5 ? "#f0a060" : "#87c0e8");
       hemiGnd.current.set(factor < 0.35 ? "#1a1810" : "#4a6040");
       hemi.current.color.copy(hemiSky.current);
       hemi.current.groundColor.copy(hemiGnd.current);
-      hemi.current.intensity = THREE.MathUtils.lerp(0.42, 0.7, factor);
+      hemi.current.intensity = THREE.MathUtils.lerp(0.42, 0.85, factor);
     }
 
     gl.toneMappingExposure = THREE.MathUtils.lerp(1.02, 1.22, factor);

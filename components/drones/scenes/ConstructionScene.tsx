@@ -191,7 +191,7 @@ export function ConstructionScene({
         phase={0.8}
         reducedMotion={reducedMotion}
       />
-      <Dozer position={[4.2, 0, -8]} phase={1.4} reducedMotion={reducedMotion} />
+      <Dozer position={[6.4, 0, 6.2]} phase={1.4} reducedMotion={reducedMotion} />
 
       {/* Dumpster + porta */}
       <mesh castShadow position={[9.5, 0.55, -6]}>
