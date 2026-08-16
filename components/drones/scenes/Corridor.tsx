@@ -24,7 +24,7 @@ export function Corridor({
   const backdrop = useMemo(() => {
     const blocks: { x: number; z: number; w: number; h: number; d: number; c: string }[] = [];
     const colors = ["#243040", "#2a2830", "#203038", "#2c3028"];
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 24; i++) {
       const z = 8 - i * 6.4;
       blocks.push({
         x: -16 - (i % 3) * 1.4,
@@ -48,12 +48,12 @@ export function Corridor({
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, -44]} receiveShadow>
-        <planeGeometry args={[90, 160]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, -64]} receiveShadow>
+        <planeGeometry args={[90, 210]} />
         <meshStandardMaterial map={grass} color="#3a4434" roughness={1} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, -44]} receiveShadow>
-        <planeGeometry args={[7.2, 120]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, -64]} receiveShadow>
+        <planeGeometry args={[7.2, 200]} />
         <meshStandardMaterial map={asphalt} roughness={0.95} />
       </mesh>
       {[-20, -24, -46, -50, -66, -70].map((z) => (
@@ -70,12 +70,15 @@ export function Corridor({
       <Streetlight position={[2.6, 0, -49]} rotation={Math.PI} />
       <Streetlight position={[-2.6, 0, -67]} />
       <Streetlight position={[2.6, 0, -71]} rotation={Math.PI} />
+      <Streetlight position={[-2.6, 0, -100]} />
+      <Streetlight position={[2.6, 0, -108]} rotation={Math.PI} />
+      <Streetlight position={[-2.6, 0, -116]} />
 
       {/* Downtown → jobsite seam */}
       <Tree position={[-3.6, 0, -21]} scale={0.8} />
       <Tree position={[3.8, 0, -23]} scale={0.7} />
-      <DrivingCar x={1.15} color="#4a6078" zStart={-18} zEnd={-90} speed={4.2} dir={-1} reducedMotion={reducedMotion} />
-      <DrivingCar x={1.2} color="#5a7088" zStart={-40} zEnd={-90} speed={3.6} dir={-1} reducedMotion={reducedMotion} />
+      <DrivingCar x={1.15} color="#4a6078" zStart={-18} zEnd={-140} speed={4.2} dir={-1} reducedMotion={reducedMotion} />
+      <DrivingCar x={1.2} color="#5a7088" zStart={-40} zEnd={-140} speed={3.6} dir={-1} reducedMotion={reducedMotion} />
 
       {/* Jobsite → survey seam */}
       <Tree position={[-4.2, 0, -46]} scale={0.75} />
@@ -86,8 +89,11 @@ export function Corridor({
       <Tree position={[-3.8, 0, -68]} scale={0.9} />
       <Tree position={[3.6, 0, -70]} scale={0.8} />
       <Tree position={[-4.0, 0, -72]} scale={0.7} />
-      <DrivingCar x={-1.15} color="#6a5040" zStart={-90} zEnd={-18} speed={3.8} dir={1} reducedMotion={reducedMotion} />
-      <DrivingCar x={-1.2} color="#8a6048" zStart={-70} zEnd={-18} speed={3.2} dir={1} reducedMotion={reducedMotion} />
+      <Tree position={[-3.6, 0, -100]} scale={0.8} />
+      <Tree position={[3.8, 0, -108]} scale={0.75} />
+      <Tree position={[-4.0, 0, -116]} scale={0.7} />
+      <DrivingCar x={-1.15} color="#6a5040" zStart={-140} zEnd={-18} speed={3.8} dir={1} reducedMotion={reducedMotion} />
+      <DrivingCar x={-1.2} color="#8a6048" zStart={-110} zEnd={-18} speed={3.2} dir={1} reducedMotion={reducedMotion} />
 
       {backdrop.map((b, i) => (
         <mesh key={i} castShadow position={[b.x, b.h / 2, b.z]}>

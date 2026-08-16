@@ -26,15 +26,25 @@ export function DronesExperience() {
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     "https://www.spleckt.com";
 
+  const prevT = useRef(0);
   useEffect(() => {
+    if (prevT.current > 0.9 && scrollT < 0.08) {
+      snapToken.current += 1;
+    }
+    prevT.current = scrollT;
     progressRef.current = scrollT;
   }, [scrollT]);
 
-  // First scene shows immediately at the top; last scene stays visible at
-  // the bottom; middle scenes crossfade at their edges.
-  const fadeIn = sceneIndex === 0 ? 1 : Math.min(1, local / 0.12);
-  const fadeOut =
-    sceneIndex === SCENES.length - 1 ? 1 : Math.min(1, (1 - local) / 0.12);
+  // First scene shows at the top; it also fades back in as the city
+  // returns at the end of the loop. Neighborhood yields before that.
+  const loopingHome = scrollT >= 0.88;
+  const fadeIn =
+    sceneIndex === 0 && !loopingHome ? 1 : Math.min(1, local / 0.12);
+  const fadeOut = loopingHome
+    ? 1
+    : sceneIndex === SCENES.length - 1
+      ? Math.min(1, (0.88 - scrollT) / 0.08)
+      : Math.min(1, (1 - local) / 0.12);
   const panelOpacity = Math.min(fadeIn, fadeOut);
 
   const jumpToScene = (i: number) => {

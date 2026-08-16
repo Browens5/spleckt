@@ -112,8 +112,10 @@ function TrafficLight({
 
 export function DowntownScene({
   reducedMotion = false,
+  origin = ANCHOR.downtown,
 }: {
   reducedMotion?: boolean;
+  origin?: { x: number; z: number };
 }) {
   const facades = useMemo(() => getFacadeTextures(), []);
   const asphalt = useMemo(() => {
@@ -157,7 +159,7 @@ export function DowntownScene({
   );
 
   return (
-    <group position={[ANCHOR.downtown.x, 0, ANCHOR.downtown.z]}>
+    <group position={[origin.x, 0, origin.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -4]} receiveShadow>
         <planeGeometry args={[8, 42]} />
         <meshStandardMaterial map={asphalt} roughness={0.95} />

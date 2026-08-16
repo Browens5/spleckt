@@ -65,6 +65,7 @@ export const SCENES: SceneTheme[] = [
 ];
 
 export function sceneIndexFromProgress(t: number) {
+  if (t >= 0.88) return 0;
   if (t < 0.25) return 0;
   if (t < 0.5) return 1;
   if (t < 0.75) return 2;
@@ -72,6 +73,9 @@ export function sceneIndexFromProgress(t: number) {
 }
 
 export function sceneLocalProgress(t: number, index: number) {
+  if (t >= 0.88 && index === 0) {
+    return Math.min(1, Math.max(0, (t - 0.88) / 0.12));
+  }
   const start = index * 0.25;
   const end = start + 0.25;
   return Math.min(1, Math.max(0, (t - start) / (end - start)));

@@ -30,15 +30,17 @@ function SunRig({
 
   useFrame(({ gl }) => {
     const t = progress.current;
-    // Night in the city → sunrise as we leave → overhead by the neighborhood.
+    // Night → sunrise after the city → noon over the neighborhood → night
+    // again as downtown returns so the wrap matches the opening shot.
     const rise = THREE.MathUtils.smoothstep(t, 0.18, 0.4);
     const climb = THREE.MathUtils.smoothstep(t, 0.38, 0.76);
-    const factor = THREE.MathUtils.clamp(rise * 0.4 + climb * 0.6, 0, 1);
+    const dusk = THREE.MathUtils.smoothstep(t, 0.84, 0.98);
+    const factor = THREE.MathUtils.clamp(rise * 0.4 + climb * 0.6, 0, 1) * (1 - dusk);
     sunState.factor = factor;
     const elev = THREE.MathUtils.lerp(-0.08, 1.35, factor);
     sunState.elev = elev;
 
-    const z = THREE.MathUtils.lerp(FOCUS.downtown.z, FOCUS.neighborhood.z, t);
+    const z = THREE.MathUtils.lerp(FOCUS.downtown.z, FOCUS.downtownLoop.z, t);
     const x = Math.cos(elev) * 58;
     const y = Math.max(1.6, Math.sin(elev) * 72);
     const sz = z - Math.cos(elev) * 18;

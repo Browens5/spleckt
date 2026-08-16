@@ -3,7 +3,7 @@
 import { useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { FOCUS } from "./layout";
+import { FOCUS, LOOP_CAM, LOOP_LOOK, START_CAM, START_LOOK } from "./layout";
 
 type Key = {
   t: number;
@@ -21,20 +21,24 @@ const N = FOCUS.neighborhood;
  * Look-ats stay on the visual center so the drone (camera-parented) sits
  * over the scene instead of empty fog.
  */
+const L = FOCUS.downtownLoop;
+
 const KEYS: Key[] = [
-  { t: 0, cam: [0, 3.35, 9.2], look: [D.x, D.y, D.z] },
+  { t: 0, cam: START_CAM, look: START_LOOK },
   { t: 0.18, cam: [0.18, 3.55, 1.8], look: [D.x, D.y + 0.08, D.z - 4] },
   { t: 0.26, cam: [3.6, 5.1, C.z + 15], look: [C.x, 2.0, C.z] },
   { t: 0.34, cam: [4.8, 5.4, C.z + 13], look: [C.x, 2.1, C.z] },
   { t: 0.44, cam: [5.0, 5.6, C.z + 12], look: [C.x, 2.2, C.z] },
-  // Climb in front of the tower so the path never clips the roof
   { t: 0.48, cam: [4.4, 10.2, C.z + 11], look: [1.0, 1.4, O.z + 8] },
   { t: 0.52, cam: [2.0, 11.4, O.z + 12], look: [O.x, O.y, O.z] },
   { t: 0.6, cam: [0.55, 12.6, O.z + 5], look: [O.x, O.y, O.z] },
   { t: 0.7, cam: [0.08, 14.2, O.z + 0.3], look: [O.x, 0.04, O.z] },
   { t: 0.76, cam: [-0.8, 5.4, N.z + 12], look: [N.x, 1.05, N.z + 2] },
-  { t: 0.88, cam: [-1.6, 4.6, N.z + 8], look: [N.x, 1.0, N.z] },
-  { t: 1, cam: [-1.4, 4.4, N.z + 7], look: [N.x, 1.0, N.z - 1] },
+  { t: 0.84, cam: [-1.6, 4.6, N.z + 8], look: [N.x, 1.0, N.z] },
+  // City comes back into view; end pose matches the opening shot.
+  { t: 0.9, cam: [-0.6, 4.2, L.z + 22], look: [L.x, 1.2, L.z + 8] },
+  { t: 0.96, cam: [0.1, 3.55, L.z + 14], look: [L.x, L.y, L.z] },
+  { t: 1, cam: LOOP_CAM, look: LOOP_LOOK },
 ];
 
 const tmpCam = new THREE.Vector3();
