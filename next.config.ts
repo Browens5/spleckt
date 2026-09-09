@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
     "better-auth",
     "@huggingface/transformers",
     "onnxruntime-node",
-    "youtubei.js",
   ],
+  transpilePackages: ["youtubei.js"],
 };
 
 export default nextConfig;
