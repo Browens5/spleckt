@@ -13,6 +13,8 @@ export type OutputLayout = "separate" | "strip" | "cross";
 
 export type ImageFormat = "png" | "jpeg" | "webp";
 
+export type RangeMode = "time" | "frame";
+
 export const MASK_CLASSES = ["people", "cars", "sky"] as const;
 
 export type MaskClass = (typeof MASK_CLASSES)[number];
@@ -20,6 +22,19 @@ export type MaskClass = (typeof MASK_CLASSES)[number];
 export type CubemapSettings = {
   /** Frames to extract per second of video. */
   framesPerSecond: number;
+  /**
+   * How the export window is specified for video.
+   * ZIP stills always use frame indices (startFrame / endFrame).
+   */
+  rangeMode: RangeMode;
+  /** Inclusive start time in seconds (time mode, video only). */
+  startTimeSec: number;
+  /** Exclusive end time in seconds; null = end of video (time mode). */
+  endTimeSec: number | null;
+  /** Inclusive 1-based start sample/image index (frame mode or ZIP). */
+  startFrame: number;
+  /** Inclusive 1-based end sample/image index; null = last frame. */
+  endFrame: number | null;
   /** Output resolution for each cube face (pixels). */
   faceSize: number;
   /** Horizontal/vertical FOV for each face, in degrees (90 = classic cubemap). */
@@ -57,6 +72,11 @@ export type ProcessProgress = {
 
 export const DEFAULT_CUBEMAP_SETTINGS: CubemapSettings = {
   framesPerSecond: 1,
+  rangeMode: "time",
+  startTimeSec: 0,
+  endTimeSec: null,
+  startFrame: 1,
+  endFrame: null,
   faceSize: 1024,
   fovDegrees: 90,
   faces: ["front", "right", "back", "left", "top", "bottom"],

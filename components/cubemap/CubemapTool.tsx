@@ -9,7 +9,11 @@ import {
   pickOutputDirectory,
 } from "@/lib/cubemap/fs-access";
 import { processEquirectVideo } from "@/lib/cubemap/process-video";
-import { isZipFile } from "@/lib/cubemap/zip-images";
+import {
+  formatDurationLabel,
+  maxSampleFrameCount,
+} from "@/lib/cubemap/sample-range";
+import { isVideoFile, isZipFile } from "@/lib/cubemap/zip-images";
 import {
   CUBE_FACES,
   DEFAULT_CUBEMAP_SETTINGS,
@@ -21,6 +25,7 @@ import {
   type MaskClass,
   type OutputLayout,
   type ProcessProgress,
+  type RangeMode,
 } from "@/lib/cubemap/types";
 
 const IDLE_PROGRESS: ProcessProgress = {
@@ -37,10 +42,43 @@ const IDLE_PROGRESS: ProcessProgress = {
 
 const SIDE_FACES: CubeFace[] = ["front", "right", "back", "left"];
 
+async function probeVideoDuration(file: File): Promise<number> {
+  const url = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  video.preload = "metadata";
+  video.muted = true;
+  video.playsInline = true;
+  video.src = url;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const onMeta = () => {
+        cleanup();
+        resolve();
+      };
+      const onError = () => {
+        cleanup();
+        reject(new Error("Unable to read video metadata."));
+      };
+      const cleanup = () => {
+        video.removeEventListener("loadedmetadata", onMeta);
+        video.removeEventListener("error", onError);
+      };
+      video.addEventListener("loadedmetadata", onMeta, { once: true });
+      video.addEventListener("error", onError, { once: true });
+    });
+    return Number.isFinite(video.duration) ? video.duration : 0;
+  } finally {
+    URL.revokeObjectURL(url);
+    video.removeAttribute("src");
+    video.load();
+  }
+}
+
 export function CubemapTool() {
   const [inputLabel, setInputLabel] = useState("");
   const [outputLabel, setOutputLabel] = useState("");
   const [inputFile, setInputFile] = useState<File | null>(null);
+  const [videoDurationSec, setVideoDurationSec] = useState<number | null>(null);
   const [outputDir, setOutputDir] = useState<FileSystemDirectoryHandle | null>(
     null,
   );
@@ -52,11 +90,60 @@ export function CubemapTool() {
   const abortRef = useRef<AbortController | null>(null);
   const usingDownloadFallback = outputLabel === "Browser downloads (fallback)";
   const inputIsZip = Boolean(inputFile && isZipFile(inputFile));
+  const rangeMode: RangeMode = inputIsZip ? "frame" : settings.rangeMode;
 
   const faceCount = settings.faces.length;
   const masksReady =
     !settings.exportMasks || settings.maskClasses.length > 0;
   const canRun = Boolean(inputFile) && faceCount > 0 && masksReady && !busy;
+
+  const sampleFrameCount = useMemo(() => {
+    if (videoDurationSec == null || videoDurationSec <= 0) return null;
+    return maxSampleFrameCount(videoDurationSec, settings.framesPerSecond);
+  }, [videoDurationSec, settings.framesPerSecond]);
+
+  const estimatedExportCount = useMemo(() => {
+    if (inputIsZip) {
+      if (settings.endFrame == null) return null;
+      return Math.max(
+        0,
+        Math.floor(settings.endFrame) -
+          Math.max(1, Math.floor(settings.startFrame)) +
+          1,
+      );
+    }
+    if (rangeMode === "frame") {
+      if (sampleFrameCount == null) return null;
+      const start = Math.max(1, Math.floor(settings.startFrame));
+      const end =
+        settings.endFrame == null
+          ? sampleFrameCount
+          : Math.min(sampleFrameCount, Math.floor(settings.endFrame));
+      return Math.max(0, end - start + 1);
+    }
+    if (videoDurationSec == null || videoDurationSec <= 0) return null;
+    const start = Math.max(0, settings.startTimeSec);
+    const end =
+      settings.endTimeSec == null
+        ? videoDurationSec
+        : Math.min(videoDurationSec, Math.max(0, settings.endTimeSec));
+    if (!(end > start)) return 0;
+    const fps = Math.max(0.05, settings.framesPerSecond);
+    const interval = 1 / fps;
+    let count = 0;
+    for (let t = start; t < end - 1e-4; t += interval) count += 1;
+    return Math.max(1, count);
+  }, [
+    inputIsZip,
+    rangeMode,
+    sampleFrameCount,
+    settings.endFrame,
+    settings.endTimeSec,
+    settings.framesPerSecond,
+    settings.startFrame,
+    settings.startTimeSec,
+    videoDurationSec,
+  ]);
 
   function toggleMaskClass(maskClass: MaskClass) {
     const exists = settings.maskClasses.includes(maskClass);
@@ -74,6 +161,23 @@ export function CubemapTool() {
       const picked = await pickInputSource();
       setInputFile(picked.file);
       setInputLabel(picked.pathLabel);
+      setVideoDurationSec(null);
+      updateSettings({
+        startTimeSec: 0,
+        endTimeSec: null,
+        startFrame: 1,
+        endFrame: null,
+        ...(isZipFile(picked.file) ? { rangeMode: "frame" as const } : {}),
+      });
+
+      if (isVideoFile(picked.file)) {
+        try {
+          const duration = await probeVideoDuration(picked.file);
+          setVideoDurationSec(duration > 0 ? duration : null);
+        } catch {
+          setVideoDurationSec(null);
+        }
+      }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Could not open input file.");
@@ -133,10 +237,13 @@ export function CubemapTool() {
     setBusy(true);
     const controller = new AbortController();
     abortRef.current = controller;
+    const effectiveSettings: CubemapSettings = inputIsZip
+      ? { ...settings, rangeMode: "frame" }
+      : settings;
     try {
       await processEquirectVideo({
         file: inputFile,
-        settings,
+        settings: effectiveSettings,
         outputDirectory: outputDir,
         signal: controller.signal,
         onProgress: setProgress,
@@ -209,9 +316,9 @@ export function CubemapTool() {
             transition={{ duration: 0.55, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           >
             Extract frames from an equirectangular video — or a ZIP of still
-            frames — at your chosen rate, project selected cube faces with
-            custom FOV, and write images straight to a local folder — all in the
-            browser.
+            frames — at your chosen rate, trim to a start/end window, project
+            selected cube faces with custom FOV, and write images straight to a
+            local folder — all in the browser.
           </motion.p>
         </section>
 
@@ -239,7 +346,15 @@ export function CubemapTool() {
               {inputIsZip ? (
                 <p className="cm-hint">
                   ZIP detected — each image is processed as one equirect frame
-                  (sorted by filename). Frames-per-second applies to video only.
+                  (sorted by filename). Use start/end frame to limit the export.
+                  Frames-per-second applies to video only.
+                </p>
+              ) : videoDurationSec != null ? (
+                <p className="cm-hint">
+                  Duration {formatDurationLabel(videoDurationSec)}
+                  {sampleFrameCount != null
+                    ? ` · ${sampleFrameCount} sample${sampleFrameCount === 1 ? "" : "s"} at ${settings.framesPerSecond} FPS`
+                    : ""}
                 </p>
               ) : null}
             </div>
@@ -401,6 +516,149 @@ export function CubemapTool() {
                 <option value="cross">Cubemap cross</option>
               </select>
             </label>
+          </div>
+
+          <div className="cm-range">
+            <div className="cm-faces__head">
+              <h2>Export range</h2>
+              <div
+                className="cm-segment"
+                role="group"
+                aria-label="Range mode"
+              >
+                <button
+                  type="button"
+                  className={`cm-segment__btn${rangeMode === "time" ? " is-active" : ""}`}
+                  aria-pressed={rangeMode === "time"}
+                  disabled={busy || inputIsZip}
+                  onClick={() => updateSettings({ rangeMode: "time" })}
+                >
+                  Time
+                </button>
+                <button
+                  type="button"
+                  className={`cm-segment__btn${rangeMode === "frame" ? " is-active" : ""}`}
+                  aria-pressed={rangeMode === "frame"}
+                  disabled={busy}
+                  onClick={() => updateSettings({ rangeMode: "frame" })}
+                >
+                  Frame
+                </button>
+              </div>
+            </div>
+            <p className="cm-hint">
+              {inputIsZip
+                ? "Limit which ZIP images are exported (1-based, inclusive). Leave end empty for the last image."
+                : rangeMode === "time"
+                  ? "Only sample video between start and end times. Leave end empty for the full remaining duration."
+                  : "Frame numbers follow the FPS grid from the start of the video (frame 1 = 0s). Leave end empty for the last sample."}
+            </p>
+            <div className="cm-grid cm-range__grid">
+              {rangeMode === "time" && !inputIsZip ? (
+                <>
+                  <label className="cm-field">
+                    <span>Start time (sec)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={videoDurationSec ?? undefined}
+                      step={0.1}
+                      value={settings.startTimeSec}
+                      disabled={busy}
+                      onChange={(e) =>
+                        updateSettings({
+                          startTimeSec: Math.max(0, Number(e.target.value) || 0),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="cm-field">
+                    <span>End time (sec)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={videoDurationSec ?? undefined}
+                      step={0.1}
+                      value={settings.endTimeSec ?? ""}
+                      placeholder={
+                        videoDurationSec != null
+                          ? String(Number(videoDurationSec.toFixed(3)))
+                          : "End of video"
+                      }
+                      disabled={busy}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        if (raw === "") {
+                          updateSettings({ endTimeSec: null });
+                          return;
+                        }
+                        updateSettings({
+                          endTimeSec: Math.max(0, Number(raw) || 0),
+                        });
+                      }}
+                    />
+                    <em>Empty = end of video</em>
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label className="cm-field">
+                    <span>Start frame</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={sampleFrameCount ?? undefined}
+                      step={1}
+                      value={settings.startFrame}
+                      disabled={busy}
+                      onChange={(e) =>
+                        updateSettings({
+                          startFrame: Math.max(
+                            1,
+                            Math.floor(Number(e.target.value) || 1),
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="cm-field">
+                    <span>End frame</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={sampleFrameCount ?? undefined}
+                      step={1}
+                      value={settings.endFrame ?? ""}
+                      placeholder={
+                        sampleFrameCount != null
+                          ? String(sampleFrameCount)
+                          : "Last frame"
+                      }
+                      disabled={busy}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        if (raw === "") {
+                          updateSettings({ endFrame: null });
+                          return;
+                        }
+                        updateSettings({
+                          endFrame: Math.max(1, Math.floor(Number(raw) || 1)),
+                        });
+                      }}
+                    />
+                    <em>Empty = last frame</em>
+                  </label>
+                </>
+              )}
+              <div className="cm-field cm-field--readonly">
+                <span>Frames to export</span>
+                <strong>
+                  {estimatedExportCount == null
+                    ? "—"
+                    : estimatedExportCount}
+                </strong>
+              </div>
+            </div>
           </div>
 
           <div className="cm-faces">
