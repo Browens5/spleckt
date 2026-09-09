@@ -4693,6 +4693,11 @@ textarea {
   line-height: 1.45;
 }
 
+.cm-hint--status {
+  color: var(--cm-accent);
+  font-weight: 600;
+}
+
 .cm-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -4714,6 +4719,60 @@ textarea {
 .cm-field input[type="range"] {
   width: 100%;
   accent-color: var(--cm-accent);
+}
+
+.cm-range {
+  margin-top: 0.35rem;
+}
+
+.cm-range__grid {
+  margin-top: 0.85rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cm-field--readonly strong {
+  display: block;
+  padding: 0.72rem 0.85rem;
+  border: 1px solid var(--cm-line);
+  background: rgba(15, 122, 134, 0.04);
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--cm-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.cm-segment {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--cm-line);
+  background: #fff;
+}
+
+.cm-segment__btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--cm-muted);
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cm-segment__btn.is-active {
+  background: var(--cm-accent);
+  color: #fff;
+}
+
+.cm-segment__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cm-segment__btn:focus-visible {
+  outline: 2px solid rgba(15, 122, 134, 0.45);
+  outline-offset: 1px;
 }
 
 .cm-faces__head {
@@ -4963,6 +5022,10 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .cm-range__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .cm-faces__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -4986,6 +5049,10 @@ textarea {
   }
 
   .cm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cm-range__grid {
     grid-template-columns: 1fr;
   }
 

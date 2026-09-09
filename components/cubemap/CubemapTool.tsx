@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CubemapBrand } from "@/components/cubemap/CubemapBrand";
 import { ProgressBar } from "@/components/cubemap/ProgressBar";
 import {
@@ -9,7 +9,11 @@ import {
   pickOutputDirectory,
 } from "@/lib/cubemap/fs-access";
 import { processEquirectVideo } from "@/lib/cubemap/process-video";
-import { isZipFile } from "@/lib/cubemap/zip-images";
+import {
+  formatDurationLabel,
+  maxSampleFrameCount,
+} from "@/lib/cubemap/sample-range";
+import { isVideoFile, isZipFile } from "@/lib/cubemap/zip-images";
 import {
   CUBE_FACES,
   DEFAULT_CUBEMAP_SETTINGS,
@@ -18,9 +22,11 @@ import {
   type CubeFace,
   type CubemapSettings,
   type ImageFormat,
+  type InputProjection,
   type MaskClass,
   type OutputLayout,
   type ProcessProgress,
+  type RangeMode,
 } from "@/lib/cubemap/types";
 
 const IDLE_PROGRESS: ProcessProgress = {
@@ -37,10 +43,50 @@ const IDLE_PROGRESS: ProcessProgress = {
 
 const SIDE_FACES: CubeFace[] = ["front", "right", "back", "left"];
 
+async function probeVideoDuration(file: File): Promise<number> {
+  const url = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  video.preload = "metadata";
+  video.muted = true;
+  video.playsInline = true;
+  video.src = url;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const onMeta = () => {
+        cleanup();
+        resolve();
+      };
+      const onError = () => {
+        cleanup();
+        reject(new Error("Unable to read video metadata."));
+      };
+      const cleanup = () => {
+        video.removeEventListener("loadedmetadata", onMeta);
+        video.removeEventListener("error", onError);
+      };
+      video.addEventListener("loadedmetadata", onMeta, { once: true });
+      video.addEventListener("error", onError, { once: true });
+    });
+    return Number.isFinite(video.duration) ? video.duration : 0;
+  } finally {
+    URL.revokeObjectURL(url);
+    video.removeAttribute("src");
+    video.load();
+  }
+}
+
 export function CubemapTool() {
   const [inputLabel, setInputLabel] = useState("");
   const [outputLabel, setOutputLabel] = useState("");
   const [inputFile, setInputFile] = useState<File | null>(null);
+  const [videoDurationSec, setVideoDurationSec] = useState<number | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeStatus, setYoutubeStatus] = useState<string | null>(null);
+  const [youtubeImporting, setYoutubeImporting] = useState(false);
+  const [youtubeEnabled, setYoutubeEnabled] = useState<boolean | null>(null);
+  const [youtubeDisabledReason, setYoutubeDisabledReason] = useState<string | null>(
+    null,
+  );
   const [outputDir, setOutputDir] = useState<FileSystemDirectoryHandle | null>(
     null,
   );
@@ -52,11 +98,184 @@ export function CubemapTool() {
   const abortRef = useRef<AbortController | null>(null);
   const usingDownloadFallback = outputLabel === "Browser downloads (fallback)";
   const inputIsZip = Boolean(inputFile && isZipFile(inputFile));
+  const rangeMode: RangeMode = inputIsZip ? "frame" : settings.rangeMode;
 
   const faceCount = settings.faces.length;
   const masksReady =
     !settings.exportMasks || settings.maskClasses.length > 0;
-  const canRun = Boolean(inputFile) && faceCount > 0 && masksReady && !busy;
+  const canRun =
+    Boolean(inputFile) && faceCount > 0 && masksReady && !busy && !youtubeImporting;
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/cubemap/youtube");
+        const payload = (await response.json()) as {
+          enabled?: boolean;
+          error?: string;
+        };
+        if (cancelled) return;
+        setYoutubeEnabled(Boolean(payload.enabled));
+        setYoutubeDisabledReason(
+          payload.enabled ? null : payload.error ?? "YouTube import unavailable on this host.",
+        );
+      } catch {
+        if (cancelled) return;
+        setYoutubeEnabled(false);
+        setYoutubeDisabledReason("Could not reach the YouTube import API.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function applyInputFile(
+    file: File,
+    pathLabel: string,
+    projection?: InputProjection,
+  ) {
+    setInputFile(file);
+    setInputLabel(pathLabel);
+    setVideoDurationSec(null);
+    const nextProjection =
+      projection ??
+      (settings.inputProjection === "eac" ? "eac" : "equirect");
+    updateSettings({
+      startTimeSec: 0,
+      endTimeSec: null,
+      startFrame: 1,
+      endFrame: null,
+      inputProjection: nextProjection,
+      ...(isZipFile(file) ? { rangeMode: "frame" as const } : {}),
+    });
+
+    if (isVideoFile(file)) {
+      try {
+        const duration = await probeVideoDuration(file);
+        setVideoDurationSec(duration > 0 ? duration : null);
+      } catch {
+        setVideoDurationSec(null);
+      }
+    }
+  }
+
+  async function onImportYoutube() {
+    if (busy || youtubeImporting || youtubeEnabled === false) return;
+    setError(null);
+    setYoutubeStatus("Contacting YouTube via yt-dlp…");
+    setYoutubeImporting(true);
+    try {
+      const response = await fetch("/api/cubemap/youtube", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: youtubeUrl,
+          startTimeSec:
+            settings.rangeMode === "time" ? settings.startTimeSec : undefined,
+          endTimeSec:
+            settings.rangeMode === "time" ? settings.endTimeSec : undefined,
+          // Only force EAC when the user explicitly selected that projection.
+          // Otherwise let the server detect 3×2 EAC vs equirect from metadata/aspect.
+          forceEac: settings.inputProjection === "eac",
+        }),
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        downloadPath?: string;
+        fileName?: string;
+        title?: string;
+        durationSec?: number | null;
+        projection?: string;
+        note?: string;
+      };
+      if (!response.ok || !payload.downloadPath) {
+        throw new Error(payload.error || "YouTube import failed.");
+      }
+
+      setYoutubeStatus(
+        payload.note ??
+          "Download ready — converting EAC and loading into the tool…",
+      );
+      const media = await fetch(payload.downloadPath);
+      if (!media.ok) {
+        throw new Error("Could not download the prepared equirect clip.");
+      }
+      const blob = await media.blob();
+      const file = new File(
+        [blob],
+        payload.fileName || "youtube-equirect.mp4",
+        { type: blob.type || "video/mp4" },
+      );
+      // Server already converted EAC → equirect for the browser pipeline.
+      // Keep the probed clip duration from applyInputFile (do not overwrite
+      // with the original full-length YouTube duration when a range was used).
+      await applyInputFile(
+        file,
+        `${payload.title ?? "YouTube"} (imported equirect)`,
+        "equirect",
+      );
+      setYoutubeStatus(
+        `Ready: ${payload.title ?? "YouTube video"} · projection prepared as equirect`,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "YouTube import failed.";
+      setError(message);
+      setYoutubeStatus(null);
+    } finally {
+      setYoutubeImporting(false);
+    }
+  }
+
+  const sampleFrameCount = useMemo(() => {
+    if (videoDurationSec == null || videoDurationSec <= 0) return null;
+    return maxSampleFrameCount(videoDurationSec, settings.framesPerSecond);
+  }, [videoDurationSec, settings.framesPerSecond]);
+
+  const estimatedExportCount = useMemo(() => {
+    if (inputIsZip) {
+      if (settings.endFrame == null) return null;
+      return Math.max(
+        0,
+        Math.floor(settings.endFrame) -
+          Math.max(1, Math.floor(settings.startFrame)) +
+          1,
+      );
+    }
+    if (rangeMode === "frame") {
+      if (sampleFrameCount == null) return null;
+      const start = Math.max(1, Math.floor(settings.startFrame));
+      const end =
+        settings.endFrame == null
+          ? sampleFrameCount
+          : Math.min(sampleFrameCount, Math.floor(settings.endFrame));
+      return Math.max(0, end - start + 1);
+    }
+    if (videoDurationSec == null || videoDurationSec <= 0) return null;
+    const start = Math.max(0, settings.startTimeSec);
+    const end =
+      settings.endTimeSec == null
+        ? videoDurationSec
+        : Math.min(videoDurationSec, Math.max(0, settings.endTimeSec));
+    if (!(end > start)) return 0;
+    const fps = Math.max(0.05, settings.framesPerSecond);
+    const interval = 1 / fps;
+    let count = 0;
+    for (let t = start; t < end - 1e-4; t += interval) count += 1;
+    return Math.max(1, count);
+  }, [
+    inputIsZip,
+    rangeMode,
+    sampleFrameCount,
+    settings.endFrame,
+    settings.endTimeSec,
+    settings.framesPerSecond,
+    settings.startFrame,
+    settings.startTimeSec,
+    videoDurationSec,
+  ]);
 
   function toggleMaskClass(maskClass: MaskClass) {
     const exists = settings.maskClasses.includes(maskClass);
@@ -70,10 +289,10 @@ export function CubemapTool() {
 
   async function onPickInput() {
     setError(null);
+    setYoutubeStatus(null);
     try {
       const picked = await pickInputSource();
-      setInputFile(picked.file);
-      setInputLabel(picked.pathLabel);
+      await applyInputFile(picked.file, picked.pathLabel);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Could not open input file.");
@@ -133,10 +352,13 @@ export function CubemapTool() {
     setBusy(true);
     const controller = new AbortController();
     abortRef.current = controller;
+    const effectiveSettings: CubemapSettings = inputIsZip
+      ? { ...settings, rangeMode: "frame" }
+      : settings;
     try {
       await processEquirectVideo({
         file: inputFile,
-        settings,
+        settings: effectiveSettings,
         outputDirectory: outputDir,
         signal: controller.signal,
         onProgress: setProgress,
@@ -181,7 +403,7 @@ export function CubemapTool() {
       <header className="cm-header">
         <div className="cm-header__inner">
           <CubemapBrand />
-          <p className="cm-header__privacy">100% on-device · nothing uploads</p>
+          <p className="cm-header__privacy">Cubemap projection stays in your browser</p>
         </div>
       </header>
 
@@ -208,10 +430,10 @@ export function CubemapTool() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           >
-            Extract frames from an equirectangular video — or a ZIP of still
-            frames — at your chosen rate, project selected cube faces with
-            custom FOV, and write images straight to a local folder — all in the
-            browser.
+            Extract frames from an equirectangular video, a YouTube 360 EAC
+            link, or a ZIP of still frames — trim to a start/end window, project
+            selected cube faces with custom FOV, and write images straight to a
+            local folder.
           </motion.p>
         </section>
 
@@ -232,17 +454,59 @@ export function CubemapTool() {
                   value={inputLabel}
                   placeholder="Select an equirectangular MP4 or a ZIP of frames…"
                 />
-                <button type="button" className="cm-btn cm-btn--secondary" onClick={onPickInput} disabled={busy}>
+                <button type="button" className="cm-btn cm-btn--secondary" onClick={onPickInput} disabled={busy || youtubeImporting}>
                   Choose file
                 </button>
               </div>
               {inputIsZip ? (
                 <p className="cm-hint">
                   ZIP detected — each image is processed as one equirect frame
-                  (sorted by filename). Frames-per-second applies to video only.
+                  (sorted by filename). Use start/end frame to limit the export.
+                  Frames-per-second applies to video only.
+                </p>
+              ) : videoDurationSec != null ? (
+                <p className="cm-hint">
+                  Duration {formatDurationLabel(videoDurationSec)}
+                  {sampleFrameCount != null
+                    ? ` · ${sampleFrameCount} sample${sampleFrameCount === 1 ? "" : "s"} at ${settings.framesPerSecond} FPS`
+                    : ""}
                 </p>
               ) : null}
             </div>
+
+            <div className="cm-path">
+              <label htmlFor="cm-youtube-url">YouTube 360 link</label>
+              <div className="cm-path__row">
+                <input
+                  id="cm-youtube-url"
+                  value={youtubeUrl}
+                  placeholder="https://www.youtube.com/watch?v=…"
+                  disabled={busy || youtubeImporting || youtubeEnabled === false}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="cm-btn cm-btn--secondary"
+                  onClick={onImportYoutube}
+                  disabled={
+                    busy ||
+                    youtubeImporting ||
+                    youtubeEnabled === false ||
+                    !youtubeUrl.trim()
+                  }
+                >
+                  {youtubeImporting ? "Importing…" : "Import"}
+                </button>
+              </div>
+              <p className="cm-hint">
+                {youtubeEnabled === false
+                  ? youtubeDisabledReason ??
+                    "YouTube import needs yt-dlp + ffmpeg on a self-hosted host (not available on plain Vercel serverless)."
+                  : "Pulls the YouTube 360 stream (EAC when metadata says so), converts it to equirectangular on the host, then loads it here for cubemap export. Set the export time range first if you only need a clip. Optional YOUTUBE_COOKIES_FILE helps when YouTube asks for a sign-in."}
+              </p>
+              {youtubeStatus ? <p className="cm-hint cm-hint--status">{youtubeStatus}</p> : null}
+            </div>
+
             <div className="cm-path">
               <label htmlFor="cm-output-path">Output folder</label>
               <div className="cm-path__row">
@@ -279,7 +543,7 @@ export function CubemapTool() {
                 max={60}
                 step={0.1}
                 value={settings.framesPerSecond}
-                disabled={busy || inputIsZip}
+                disabled={busy || inputIsZip || youtubeImporting}
                 onChange={(e) =>
                   updateSettings({
                     framesPerSecond: Number(e.target.value) || 1,
@@ -287,6 +551,23 @@ export function CubemapTool() {
                 }
               />
               {inputIsZip ? <em>Video only</em> : null}
+            </label>
+
+            <label className="cm-field">
+              <span>Input projection</span>
+              <select
+                value={settings.inputProjection}
+                disabled={busy || youtubeImporting}
+                onChange={(e) =>
+                  updateSettings({
+                    inputProjection: e.target.value as InputProjection,
+                  })
+                }
+              >
+                <option value="equirect">Equirectangular</option>
+                <option value="eac">YouTube EAC (3×2)</option>
+              </select>
+              <em>Use EAC for local YouTube 360 downloads</em>
             </label>
 
             <label className="cm-field">
@@ -401,6 +682,149 @@ export function CubemapTool() {
                 <option value="cross">Cubemap cross</option>
               </select>
             </label>
+          </div>
+
+          <div className="cm-range">
+            <div className="cm-faces__head">
+              <h2>Export range</h2>
+              <div
+                className="cm-segment"
+                role="group"
+                aria-label="Range mode"
+              >
+                <button
+                  type="button"
+                  className={`cm-segment__btn${rangeMode === "time" ? " is-active" : ""}`}
+                  aria-pressed={rangeMode === "time"}
+                  disabled={busy || inputIsZip}
+                  onClick={() => updateSettings({ rangeMode: "time" })}
+                >
+                  Time
+                </button>
+                <button
+                  type="button"
+                  className={`cm-segment__btn${rangeMode === "frame" ? " is-active" : ""}`}
+                  aria-pressed={rangeMode === "frame"}
+                  disabled={busy}
+                  onClick={() => updateSettings({ rangeMode: "frame" })}
+                >
+                  Frame
+                </button>
+              </div>
+            </div>
+            <p className="cm-hint">
+              {inputIsZip
+                ? "Limit which ZIP images are exported (1-based, inclusive). Leave end empty for the last image."
+                : rangeMode === "time"
+                  ? "Only sample video between start and end times. Leave end empty for the full remaining duration."
+                  : "Frame numbers follow the FPS grid from the start of the video (frame 1 = 0s). Leave end empty for the last sample."}
+            </p>
+            <div className="cm-grid cm-range__grid">
+              {rangeMode === "time" && !inputIsZip ? (
+                <>
+                  <label className="cm-field">
+                    <span>Start time (sec)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={videoDurationSec ?? undefined}
+                      step={0.1}
+                      value={settings.startTimeSec}
+                      disabled={busy}
+                      onChange={(e) =>
+                        updateSettings({
+                          startTimeSec: Math.max(0, Number(e.target.value) || 0),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="cm-field">
+                    <span>End time (sec)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={videoDurationSec ?? undefined}
+                      step={0.1}
+                      value={settings.endTimeSec ?? ""}
+                      placeholder={
+                        videoDurationSec != null
+                          ? String(Number(videoDurationSec.toFixed(3)))
+                          : "End of video"
+                      }
+                      disabled={busy}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        if (raw === "") {
+                          updateSettings({ endTimeSec: null });
+                          return;
+                        }
+                        updateSettings({
+                          endTimeSec: Math.max(0, Number(raw) || 0),
+                        });
+                      }}
+                    />
+                    <em>Empty = end of video</em>
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label className="cm-field">
+                    <span>Start frame</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={sampleFrameCount ?? undefined}
+                      step={1}
+                      value={settings.startFrame}
+                      disabled={busy}
+                      onChange={(e) =>
+                        updateSettings({
+                          startFrame: Math.max(
+                            1,
+                            Math.floor(Number(e.target.value) || 1),
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="cm-field">
+                    <span>End frame</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={sampleFrameCount ?? undefined}
+                      step={1}
+                      value={settings.endFrame ?? ""}
+                      placeholder={
+                        sampleFrameCount != null
+                          ? String(sampleFrameCount)
+                          : "Last frame"
+                      }
+                      disabled={busy}
+                      onChange={(e) => {
+                        const raw = e.target.value.trim();
+                        if (raw === "") {
+                          updateSettings({ endFrame: null });
+                          return;
+                        }
+                        updateSettings({
+                          endFrame: Math.max(1, Math.floor(Number(raw) || 1)),
+                        });
+                      }}
+                    />
+                    <em>Empty = last frame</em>
+                  </label>
+                </>
+              )}
+              <div className="cm-field cm-field--readonly">
+                <span>Frames to export</span>
+                <strong>
+                  {estimatedExportCount == null
+                    ? "—"
+                    : estimatedExportCount}
+                </strong>
+              </div>
+            </div>
           </div>
 
           <div className="cm-faces">
@@ -525,10 +949,12 @@ export function CubemapTool() {
         <section className="cm-notes" aria-label="How it works">
           <h2>Private by design</h2>
           <p>
-            Video decoding, frame extraction, and equirectangular projection run
-            entirely in your browser with WebGL. Nothing is uploaded. Optional
-            mask export loads a small segmentation model into the browser on
-            first use and keeps all inference on-device.
+            Cubemap projection, frame extraction, and optional mask inference run
+            in your browser with WebGL. Local files never leave the device.
+            YouTube import is the exception: the link is fetched with yt-dlp on
+            the host, EAC is converted to equirectangular, then the clip is
+            handed back to the browser for face export. Only import videos you
+            have rights to use.
           </p>
         </section>
       </main>

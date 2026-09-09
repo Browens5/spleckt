@@ -15,6 +15,10 @@ import type {
   ProcessProgress,
 } from "@/lib/cubemap/types";
 import {
+  buildVideoSampleTimes,
+  sliceFrameRange,
+} from "@/lib/cubemap/sample-range";
+import {
   extractImagesFromZip,
   isVideoFile,
   isZipFile,
@@ -269,13 +273,7 @@ async function createVideoFrameProvider(
     throw new Error("Video dimensions are unavailable.");
   }
 
-  const fps = Math.max(0.05, settings.framesPerSecond);
-  const interval = 1 / fps;
-  const times: number[] = [];
-  for (let t = 0; t < duration - 1e-4; t += interval) {
-    times.push(Math.min(t, duration - 1e-4));
-  }
-  if (times.length === 0) times.push(0);
+  const times = buildVideoSampleTimes(duration, settings);
 
   return {
     kind: "video",
@@ -300,12 +298,20 @@ async function createVideoFrameProvider(
  */
 async function createZipFrameProvider(
   file: File,
-  _settings: CubemapSettings,
+  settings: CubemapSettings,
   signal?: AbortSignal,
   onStatus?: (message: string) => void,
 ): Promise<FrameProvider> {
   onStatus?.("Reading ZIP archive…");
-  const entries = await extractImagesFromZip(file, signal);
+  const allEntries = await extractImagesFromZip(file, signal);
+  const entries = sliceFrameRange(
+    allEntries,
+    settings.startFrame,
+    settings.endFrame,
+  );
+  if (entries.length === 0) {
+    throw new Error("No images remain in the selected frame range.");
+  }
 
   return {
     kind: "images",
@@ -401,6 +407,7 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
       : await createVideoFrameProvider(file, settings, signal);
 
   const renderer = new EquirectCubemapRenderer();
+  renderer.setProjection(settings.inputProjection);
   const frameCanvas = document.createElement("canvas");
   const frameCtx = frameCanvas.getContext("2d", { willReadFrequently: false });
   if (!frameCtx) {
