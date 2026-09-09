@@ -56,15 +56,15 @@ Point DNS for `menoknow.spleckt.com` at the same Vercel deployment as www. Optio
 
 ## Cubemap (`cubemap.spleckt.com`)
 
-Browser tool that converts equirectangular 360° MP4 (or YouTube 360 EAC after host-side conversion) into cubemap face images. Host-based routing sends `cubemap.spleckt.com` (and `cubemap.localhost:3000` in local dev) to the Cubemap UI. The main Spleckt site does not link to it; `/cubemap` paths return 404 on www/apex.
+Browser tool that converts equirectangular 360° MP4 — or a YouTube 360 file saved locally from a link — into cubemap face images. Host-based routing sends `cubemap.spleckt.com` (and `cubemap.localhost:3000` in local dev) to the Cubemap UI. The main Spleckt site does not link to it; `/cubemap` paths return 404 on www/apex.
 
 - Choose input video (or a ZIP of equirectangular photos/frames) and output folder via the File System Access API (Chromium); other browsers fall back to downloads
-- Paste a YouTube 360 URL to import via `yt-dlp` (**self-hosted only** — needs `yt-dlp` + `ffmpeg` on the Node host; not suitable for stock Vercel serverless). EAC streams are converted to equirectangular with ffmpeg, then projected in the browser. Set `YOUTUBE_COOKIES_FILE` if YouTube requires sign-in. Set `CUBEMAP_YOUTUBE_ENABLED=0` to disable the endpoint.
+- Paste a YouTube 360 URL and use **Save to folder & process**: the host resolves the stream with `youtubei.js` (npm only — no yt-dlp/ffmpeg), the browser saves the file into a folder you pick via the File System Access API, then loads it for cubemap export. 360/EAC sources use the YouTube EAC input projection in WebGL. Optional host convert remains available only when `yt-dlp` is installed self-hosted.
 - Set frames/sec (video), an optional start/end time or start/end frame export window, input projection (equirect or YouTube EAC 3×2 for local downloads), face size, FOV, faces per frame, top/bottom inclusion, yaw, layout (separate / strip / cross), and image format
 - Optional photogrammetry masks (people / cars / sky) export as black=exclude, white=keep PNGs beside each face
-- Cubemap projection uses HTML video + WebGL in the browser. Local files stay on-device; YouTube import is the networked, self-hosted exception.
+- Cubemap projection uses HTML video + WebGL in the browser. Local files stay on-device; YouTube save-to-folder only uses the host as a byte proxy for CDN media.
 
-Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www for the browser UI. YouTube import requires a self-hosted Node runtime with `yt-dlp` and `ffmpeg` (or leave it disabled). Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
+Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www for the browser UI. YouTube **Save to folder & process** works without host binaries; optional host convert still needs self-hosted `yt-dlp`/`ffmpeg`. Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
 
 ## Drones (`drones.spleckt.com`)
 

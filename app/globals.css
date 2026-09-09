@@ -4668,6 +4668,15 @@ textarea {
   gap: 0.65rem;
 }
 
+.cm-path__row--tight {
+  grid-template-columns: 1fr;
+  margin-top: 0.55rem;
+}
+
+.cm-path__row--tight .cm-btn {
+  justify-self: start;
+}
+
 .cm-path input,
 .cm-field input[type="number"],
 .cm-field select {

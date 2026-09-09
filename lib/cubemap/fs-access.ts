@@ -126,6 +126,76 @@ export async function writeBlobToDirectory(
   const writable = await fileHandle.createWritable();
   await writable.write(blob);
   await writable.close();
+  return fileHandle;
+}
+
+/**
+ * Stream a fetch Response into a local folder (File System Access API).
+ * Avoids holding the entire YouTube download in memory when possible.
+ */
+export async function writeResponseToDirectory(
+  dir: FileSystemDirectoryHandle,
+  fileName: string,
+  response: Response,
+  onProgress?: (receivedBytes: number, totalBytes: number | null) => void,
+): Promise<FileSystemFileHandle> {
+  const safeName = fileName.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_").trim() || "youtube.mp4";
+  const fileHandle = await dir.getFileHandle(safeName, { create: true });
+  const writable = await fileHandle.createWritable();
+
+  if (!response.body) {
+    const buffer = await response.arrayBuffer();
+    await writable.write(buffer);
+    await writable.close();
+    onProgress?.(buffer.byteLength, buffer.byteLength);
+    return fileHandle;
+  }
+
+  const totalHeader = response.headers.get("content-length");
+  const totalBytes = totalHeader ? Number(totalHeader) : null;
+  const reader = response.body.getReader();
+  let received = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        await writable.write(value);
+        received += value.byteLength;
+        onProgress?.(received, Number.isFinite(totalBytes) ? totalBytes : null);
+      }
+    }
+  } finally {
+    await writable.close();
+  }
+
+  return fileHandle;
+}
+
+/**
+ * Pick a folder for saving a YouTube download locally before Cubemap processing.
+ */
+export async function pickYoutubeDownloadDirectory(): Promise<{
+  handle: FileSystemDirectoryHandle | null;
+  pathLabel: string;
+}> {
+  if (supportsFileSystemAccess() && window.showDirectoryPicker) {
+    const handle = await window.showDirectoryPicker({
+      mode: "readwrite",
+      id: "cubemap-youtube-download",
+    });
+    const permission = await ensureReadWrite(handle);
+    if (permission !== "granted") {
+      throw new Error("Write permission for the download folder was denied.");
+    }
+    return { handle, pathLabel: handle.name };
+  }
+
+  return {
+    handle: null,
+    pathLabel: "Browser downloads (fallback)",
+  };
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

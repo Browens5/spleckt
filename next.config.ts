@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     "@huggingface/transformers",
     "onnxruntime-node",
   ],
+  transpilePackages: ["youtubei.js"],
 };
 
 export default nextConfig;

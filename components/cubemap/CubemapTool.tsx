@@ -5,14 +5,18 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CubemapBrand } from "@/components/cubemap/CubemapBrand";
 import { ProgressBar } from "@/components/cubemap/ProgressBar";
 import {
+  downloadBlob,
   pickInputSource,
   pickOutputDirectory,
+  pickYoutubeDownloadDirectory,
+  writeResponseToDirectory,
 } from "@/lib/cubemap/fs-access";
 import { processEquirectVideo } from "@/lib/cubemap/process-video";
 import {
   formatDurationLabel,
   maxSampleFrameCount,
 } from "@/lib/cubemap/sample-range";
+import { resolveYoutubeForLocalSave } from "@/lib/cubemap/youtube-browser";
 import { isVideoFile, isZipFile } from "@/lib/cubemap/zip-images";
 import {
   CUBE_FACES,
@@ -161,10 +165,114 @@ export function CubemapTool() {
     }
   }
 
-  async function onImportYoutube() {
+  async function onSaveYoutubeLocally() {
+    if (busy || youtubeImporting) return;
+    if (!youtubeUrl.trim()) {
+      setError("Paste a YouTube URL first.");
+      return;
+    }
+    setError(null);
+    setYoutubeImporting(true);
+    setYoutubeStatus("Resolving YouTube media…");
+    try {
+      const resolved = await resolveYoutubeForLocalSave(youtubeUrl, (message) => {
+        setYoutubeStatus(message);
+      });
+
+      setYoutubeStatus(`Choose a local folder to save “${resolved.title}”…`);
+      const folder = await pickYoutubeDownloadDirectory();
+
+      setYoutubeStatus(
+        `Downloading${resolved.qualityLabel ? ` ${resolved.qualityLabel}` : ""} to ${folder.pathLabel}…`,
+      );
+
+      const response = await fetch(resolved.proxyPath);
+      if (!response.ok) {
+        let detail = `Download failed (HTTP ${response.status}).`;
+        try {
+          const payload = (await response.json()) as { error?: string };
+          if (payload.error) detail = payload.error;
+        } catch {
+          // ignore non-JSON error bodies
+        }
+        throw new Error(detail);
+      }
+
+      let file: File;
+      if (folder.handle) {
+        const fileHandle = await writeResponseToDirectory(
+          folder.handle,
+          resolved.fileName,
+          response,
+          (received, total) => {
+            if (total && total > 0) {
+              const pct = Math.min(99, Math.round((received / total) * 100));
+              setYoutubeStatus(`Downloading to ${folder.pathLabel}… ${pct}%`);
+            } else {
+              const mb = (received / (1024 * 1024)).toFixed(1);
+              setYoutubeStatus(`Downloading to ${folder.pathLabel}… ${mb} MB`);
+            }
+          },
+        );
+        file = await fileHandle.getFile();
+        setYoutubeStatus(
+          `Saved ${resolved.fileName} to “${folder.pathLabel}”. Loading into Cubemap…`,
+        );
+      } else {
+        const blob = await response.blob();
+        file = new File([blob], resolved.fileName, {
+          type: resolved.mimeType || blob.type || "video/mp4",
+        });
+        downloadBlob(blob, resolved.fileName);
+        setYoutubeStatus(
+          `Saved ${resolved.fileName} to your downloads folder. Loading into Cubemap…`,
+        );
+      }
+
+      // Prefer metadata; for unknown 360-style titles default to EAC so YouTube 360 works.
+      const projection: InputProjection =
+        resolved.projection === "equirect"
+          ? "equirect"
+          : resolved.projection === "eac"
+            ? "eac"
+            : "eac";
+
+      await applyInputFile(
+        file,
+        `${resolved.title} (saved locally)`,
+        projection,
+      );
+
+      if (projection === "eac") {
+        updateSettings({ inputProjection: "eac" });
+      }
+
+      setYoutubeStatus(
+        `Ready: ${resolved.title} saved locally` +
+          (projection === "eac"
+            ? " · input projection set to YouTube EAC (3×2)"
+            : " · ready to extract cubemap faces"),
+      );
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setYoutubeStatus(null);
+        return;
+      }
+      const message =
+        err instanceof Error ? err.message : "YouTube local save failed.";
+      setError(
+        `${message} You can still Choose file if you already have the video on disk.`,
+      );
+      setYoutubeStatus(null);
+    } finally {
+      setYoutubeImporting(false);
+    }
+  }
+
+  async function onImportYoutubeServer() {
     if (busy || youtubeImporting || youtubeEnabled === false) return;
     setError(null);
-    setYoutubeStatus("Contacting YouTube via yt-dlp…");
+    setYoutubeStatus("Contacting host YouTube import (optional)…");
     setYoutubeImporting(true);
     try {
       const response = await fetch("/api/cubemap/youtube", {
@@ -176,8 +284,6 @@ export function CubemapTool() {
             settings.rangeMode === "time" ? settings.startTimeSec : undefined,
           endTimeSec:
             settings.rangeMode === "time" ? settings.endTimeSec : undefined,
-          // Only force EAC when the user explicitly selected that projection.
-          // Otherwise let the server detect 3×2 EAC vs equirect from metadata/aspect.
           forceEac: settings.inputProjection === "eac",
         }),
       });
@@ -191,12 +297,12 @@ export function CubemapTool() {
         note?: string;
       };
       if (!response.ok || !payload.downloadPath) {
-        throw new Error(payload.error || "YouTube import failed.");
+        throw new Error(payload.error || "Host YouTube import failed.");
       }
 
       setYoutubeStatus(
         payload.note ??
-          "Download ready — converting EAC and loading into the tool…",
+          "Host download ready — loading prepared equirect into the tool…",
       );
       const media = await fetch(payload.downloadPath);
       if (!media.ok) {
@@ -208,21 +314,20 @@ export function CubemapTool() {
         payload.fileName || "youtube-equirect.mp4",
         { type: blob.type || "video/mp4" },
       );
-      // Server already converted EAC → equirect for the browser pipeline.
-      // Keep the probed clip duration from applyInputFile (do not overwrite
-      // with the original full-length YouTube duration when a range was used).
       await applyInputFile(
         file,
-        `${payload.title ?? "YouTube"} (imported equirect)`,
+        `${payload.title ?? "YouTube"} (host import)`,
         "equirect",
       );
       setYoutubeStatus(
-        `Ready: ${payload.title ?? "YouTube video"} · projection prepared as equirect`,
+        `Ready: ${payload.title ?? "YouTube video"} · host prepared equirect`,
       );
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "YouTube import failed.";
-      setError(message);
+        err instanceof Error ? err.message : "Host YouTube import failed.";
+      setError(
+        `${message} Try “Save to folder & process” instead — it works without yt-dlp.`,
+      );
       setYoutubeStatus(null);
     } finally {
       setYoutubeImporting(false);
@@ -481,30 +586,50 @@ export function CubemapTool() {
                   id="cm-youtube-url"
                   value={youtubeUrl}
                   placeholder="https://www.youtube.com/watch?v=…"
-                  disabled={busy || youtubeImporting || youtubeEnabled === false}
+                  disabled={busy || youtubeImporting}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                 />
                 <button
                   type="button"
                   className="cm-btn cm-btn--secondary"
-                  onClick={onImportYoutube}
-                  disabled={
-                    busy ||
-                    youtubeImporting ||
-                    youtubeEnabled === false ||
-                    !youtubeUrl.trim()
-                  }
+                  onClick={onSaveYoutubeLocally}
+                  disabled={busy || youtubeImporting || !youtubeUrl.trim()}
                 >
-                  {youtubeImporting ? "Importing…" : "Import"}
+                  {youtubeImporting ? "Working…" : "Save to folder & process"}
                 </button>
               </div>
+              {youtubeEnabled ? (
+                <div className="cm-path__row cm-path__row--tight">
+                  <button
+                    type="button"
+                    className="cm-btn cm-btn--ghost"
+                    onClick={onImportYoutubeServer}
+                    disabled={busy || youtubeImporting || !youtubeUrl.trim()}
+                  >
+                    Optional: host convert (yt-dlp)
+                  </button>
+                </div>
+              ) : null}
               <p className="cm-hint">
-                {youtubeEnabled === false
-                  ? youtubeDisabledReason ??
-                    "YouTube import needs yt-dlp + ffmpeg on a self-hosted host (not available on plain Vercel serverless)."
-                  : "Pulls the YouTube 360 stream (EAC when metadata says so), converts it to equirectangular on the host, then loads it here for cubemap export. Set the export time range first if you only need a clip. Optional YOUTUBE_COOKIES_FILE helps when YouTube asks for a sign-in."}
+                Saves the YouTube video into a folder you choose (Chrome/Edge), then
+                loads it for cubemap export — no apps to install. 360/EAC videos
+                are processed with Input projection set to YouTube EAC. If YouTube
+                blocks the session, Choose file with a copy you already have.
               </p>
-              {youtubeStatus ? <p className="cm-hint cm-hint--status">{youtubeStatus}</p> : null}
+              {youtubeEnabled === false && youtubeDisabledReason ? (
+                <p className="cm-hint">
+                  Host convert unavailable ({youtubeDisabledReason}). Save to
+                  folder still works without yt-dlp.
+                </p>
+              ) : null}
+              {youtubeStatus ? (
+                <p className="cm-hint cm-hint--status">{youtubeStatus}</p>
+              ) : null}
+              {error ? (
+                <p className="cm-error" role="alert">
+                  {error}
+                </p>
+              ) : null}
             </div>
 
             <div className="cm-path">
@@ -924,8 +1049,6 @@ export function CubemapTool() {
 
           <ProgressBar progress={progress} busy={busy} />
 
-          {error ? <p className="cm-error">{error}</p> : null}
-
           <div className="cm-actions">
             <button
               type="button"
@@ -951,10 +1074,10 @@ export function CubemapTool() {
           <p>
             Cubemap projection, frame extraction, and optional mask inference run
             in your browser with WebGL. Local files never leave the device.
-            YouTube import is the exception: the link is fetched with yt-dlp on
-            the host, EAC is converted to equirectangular, then the clip is
-            handed back to the browser for face export. Only import videos you
-            have rights to use.
+            YouTube “Save to folder & process” resolves the stream on the host with
+            a JavaScript library (no yt-dlp/ffmpeg install), then proxies bytes so
+            your browser can write the file to a folder you pick. Cubemap processing
+            stays on-device. Only use videos you have rights to process.
           </p>
         </section>
       </main>
