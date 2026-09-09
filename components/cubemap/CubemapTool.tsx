@@ -147,7 +147,9 @@ export function CubemapTool() {
             settings.rangeMode === "time" ? settings.startTimeSec : undefined,
           endTimeSec:
             settings.rangeMode === "time" ? settings.endTimeSec : undefined,
-          forceEac: true,
+          // Only force EAC when the user explicitly selected that projection.
+          // Otherwise let the server detect 3×2 EAC vs equirect from metadata/aspect.
+          forceEac: settings.inputProjection === "eac",
         }),
       });
       const payload = (await response.json()) as {

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       job: downloaded,
       startTimeSec: typeof body.startTimeSec === "number" ? body.startTimeSec : 0,
       endTimeSec: body.endTimeSec ?? null,
-      forceEac: body.forceEac === true || downloaded.projection !== "equirect",
+      forceEac: body.forceEac === true || downloaded.projection === "eac",
     });
 
     const fileName = `${prepared.videoId}_equirect.mp4`;

@@ -368,8 +368,7 @@ export async function convertYoutubeToEquirect(options: {
   forceEac?: boolean;
 }): Promise<YoutubeJobInfo> {
   const { job } = options;
-  const treatAsEac =
-    options.forceEac || job.projection === "eac" || job.projection === "unknown";
+  const treatAsEac = Boolean(options.forceEac) || job.projection === "eac";
   const outPath = path.join(path.dirname(job.sourcePath), "equirect.mp4");
 
   const args = ["-y"];
