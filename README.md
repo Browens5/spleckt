@@ -59,9 +59,10 @@ Point DNS for `menoknow.spleckt.com` at the same Vercel deployment as www. Optio
 Browser tool that converts equirectangular 360° MP4 video into cubemap face images. Host-based routing sends `cubemap.spleckt.com` (and `cubemap.localhost:3000` in local dev) to the Cubemap UI. The main Spleckt site does not link to it; `/cubemap` paths return 404 on www/apex.
 
 - Choose input video (or a ZIP of equirectangular photos/frames) and output folder via the File System Access API (Chromium); other browsers fall back to downloads
-- Set frames/sec (video), an optional start/end time or start/end frame export window, face size, FOV, faces per frame, top/bottom inclusion, yaw, layout (separate / strip / cross), and image format
+- Paste a YouTube 360 URL to import via `yt-dlp` (host-side). EAC streams are converted to equirectangular with ffmpeg, then projected in the browser. Set `YOUTUBE_COOKIES_FILE` if YouTube requires sign-in.
+- Set frames/sec (video), an optional start/end time or start/end frame export window, input projection (equirect or YouTube EAC 3×2 for local downloads), face size, FOV, faces per frame, top/bottom inclusion, yaw, layout (separate / strip / cross), and image format
 - Optional photogrammetry masks (people / cars / sky) export as black=exclude, white=keep PNGs beside each face
-- Processing uses HTML video + WebGL entirely on-device — nothing is uploaded; mask export optionally loads a browser segmentation model on first use
+- Cubemap projection uses HTML video + WebGL in the browser. Local files stay on-device; YouTube import is the networked exception.
 
 Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
 

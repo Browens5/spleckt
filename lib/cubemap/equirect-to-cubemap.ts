@@ -12,10 +12,11 @@ void main() {
 const FRAG = `
 precision highp float;
 varying vec2 v_uv;
-uniform sampler2D u_equirect;
+uniform sampler2D u_panorama;
 uniform int u_face;
 uniform float u_tanHalfFov;
 uniform float u_yaw;
+uniform int u_projection; // 0 = equirect, 1 = YouTube EAC 3x2
 
 vec3 faceDir(int face, vec2 uv) {
   // uv in [-1, 1], y up
@@ -30,20 +31,93 @@ vec3 faceDir(int face, vec2 uv) {
 }
 
 vec2 dirToEquirect(vec3 dir) {
-  float lon = atan(dir.x, dir.z) + u_yaw;
+  float lon = atan(dir.x, dir.z);
   float lat = asin(clamp(dir.y, -1.0, 1.0));
   float u = lon * (0.5 / 3.141592653589793) + 0.5;
   float v = 0.5 - lat * (1.0 / 3.141592653589793);
   return vec2(fract(u), clamp(v, 0.0, 1.0));
 }
 
+float eacTangentToUv(float t) {
+  // s = (atan(t) / (pi/4) + 1) / 2
+  return (atan(t) / 0.7853981633974483 + 1.0) * 0.5;
+}
+
+vec2 dirToEac(vec3 dir) {
+  vec3 d = normalize(dir);
+  float ax = abs(d.x);
+  float ay = abs(d.y);
+  float az = abs(d.z);
+
+  int tile;
+  float ts;
+  float tt;
+
+  // Invert faceDir() for a full 90° cube face, then apply EAC remap.
+  if (ax >= ay && ax >= az) {
+    if (d.x > 0.0) {
+      tile = 1; // right
+      ts = -d.z / d.x;
+      tt = d.y / d.x;
+    } else {
+      tile = 3; // left
+      ts = d.z / (-d.x);
+      tt = d.y / (-d.x);
+    }
+  } else if (ay >= ax && ay >= az) {
+    if (d.y > 0.0) {
+      tile = 4; // top
+      ts = d.x / d.y;
+      tt = -d.z / d.y;
+    } else {
+      tile = 5; // bottom
+      ts = d.x / (-d.y);
+      tt = d.z / (-d.y);
+    }
+  } else if (d.z > 0.0) {
+    tile = 0; // front
+    ts = d.x / d.z;
+    tt = d.y / d.z;
+  } else {
+    tile = 2; // back
+    ts = -d.x / (-d.z);
+    tt = d.y / (-d.z);
+  }
+
+  float fu = clamp(eacTangentToUv(ts), 0.0, 1.0);
+  float fv = clamp(eacTangentToUv(tt), 0.0, 1.0);
+
+  // YouTube / Photo Sphere Viewer 3×2 layout:
+  // | left | front | right |
+  // | bottom | back | top |
+  float col;
+  float row;
+  if (tile == 3) { col = 0.0; row = 0.0; }
+  else if (tile == 0) { col = 1.0; row = 0.0; }
+  else if (tile == 1) { col = 2.0; row = 0.0; }
+  else if (tile == 5) { col = 0.0; row = 1.0; }
+  else if (tile == 2) { col = 1.0; row = 1.0; }
+  else { col = 2.0; row = 1.0; }
+
+  // Texture v=0 is the top of the uploaded frame.
+  float u = (col + fu) / 3.0;
+  float v = (row + (1.0 - fv)) / 2.0;
+  return vec2(u, clamp(v, 0.0, 1.0));
+}
+
+vec3 rotateYaw(vec3 dir, float yaw) {
+  float c = cos(yaw);
+  float s = sin(yaw);
+  return vec3(c * dir.x + s * dir.z, dir.y, -s * dir.x + c * dir.z);
+}
+
 void main() {
   // Clip-space y=+1 is the top of the output face. Keep uv.y positive upward
   // so cube faces are not vertically flipped.
   vec2 uv = v_uv * 2.0 - 1.0;
-  vec3 dir = faceDir(u_face, uv);
-  vec2 sampleUv = dirToEquirect(dir);
-  gl_FragColor = texture2D(u_equirect, sampleUv);
+  vec3 dir = rotateYaw(faceDir(u_face, uv), u_yaw);
+  vec2 sampleUv = u_projection == 1 ? dirToEac(dir) : dirToEquirect(dir);
+  gl_FragColor = texture2D(u_panorama, sampleUv);
 }
 `;
 
@@ -77,7 +151,9 @@ export class EquirectCubemapRenderer {
   private faceLoc: WebGLUniformLocation;
   private fovLoc: WebGLUniformLocation;
   private yawLoc: WebGLUniformLocation;
+  private projectionLoc: WebGLUniformLocation;
   private disposed = false;
+  private projectionMode: 0 | 1 = 0;
 
   constructor() {
     this.canvas = document.createElement("canvas");
@@ -121,11 +197,17 @@ export class EquirectCubemapRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.uniform1i(gl.getUniformLocation(program, "u_equirect"), 0);
+    gl.uniform1i(gl.getUniformLocation(program, "u_panorama"), 0);
 
     this.faceLoc = gl.getUniformLocation(program, "u_face")!;
     this.fovLoc = gl.getUniformLocation(program, "u_tanHalfFov")!;
     this.yawLoc = gl.getUniformLocation(program, "u_yaw")!;
+    this.projectionLoc = gl.getUniformLocation(program, "u_projection")!;
+    gl.uniform1i(this.projectionLoc, 0);
+  }
+
+  setProjection(projection: "equirect" | "eac") {
+    this.projectionMode = projection === "eac" ? 1 : 0;
   }
 
   uploadEquirect(
@@ -191,6 +273,7 @@ export class EquirectCubemapRenderer {
     gl.uniform1i(this.faceLoc, FACE_INDEX[face]);
     gl.uniform1f(this.fovLoc, Math.tan(halfFov));
     gl.uniform1f(this.yawLoc, (yawDegrees * Math.PI) / 180);
+    gl.uniform1i(this.projectionLoc, this.projectionMode);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     return canvas;
   }

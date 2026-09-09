@@ -4693,6 +4693,11 @@ textarea {
   line-height: 1.45;
 }
 
+.cm-hint--status {
+  color: var(--cm-accent);
+  font-weight: 600;
+}
+
 .cm-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

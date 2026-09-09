@@ -22,6 +22,7 @@ import {
   type CubeFace,
   type CubemapSettings,
   type ImageFormat,
+  type InputProjection,
   type MaskClass,
   type OutputLayout,
   type ProcessProgress,
@@ -79,6 +80,9 @@ export function CubemapTool() {
   const [outputLabel, setOutputLabel] = useState("");
   const [inputFile, setInputFile] = useState<File | null>(null);
   const [videoDurationSec, setVideoDurationSec] = useState<number | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeStatus, setYoutubeStatus] = useState<string | null>(null);
+  const [youtubeImporting, setYoutubeImporting] = useState(false);
   const [outputDir, setOutputDir] = useState<FileSystemDirectoryHandle | null>(
     null,
   );
@@ -95,7 +99,105 @@ export function CubemapTool() {
   const faceCount = settings.faces.length;
   const masksReady =
     !settings.exportMasks || settings.maskClasses.length > 0;
-  const canRun = Boolean(inputFile) && faceCount > 0 && masksReady && !busy;
+  const canRun =
+    Boolean(inputFile) && faceCount > 0 && masksReady && !busy && !youtubeImporting;
+
+  async function applyInputFile(
+    file: File,
+    pathLabel: string,
+    projection?: InputProjection,
+  ) {
+    setInputFile(file);
+    setInputLabel(pathLabel);
+    setVideoDurationSec(null);
+    const nextProjection =
+      projection ??
+      (settings.inputProjection === "eac" ? "eac" : "equirect");
+    updateSettings({
+      startTimeSec: 0,
+      endTimeSec: null,
+      startFrame: 1,
+      endFrame: null,
+      inputProjection: nextProjection,
+      ...(isZipFile(file) ? { rangeMode: "frame" as const } : {}),
+    });
+
+    if (isVideoFile(file)) {
+      try {
+        const duration = await probeVideoDuration(file);
+        setVideoDurationSec(duration > 0 ? duration : null);
+      } catch {
+        setVideoDurationSec(null);
+      }
+    }
+  }
+
+  async function onImportYoutube() {
+    if (busy || youtubeImporting) return;
+    setError(null);
+    setYoutubeStatus("Contacting YouTube via yt-dlp…");
+    setYoutubeImporting(true);
+    try {
+      const response = await fetch("/api/cubemap/youtube", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: youtubeUrl,
+          startTimeSec:
+            settings.rangeMode === "time" ? settings.startTimeSec : undefined,
+          endTimeSec:
+            settings.rangeMode === "time" ? settings.endTimeSec : undefined,
+          forceEac: true,
+        }),
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        downloadPath?: string;
+        fileName?: string;
+        title?: string;
+        durationSec?: number | null;
+        projection?: string;
+        note?: string;
+      };
+      if (!response.ok || !payload.downloadPath) {
+        throw new Error(payload.error || "YouTube import failed.");
+      }
+
+      setYoutubeStatus(
+        payload.note ??
+          "Download ready — converting EAC and loading into the tool…",
+      );
+      const media = await fetch(payload.downloadPath);
+      if (!media.ok) {
+        throw new Error("Could not download the prepared equirect clip.");
+      }
+      const blob = await media.blob();
+      const file = new File(
+        [blob],
+        payload.fileName || "youtube-equirect.mp4",
+        { type: blob.type || "video/mp4" },
+      );
+      // Server already converted EAC → equirect for the browser pipeline.
+      await applyInputFile(
+        file,
+        `${payload.title ?? "YouTube"} (imported equirect)`,
+        "equirect",
+      );
+      if (typeof payload.durationSec === "number" && payload.durationSec > 0) {
+        setVideoDurationSec(payload.durationSec);
+      }
+      setYoutubeStatus(
+        `Ready: ${payload.title ?? "YouTube video"} · projection prepared as equirect`,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "YouTube import failed.";
+      setError(message);
+      setYoutubeStatus(null);
+    } finally {
+      setYoutubeImporting(false);
+    }
+  }
 
   const sampleFrameCount = useMemo(() => {
     if (videoDurationSec == null || videoDurationSec <= 0) return null;
@@ -157,27 +259,10 @@ export function CubemapTool() {
 
   async function onPickInput() {
     setError(null);
+    setYoutubeStatus(null);
     try {
       const picked = await pickInputSource();
-      setInputFile(picked.file);
-      setInputLabel(picked.pathLabel);
-      setVideoDurationSec(null);
-      updateSettings({
-        startTimeSec: 0,
-        endTimeSec: null,
-        startFrame: 1,
-        endFrame: null,
-        ...(isZipFile(picked.file) ? { rangeMode: "frame" as const } : {}),
-      });
-
-      if (isVideoFile(picked.file)) {
-        try {
-          const duration = await probeVideoDuration(picked.file);
-          setVideoDurationSec(duration > 0 ? duration : null);
-        } catch {
-          setVideoDurationSec(null);
-        }
-      }
+      await applyInputFile(picked.file, picked.pathLabel);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Could not open input file.");
@@ -288,7 +373,7 @@ export function CubemapTool() {
       <header className="cm-header">
         <div className="cm-header__inner">
           <CubemapBrand />
-          <p className="cm-header__privacy">100% on-device · nothing uploads</p>
+          <p className="cm-header__privacy">Cubemap projection stays in your browser</p>
         </div>
       </header>
 
@@ -315,10 +400,10 @@ export function CubemapTool() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           >
-            Extract frames from an equirectangular video — or a ZIP of still
-            frames — at your chosen rate, trim to a start/end window, project
+            Extract frames from an equirectangular video, a YouTube 360 EAC
+            link, or a ZIP of still frames — trim to a start/end window, project
             selected cube faces with custom FOV, and write images straight to a
-            local folder — all in the browser.
+            local folder.
           </motion.p>
         </section>
 
@@ -339,7 +424,7 @@ export function CubemapTool() {
                   value={inputLabel}
                   placeholder="Select an equirectangular MP4 or a ZIP of frames…"
                 />
-                <button type="button" className="cm-btn cm-btn--secondary" onClick={onPickInput} disabled={busy}>
+                <button type="button" className="cm-btn cm-btn--secondary" onClick={onPickInput} disabled={busy || youtubeImporting}>
                   Choose file
                 </button>
               </div>
@@ -358,6 +443,36 @@ export function CubemapTool() {
                 </p>
               ) : null}
             </div>
+
+            <div className="cm-path">
+              <label htmlFor="cm-youtube-url">YouTube 360 link</label>
+              <div className="cm-path__row">
+                <input
+                  id="cm-youtube-url"
+                  value={youtubeUrl}
+                  placeholder="https://www.youtube.com/watch?v=…"
+                  disabled={busy || youtubeImporting}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="cm-btn cm-btn--secondary"
+                  onClick={onImportYoutube}
+                  disabled={busy || youtubeImporting || !youtubeUrl.trim()}
+                >
+                  {youtubeImporting ? "Importing…" : "Import"}
+                </button>
+              </div>
+              <p className="cm-hint">
+                Pulls the YouTube 360 stream (EAC when available), converts it to
+                equirectangular on the server, then loads it here for cubemap
+                export. Set the export time range first if you only need a clip.
+                Requires yt-dlp on the host; set YOUTUBE_COOKIES_FILE if YouTube
+                asks for a sign-in.
+              </p>
+              {youtubeStatus ? <p className="cm-hint cm-hint--status">{youtubeStatus}</p> : null}
+            </div>
+
             <div className="cm-path">
               <label htmlFor="cm-output-path">Output folder</label>
               <div className="cm-path__row">
@@ -394,7 +509,7 @@ export function CubemapTool() {
                 max={60}
                 step={0.1}
                 value={settings.framesPerSecond}
-                disabled={busy || inputIsZip}
+                disabled={busy || inputIsZip || youtubeImporting}
                 onChange={(e) =>
                   updateSettings({
                     framesPerSecond: Number(e.target.value) || 1,
@@ -402,6 +517,23 @@ export function CubemapTool() {
                 }
               />
               {inputIsZip ? <em>Video only</em> : null}
+            </label>
+
+            <label className="cm-field">
+              <span>Input projection</span>
+              <select
+                value={settings.inputProjection}
+                disabled={busy || youtubeImporting}
+                onChange={(e) =>
+                  updateSettings({
+                    inputProjection: e.target.value as InputProjection,
+                  })
+                }
+              >
+                <option value="equirect">Equirectangular</option>
+                <option value="eac">YouTube EAC (3×2)</option>
+              </select>
+              <em>Use EAC for local YouTube 360 downloads</em>
             </label>
 
             <label className="cm-field">
@@ -783,10 +915,12 @@ export function CubemapTool() {
         <section className="cm-notes" aria-label="How it works">
           <h2>Private by design</h2>
           <p>
-            Video decoding, frame extraction, and equirectangular projection run
-            entirely in your browser with WebGL. Nothing is uploaded. Optional
-            mask export loads a small segmentation model into the browser on
-            first use and keeps all inference on-device.
+            Cubemap projection, frame extraction, and optional mask inference run
+            in your browser with WebGL. Local files never leave the device.
+            YouTube import is the exception: the link is fetched with yt-dlp on
+            the host, EAC is converted to equirectangular, then the clip is
+            handed back to the browser for face export. Only import videos you
+            have rights to use.
           </p>
         </section>
       </main>

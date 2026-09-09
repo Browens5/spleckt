@@ -15,6 +15,9 @@ export type ImageFormat = "png" | "jpeg" | "webp";
 
 export type RangeMode = "time" | "frame";
 
+/** Source frame projection. YouTube 360 downloads are typically EAC 3×2. */
+export type InputProjection = "equirect" | "eac";
+
 export const MASK_CLASSES = ["people", "cars", "sky"] as const;
 
 export type MaskClass = (typeof MASK_CLASSES)[number];
@@ -35,6 +38,11 @@ export type CubemapSettings = {
   startFrame: number;
   /** Inclusive 1-based end sample/image index; null = last frame. */
   endFrame: number | null;
+  /**
+   * How source frames are projected.
+   * `eac` = YouTube equi-angular cubemap 3×2 atlas.
+   */
+  inputProjection: InputProjection;
   /** Output resolution for each cube face (pixels). */
   faceSize: number;
   /** Horizontal/vertical FOV for each face, in degrees (90 = classic cubemap). */
@@ -77,6 +85,7 @@ export const DEFAULT_CUBEMAP_SETTINGS: CubemapSettings = {
   endTimeSec: null,
   startFrame: 1,
   endFrame: null,
+  inputProjection: "equirect",
   faceSize: 1024,
   fovDegrees: 90,
   faces: ["front", "right", "back", "left", "top", "bottom"],

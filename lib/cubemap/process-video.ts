@@ -407,6 +407,7 @@ export async function processEquirectVideo(options: ProcessVideoOptions) {
       : await createVideoFrameProvider(file, settings, signal);
 
   const renderer = new EquirectCubemapRenderer();
+  renderer.setProjection(settings.inputProjection);
   const frameCanvas = document.createElement("canvas");
   const frameCtx = frameCanvas.getContext("2d", { willReadFrequently: false });
   if (!frameCtx) {
