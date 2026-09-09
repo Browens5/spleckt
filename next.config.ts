@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "better-auth",
     "@huggingface/transformers",
     "onnxruntime-node",
+    "youtubei.js",
   ],
 };
 
