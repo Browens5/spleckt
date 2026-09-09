@@ -16,10 +16,7 @@ import {
   formatDurationLabel,
   maxSampleFrameCount,
 } from "@/lib/cubemap/sample-range";
-import {
-  resolveYoutubeInBrowser,
-  youtubeProxyUrl,
-} from "@/lib/cubemap/youtube-browser";
+import { resolveYoutubeForLocalSave } from "@/lib/cubemap/youtube-browser";
 import { isVideoFile, isZipFile } from "@/lib/cubemap/zip-images";
 import {
   CUBE_FACES,
@@ -176,23 +173,20 @@ export function CubemapTool() {
     }
     setError(null);
     setYoutubeImporting(true);
-    setYoutubeStatus("Resolving YouTube media in your browser…");
+    setYoutubeStatus("Resolving YouTube media…");
     try {
-      const resolved = await resolveYoutubeInBrowser(youtubeUrl, (message) => {
+      const resolved = await resolveYoutubeForLocalSave(youtubeUrl, (message) => {
         setYoutubeStatus(message);
       });
 
-      setYoutubeStatus(
-        `Choose a local folder to save “${resolved.title}”…`,
-      );
+      setYoutubeStatus(`Choose a local folder to save “${resolved.title}”…`);
       const folder = await pickYoutubeDownloadDirectory();
 
       setYoutubeStatus(
         `Downloading${resolved.qualityLabel ? ` ${resolved.qualityLabel}` : ""} to ${folder.pathLabel}…`,
       );
 
-      const proxy = youtubeProxyUrl(resolved.streamUrl);
-      const response = await fetch(proxy);
+      const response = await fetch(resolved.proxyPath);
       if (!response.ok) {
         let detail = `Download failed (HTTP ${response.status}).`;
         try {
@@ -213,14 +207,10 @@ export function CubemapTool() {
           (received, total) => {
             if (total && total > 0) {
               const pct = Math.min(99, Math.round((received / total) * 100));
-              setYoutubeStatus(
-                `Downloading to ${folder.pathLabel}… ${pct}%`,
-              );
+              setYoutubeStatus(`Downloading to ${folder.pathLabel}… ${pct}%`);
             } else {
               const mb = (received / (1024 * 1024)).toFixed(1);
-              setYoutubeStatus(
-                `Downloading to ${folder.pathLabel}… ${mb} MB`,
-              );
+              setYoutubeStatus(`Downloading to ${folder.pathLabel}… ${mb} MB`);
             }
           },
         );
@@ -239,14 +229,13 @@ export function CubemapTool() {
         );
       }
 
-      const projection =
+      // Prefer metadata; for unknown 360-style titles default to EAC so YouTube 360 works.
+      const projection: InputProjection =
         resolved.projection === "equirect"
           ? "equirect"
           : resolved.projection === "eac"
             ? "eac"
-            : settings.inputProjection === "eac"
-              ? "eac"
-              : "eac";
+            : "eac";
 
       await applyInputFile(
         file,
@@ -1080,10 +1069,10 @@ export function CubemapTool() {
           <p>
             Cubemap projection, frame extraction, and optional mask inference run
             in your browser with WebGL. Local files never leave the device.
-            YouTube “Save to folder & process” resolves the stream in your browser
-            and only uses our host as a byte proxy so the file can be written to a
-            folder you pick — no extra apps to install. Only use videos you have
-            rights to process.
+            YouTube “Save to folder & process” resolves the stream on the host with
+            a JavaScript library (no yt-dlp/ffmpeg install), then proxies bytes so
+            your browser can write the file to a folder you pick. Cubemap processing
+            stays on-device. Only use videos you have rights to process.
           </p>
         </section>
       </main>

@@ -21,8 +21,8 @@ function isAllowedMediaHost(hostname: string) {
 
 /**
  * Same-origin proxy for YouTube CDN media URLs.
- * The browser resolves stream URLs with youtubei.js (no yt-dlp); this route
- * only forwards bytes so the client can save them without CORS errors.
+ * Stream URLs are resolved server-side with youtubei.js (npm only, no yt-dlp).
+ * This route forwards CDN bytes so the client can save them without CORS errors.
  */
 export async function GET(request: Request) {
   const raw = new URL(request.url).searchParams.get("url");
