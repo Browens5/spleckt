@@ -146,7 +146,20 @@ function runCommand(
   });
 }
 
+export function isYoutubeImportEnabledByEnv() {
+  const flag = process.env.CUBEMAP_YOUTUBE_ENABLED?.trim().toLowerCase();
+  if (flag === "0" || flag === "false" || flag === "off" || flag === "no") {
+    return false;
+  }
+  return true;
+}
+
 export async function assertYoutubeTools() {
+  if (!isYoutubeImportEnabledByEnv()) {
+    throw new Error(
+      "YouTube import is disabled on this host (CUBEMAP_YOUTUBE_ENABLED=0). Enable it on a self-hosted runtime with yt-dlp and ffmpeg.",
+    );
+  }
   try {
     await runCommand(resolveYtDlpBin(), ["--version"], { timeoutMs: 15_000 });
   } catch {
@@ -187,12 +200,13 @@ type YtDlpInfo = {
 };
 
 function detectProjection(info: YtDlpInfo, width: number | null, height: number | null): YoutubeProjection {
+  // Prefer explicit metadata only. Aspect ratio alone is unreliable (ordinary
+  // 3:2 footage is not EAC), so we never classify EAC from dimensions.
   const label = `${info.projection ?? ""}`.toLowerCase();
   if (label.includes("equiangular") || label.includes("eac")) return "eac";
   if (label.includes("equirect")) return "equirect";
   if (width && height && height > 0) {
     const ratio = width / height;
-    if (ratio > 1.4 && ratio < 1.7) return "eac";
     if (ratio > 1.9 && ratio < 2.15) return "equirect";
   }
   return "unknown";
@@ -256,6 +270,7 @@ export async function downloadYoutubeVideo(options: {
   videoId: string;
   jobId: string;
 }): Promise<YoutubeJobInfo> {
+  assertSafeJobId(options.jobId);
   await assertYoutubeTools();
   const info = await fetchYoutubeMetadata(options.url);
   const title = (info.title ?? options.videoId).slice(0, 180);
@@ -418,10 +433,21 @@ export async function convertYoutubeToEquirect(options: {
     const message = error instanceof Error ? error.message : String(error);
     // Fallback: treat packed 3x2 cubemap with YouTube face order/rotations.
     if (treatAsEac) {
-      const fallback = [
-        "-y",
-        "-i",
-        job.sourcePath,
+      const fallback = ["-y"];
+      if (typeof options.startTimeSec === "number" && options.startTimeSec > 0) {
+        fallback.push("-ss", String(options.startTimeSec));
+      }
+      fallback.push("-i", job.sourcePath);
+      if (
+        typeof options.endTimeSec === "number" &&
+        options.endTimeSec != null &&
+        Number.isFinite(options.endTimeSec)
+      ) {
+        const start = Math.max(0, options.startTimeSec ?? 0);
+        const duration = Math.max(0.05, options.endTimeSec - start);
+        fallback.push("-t", String(duration));
+      }
+      fallback.push(
         "-vf",
         "v360=c3x2:equirect:cubic:in_forder=lfrdbu:in_frot=000313,scale='min(3840,iw)':-2",
         "-an",
@@ -436,10 +462,7 @@ export async function convertYoutubeToEquirect(options: {
         "-movflags",
         "+faststart",
         outPath,
-      ];
-      if (typeof options.startTimeSec === "number" && options.startTimeSec > 0) {
-        fallback.splice(1, 0, "-ss", String(options.startTimeSec));
-      }
+      );
       try {
         await runCommand(resolveFfmpegBin(), fallback, { timeoutMs: 20 * 60_000 });
       } catch {
@@ -450,8 +473,21 @@ export async function convertYoutubeToEquirect(options: {
     }
   }
 
+  const start = Math.max(0, options.startTimeSec ?? 0);
+  const end =
+    typeof options.endTimeSec === "number" && options.endTimeSec != null
+      ? Math.max(start, options.endTimeSec)
+      : null;
+  const clipDurationSec =
+    end != null
+      ? Math.max(0.05, end - start)
+      : job.durationSec != null
+        ? Math.max(0.05, job.durationSec - start)
+        : job.durationSec;
+
   const next: YoutubeJobInfo = {
     ...job,
+    durationSec: clipDurationSec,
     equirectPath: outPath,
     projection: treatAsEac ? "eac" : job.projection,
   };
@@ -463,15 +499,29 @@ export async function convertYoutubeToEquirect(options: {
   return next;
 }
 
+function assertSafeJobId(jobId: string) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(jobId)) {
+    throw new Error("Invalid YouTube job id.");
+  }
+}
+
 export async function readYoutubeJob(jobId: string): Promise<YoutubeJobInfo | null> {
-  const metaPath = path.join(getYoutubeDataDir(), jobId, "meta.json");
+  assertSafeJobId(jobId);
+  const jobDir = path.join(getYoutubeDataDir(), jobId);
+  const metaPath = path.join(jobDir, "meta.json");
   if (!existsSync(metaPath)) return null;
   const raw = await fs.readFile(metaPath, "utf8");
   return JSON.parse(raw) as YoutubeJobInfo;
 }
 
-export function openYoutubeFileStream(filePath: string) {
-  return Readable.toWeb(createReadStream(filePath)) as unknown as ReadableStream;
+export function openYoutubeFileStream(jobId: string, filePath: string) {
+  assertSafeJobId(jobId);
+  const jobDir = path.resolve(getYoutubeDataDir(), jobId);
+  const resolved = path.resolve(filePath);
+  if (resolved !== jobDir && !resolved.startsWith(`${jobDir}${path.sep}`)) {
+    throw new Error("Refusing to read a file outside the YouTube job directory.");
+  }
+  return Readable.toWeb(createReadStream(resolved)) as unknown as ReadableStream;
 }
 
 export function guessContentType(filePath: string) {

@@ -20,7 +20,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 5. Self-hosted SuperSplat viewer + editor
 6. **Handoff** training surface on `handoff.spleckt.com` (modules, tests, certifications) — not linked from the main marketing site
 7. **MenoKnow** kids game center on `menoknow.spleckt.com` (letters, numbers, simple activities) — not linked from the main marketing site
-8. **Cubemap** on-device equirect→cubemap tool on `cubemap.spleckt.com` — not linked from the main marketing site
+8. **Cubemap** equirect→cubemap tool on `cubemap.spleckt.com` (browser projection; optional self-hosted YouTube import) — not linked from the main marketing site
 9. **Drones** scroll-driven Three.js services experience on `drones.spleckt.com` — not linked from the main marketing site
 
 ### Roles
@@ -56,15 +56,15 @@ Point DNS for `menoknow.spleckt.com` at the same Vercel deployment as www. Optio
 
 ## Cubemap (`cubemap.spleckt.com`)
 
-Browser tool that converts equirectangular 360° MP4 video into cubemap face images. Host-based routing sends `cubemap.spleckt.com` (and `cubemap.localhost:3000` in local dev) to the Cubemap UI. The main Spleckt site does not link to it; `/cubemap` paths return 404 on www/apex.
+Browser tool that converts equirectangular 360° MP4 (or YouTube 360 EAC after host-side conversion) into cubemap face images. Host-based routing sends `cubemap.spleckt.com` (and `cubemap.localhost:3000` in local dev) to the Cubemap UI. The main Spleckt site does not link to it; `/cubemap` paths return 404 on www/apex.
 
 - Choose input video (or a ZIP of equirectangular photos/frames) and output folder via the File System Access API (Chromium); other browsers fall back to downloads
-- Paste a YouTube 360 URL to import via `yt-dlp` (host-side). EAC streams are converted to equirectangular with ffmpeg, then projected in the browser. Set `YOUTUBE_COOKIES_FILE` if YouTube requires sign-in.
+- Paste a YouTube 360 URL to import via `yt-dlp` (**self-hosted only** — needs `yt-dlp` + `ffmpeg` on the Node host; not suitable for stock Vercel serverless). EAC streams are converted to equirectangular with ffmpeg, then projected in the browser. Set `YOUTUBE_COOKIES_FILE` if YouTube requires sign-in. Set `CUBEMAP_YOUTUBE_ENABLED=0` to disable the endpoint.
 - Set frames/sec (video), an optional start/end time or start/end frame export window, input projection (equirect or YouTube EAC 3×2 for local downloads), face size, FOV, faces per frame, top/bottom inclusion, yaw, layout (separate / strip / cross), and image format
 - Optional photogrammetry masks (people / cars / sky) export as black=exclude, white=keep PNGs beside each face
-- Cubemap projection uses HTML video + WebGL in the browser. Local files stay on-device; YouTube import is the networked exception.
+- Cubemap projection uses HTML video + WebGL in the browser. Local files stay on-device; YouTube import is the networked, self-hosted exception.
 
-Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
+Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www for the browser UI. YouTube import requires a self-hosted Node runtime with `yt-dlp` and `ffmpeg` (or leave it disabled). Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
 
 ## Drones (`drones.spleckt.com`)
 

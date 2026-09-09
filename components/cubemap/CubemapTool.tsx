@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { CubemapBrand } from "@/components/cubemap/CubemapBrand";
 import { ProgressBar } from "@/components/cubemap/ProgressBar";
 import {
@@ -83,6 +83,10 @@ export function CubemapTool() {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [youtubeStatus, setYoutubeStatus] = useState<string | null>(null);
   const [youtubeImporting, setYoutubeImporting] = useState(false);
+  const [youtubeEnabled, setYoutubeEnabled] = useState<boolean | null>(null);
+  const [youtubeDisabledReason, setYoutubeDisabledReason] = useState<string | null>(
+    null,
+  );
   const [outputDir, setOutputDir] = useState<FileSystemDirectoryHandle | null>(
     null,
   );
@@ -101,6 +105,31 @@ export function CubemapTool() {
     !settings.exportMasks || settings.maskClasses.length > 0;
   const canRun =
     Boolean(inputFile) && faceCount > 0 && masksReady && !busy && !youtubeImporting;
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/cubemap/youtube");
+        const payload = (await response.json()) as {
+          enabled?: boolean;
+          error?: string;
+        };
+        if (cancelled) return;
+        setYoutubeEnabled(Boolean(payload.enabled));
+        setYoutubeDisabledReason(
+          payload.enabled ? null : payload.error ?? "YouTube import unavailable on this host.",
+        );
+      } catch {
+        if (cancelled) return;
+        setYoutubeEnabled(false);
+        setYoutubeDisabledReason("Could not reach the YouTube import API.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function applyInputFile(
     file: File,
@@ -133,7 +162,7 @@ export function CubemapTool() {
   }
 
   async function onImportYoutube() {
-    if (busy || youtubeImporting) return;
+    if (busy || youtubeImporting || youtubeEnabled === false) return;
     setError(null);
     setYoutubeStatus("Contacting YouTube via yt-dlp…");
     setYoutubeImporting(true);
@@ -180,14 +209,13 @@ export function CubemapTool() {
         { type: blob.type || "video/mp4" },
       );
       // Server already converted EAC → equirect for the browser pipeline.
+      // Keep the probed clip duration from applyInputFile (do not overwrite
+      // with the original full-length YouTube duration when a range was used).
       await applyInputFile(
         file,
         `${payload.title ?? "YouTube"} (imported equirect)`,
         "equirect",
       );
-      if (typeof payload.durationSec === "number" && payload.durationSec > 0) {
-        setVideoDurationSec(payload.durationSec);
-      }
       setYoutubeStatus(
         `Ready: ${payload.title ?? "YouTube video"} · projection prepared as equirect`,
       );
@@ -453,24 +481,28 @@ export function CubemapTool() {
                   id="cm-youtube-url"
                   value={youtubeUrl}
                   placeholder="https://www.youtube.com/watch?v=…"
-                  disabled={busy || youtubeImporting}
+                  disabled={busy || youtubeImporting || youtubeEnabled === false}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                 />
                 <button
                   type="button"
                   className="cm-btn cm-btn--secondary"
                   onClick={onImportYoutube}
-                  disabled={busy || youtubeImporting || !youtubeUrl.trim()}
+                  disabled={
+                    busy ||
+                    youtubeImporting ||
+                    youtubeEnabled === false ||
+                    !youtubeUrl.trim()
+                  }
                 >
                   {youtubeImporting ? "Importing…" : "Import"}
                 </button>
               </div>
               <p className="cm-hint">
-                Pulls the YouTube 360 stream (EAC when available), converts it to
-                equirectangular on the server, then loads it here for cubemap
-                export. Set the export time range first if you only need a clip.
-                Requires yt-dlp on the host; set YOUTUBE_COOKIES_FILE if YouTube
-                asks for a sign-in.
+                {youtubeEnabled === false
+                  ? youtubeDisabledReason ??
+                    "YouTube import needs yt-dlp + ffmpeg on a self-hosted host (not available on plain Vercel serverless)."
+                  : "Pulls the YouTube 360 stream (EAC when metadata says so), converts it to equirectangular on the host, then loads it here for cubemap export. Set the export time range first if you only need a clip. Optional YOUTUBE_COOKIES_FILE helps when YouTube asks for a sign-in."}
               </p>
               {youtubeStatus ? <p className="cm-hint cm-hint--status">{youtubeStatus}</p> : null}
             </div>

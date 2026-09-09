@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { randomBytes } from "node:crypto";
+import { existsSync } from "node:fs";
 import { NextResponse } from "next/server";
 import {
   assertYoutubeTools,
@@ -62,7 +63,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "YouTube import failed.";
-    const status = /yt-dlp is not available|ffmpeg is required/i.test(message)
+    const status = /yt-dlp is not available|ffmpeg is required|disabled on this host/i.test(
+      message,
+    )
       ? 503
       : /sign-in|bot check|cookies/i.test(message)
         ? 403
@@ -76,16 +79,19 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     await assertYoutubeTools();
+    const cookies = process.env.YOUTUBE_COOKIES_FILE?.trim();
     return NextResponse.json({
       ok: true,
       enabled: true,
-      cookiesConfigured: Boolean(process.env.YOUTUBE_COOKIES_FILE),
+      cookiesConfigured: Boolean(cookies && existsSync(cookies)),
+      selfHostedOnly: true,
     });
   } catch (error) {
     return NextResponse.json({
       ok: false,
       enabled: false,
       error: error instanceof Error ? error.message : "YouTube tools unavailable.",
+      selfHostedOnly: true,
     });
   }
 }

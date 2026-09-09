@@ -33,7 +33,7 @@ export async function GET(request: Request, { params }: Params) {
       ? `${job.videoId}_source${filePath.slice(filePath.lastIndexOf("."))}`
       : `${job.videoId}_equirect.mp4`;
 
-  return new NextResponse(openYoutubeFileStream(filePath), {
+  return new NextResponse(openYoutubeFileStream(id, filePath), {
     headers: {
       "Content-Type": guessContentType(filePath),
       "Content-Disposition": `attachment; filename="${fileName}"`,
