@@ -29,7 +29,6 @@ const SECTIONS: Array<{ id: PortfolioSection; label: string }> = [
 ];
 
 export function PortfolioExperience() {
-  const { data: session } = authClient.useSession();
   const [canEdit, setCanEdit] = useState(false);
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [profile, setProfile] = useState<PortfolioProfile>({
@@ -249,11 +248,11 @@ export function PortfolioExperience() {
             Sign in to edit
           </Link>
         )}
-        {session?.user ? (
+        {canEdit ? (
           <button
             type="button"
             className="portfolio-btn portfolio-btn--ghost"
-            onClick={() => void authClient.signOut()}
+            onClick={() => void authClient.signOut().then(() => void load())}
           >
             Sign out
           </button>

@@ -50,7 +50,7 @@ function textureFromCanvas(device: pc.GraphicsDevice, canvas: HTMLCanvasElement,
     addressU: pc.ADDRESS_CLAMP_TO_EDGE,
     addressV: pc.ADDRESS_CLAMP_TO_EDGE,
     mipmaps: false,
-    flipY: true,
+    flipY: false,
   });
   texture.setSource(canvas);
   return texture;
@@ -112,11 +112,8 @@ export function PortfolioCanvas({
     app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
     app.setCanvasResolution(pc.RESOLUTION_AUTO);
     app.graphicsDevice.maxPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-    app.scene.ambientLight = new pc.Color(0.03, 0.07, 0.1);
-    app.scene.fog.type = pc.FOG_LINEAR;
-    app.scene.fog.color = new pc.Color(0.01, 0.03, 0.06);
-    app.scene.fog.start = 9;
-    app.scene.fog.end = 26;
+    app.scene.ambientLight = new pc.Color(0.04, 0.08, 0.12);
+    app.scene.fog.type = pc.FOG_NONE;
 
     const camera = new pc.Entity("camera");
     camera.addComponent("camera", {
@@ -236,18 +233,24 @@ export function PortfolioCanvas({
     app.root.addChild(cardsRoot);
 
     const cards: CardNode[] = [];
+    const textures: pc.Texture[] = [];
     let current = selectedRef.current;
     let dragging = false;
     let dragStartX = 0;
     let dragStartValue = 0;
     let moved = false;
     let generation = 0;
+    let destroyed = false;
 
     const clearCards = () => {
       for (const card of cards) {
         card.root.destroy();
       }
       cards.length = 0;
+      for (const texture of textures) {
+        texture.destroy();
+      }
+      textures.length = 0;
     };
 
     const rebuild = () => {
@@ -261,28 +264,38 @@ export function PortfolioCanvas({
         const root = new pc.Entity(`card-${project.id}`);
         const glow = new pc.Entity("glow");
         glow.addComponent("render", {
-          type: "box",
+          type: "plane",
           material: ringMatSoft,
         });
-        glow.setLocalScale(1.52, 2.28, 0.02);
-        glow.setLocalPosition(0, 0, -0.04);
+        glow.setLocalEulerAngles(90, 0, 0);
+        glow.setLocalScale(1.52, 1, 2.28);
+        glow.setLocalPosition(0, 0, -0.03);
         root.addChild(glow);
 
         const face = new pc.Entity("face");
-        face.addComponent("render", { type: "box" });
-        face.setLocalScale(1.42, 2.14, 0.045);
+        face.addComponent("render", { type: "plane" });
+        face.setLocalEulerAngles(90, 0, 0);
+        face.setLocalScale(1.42, 1, 2.14);
         root.addChild(face);
         cardsRoot.addChild(root);
         cards.push({ root, glow, index });
 
         void paintProjectCard(project, index + 1, false).then(
           (painted) => {
-            if (token !== generation) return;
-            const texture = textureFromCanvas(
-              app.graphicsDevice,
-              painted,
-              `card-${project.id}`,
-            );
+            if (destroyed || token !== generation) return;
+            const device = app.graphicsDevice;
+            if (!device) return;
+            let texture: pc.Texture;
+            try {
+              texture = textureFromCanvas(device, painted, `card-${project.id}`);
+            } catch {
+              return;
+            }
+            if (destroyed || token !== generation) {
+              texture.destroy();
+              return;
+            }
+            textures.push(texture);
             const material = cardMaterial(texture);
             if (face.render) {
               face.render.meshInstances.forEach((mesh) => {
@@ -410,6 +423,8 @@ export function PortfolioCanvas({
 
     return () => {
       rebuildRef.current = null;
+      destroyed = true;
+      clearCards();
       window.removeEventListener("resize", onResize);
       canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);

@@ -47,7 +47,8 @@ export function PortfolioEditor({
     event.preventDefault();
     setSaving(true);
     setError(null);
-    const form = new FormData(event.currentTarget);
+    const formEl = event.currentTarget;
+    const form = new FormData(formEl);
     const file = form.get("image");
     try {
       let imageKey: string | undefined;
@@ -88,7 +89,7 @@ export function PortfolioEditor({
         );
       }
       const data = await res.json();
-      event.currentTarget.reset();
+      if (!editingId) formEl.reset();
       await onSaved();
       if (data.project?.id) onSelectProject(data.project.id);
     } catch (err) {

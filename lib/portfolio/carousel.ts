@@ -43,7 +43,7 @@ export function carouselSlot(
     x: Math.sin(angle) * radius,
     y: 1.22 + Math.abs(delta) * 0.02,
     z: Math.cos(angle) * 1.55 - 1.15,
-    yaw: angle * (180 / Math.PI) * 0.42,
+    yaw: angle * (180 / Math.PI) * 0.22,
     scale: 1.08 - Math.min(0.42, Math.abs(delta) * 0.14),
     delta,
   };
