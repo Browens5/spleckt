@@ -115,21 +115,34 @@ export function carouselSlot(
   index: number,
   selected: number,
   count: number,
+  expand = 0,
 ): CarouselSlot {
   if (count <= 0) {
     return { x: 0, y: CARD_Y, z: CARD_RADIUS, yaw: 0, scale: 1, delta: 0 };
   }
 
+  const amount = Math.max(0, Math.min(1, expand));
   const delta = wrapDelta(index - selected, count);
   const spacing = count <= 3 ? 0.5 : count <= 5 ? 0.4 : 0.3;
   const angle = delta * spacing;
+  const focus = Math.max(0, 1 - Math.abs(delta));
+  const lift = amount * focus;
 
   return {
-    x: Math.sin(angle) * CARD_RADIUS,
-    y: CARD_Y,
-    z: Math.cos(angle) * CARD_RADIUS,
-    yaw: (angle * 180) / Math.PI * 0.55,
-    scale: 1.08 - Math.min(0.28, Math.abs(delta) * 0.12),
+    x: Math.sin(angle) * (CARD_RADIUS - lift * 0.35),
+    y: CARD_Y + lift * 0.28,
+    z: Math.cos(angle) * CARD_RADIUS + lift * 1.15,
+    yaw: ((angle * 180) / Math.PI) * (0.55 * (1 - lift * 0.85)),
+    scale:
+      (1.08 - Math.min(0.28, Math.abs(delta) * 0.12)) *
+      (1 + lift * 0.55) *
+      (1 - amount * (1 - focus) * 0.18),
     delta,
   };
+}
+
+/** Local plane coords are x/z in [-0.5, 0.5]. Texture v=0 is the top of the painted card. */
+export function cardUvFromLocal(x: number, z: number) {
+  if (Math.abs(x) > 0.5 + 1e-4 || Math.abs(z) > 0.5 + 1e-4) return null;
+  return { u: x + 0.5, v: z + 0.5 };
 }

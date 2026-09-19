@@ -1,8 +1,17 @@
 import type { PortfolioProject } from "@/lib/portfolio/types";
 
-const WIDTH = 768;
-const HEIGHT = 1152;
+export const CARD_TEXTURE = { width: 768, height: 1152 };
+export const PLAY_BUTTON = { cx: 768 - 118, cy: 1152 - 118, radius: 44 };
+
+const WIDTH = CARD_TEXTURE.width;
+const HEIGHT = CARD_TEXTURE.height;
 const CYAN = "#3ce7ff";
+
+export function uvHitsPlayButton(u: number, v: number) {
+  const x = u * WIDTH;
+  const y = v * HEIGHT;
+  return Math.hypot(x - PLAY_BUTTON.cx, y - PLAY_BUTTON.cy) <= PLAY_BUTTON.radius;
+}
 
 function hashString(value: string) {
   let hash = 2166136261;
@@ -326,14 +335,20 @@ export async function paintProjectCard(
   ctx.font = "500 24px Rajdhani, sans-serif";
   wrapText(ctx, project.description || "Add a description for this project.", 56, 870, WIDTH - 180, 32, 4);
 
-  const bx = WIDTH - 118;
-  const by = HEIGHT - 118;
+  const bx = PLAY_BUTTON.cx;
+  const by = PLAY_BUTTON.cy;
+  const hasLink = Boolean(project.linkUrl);
   ctx.beginPath();
-  ctx.arc(bx, by, 28, 0, Math.PI * 2);
-  ctx.strokeStyle = CYAN;
+  ctx.arc(bx, by, 30, 0, Math.PI * 2);
+  ctx.fillStyle = hasLink ? "rgba(60, 231, 255, 0.18)" : "rgba(60, 231, 255, 0.06)";
+  ctx.fill();
+  ctx.shadowColor = hasLink ? "rgba(60, 231, 255, 0.7)" : "rgba(60, 231, 255, 0.2)";
+  ctx.shadowBlur = hasLink ? 16 : 0;
+  ctx.strokeStyle = hasLink ? CYAN : "rgba(60, 231, 255, 0.45)";
   ctx.lineWidth = 3;
   ctx.stroke();
-  ctx.fillStyle = CYAN;
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = hasLink ? CYAN : "rgba(60, 231, 255, 0.45)";
   ctx.beginPath();
   ctx.moveTo(bx - 6, by - 12);
   ctx.lineTo(bx + 14, by);

@@ -6,25 +6,40 @@ import {
   CARD_RADIUS,
   CARD_Y,
   DECK_RADIUS,
+  cardUvFromLocal,
   carouselSlot,
   createWheelNavState,
   nearestIndex,
   wheelStep,
 } from "@/lib/portfolio/carousel";
 import type { PortfolioProject } from "@/lib/portfolio/types";
-import { paintDeckTexture, paintGridTexture, paintProjectCard } from "./cardTexture";
+import {
+  paintDeckTexture,
+  paintGridTexture,
+  paintProjectCard,
+  uvHitsPlayButton,
+} from "./cardTexture";
 
 type CanvasProps = {
   projects: PortfolioProject[];
   selectedIndex: number;
+  expanded: boolean;
   interactive: boolean;
   onSelect: (index: number) => void;
+  onInspect: (index: number) => void;
   onActivate: (index: number) => void;
+  onCollapse: () => void;
 };
 
 type CardNode = {
   root: pc.Entity;
+  face: pc.Entity;
   index: number;
+};
+
+type CardHit = {
+  index: number;
+  play: boolean;
 };
 
 function emissiveMaterial(
@@ -143,24 +158,33 @@ function cylinderMesh(
 export function PortfolioCanvas({
   projects,
   selectedIndex,
+  expanded,
   interactive,
   onSelect,
+  onInspect,
   onActivate,
+  onCollapse,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const projectsRef = useRef(projects);
   const selectedRef = useRef(selectedIndex);
+  const expandedRef = useRef(expanded);
   const interactiveRef = useRef(interactive);
   const onSelectRef = useRef(onSelect);
+  const onInspectRef = useRef(onInspect);
   const onActivateRef = useRef(onActivate);
+  const onCollapseRef = useRef(onCollapse);
   const rebuildRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     projectsRef.current = projects;
     selectedRef.current = selectedIndex;
+    expandedRef.current = expanded;
     interactiveRef.current = interactive;
     onSelectRef.current = onSelect;
+    onInspectRef.current = onInspect;
     onActivateRef.current = onActivate;
+    onCollapseRef.current = onCollapse;
   });
 
   useEffect(() => {
@@ -408,6 +432,7 @@ export function PortfolioCanvas({
     const cards: CardNode[] = [];
     const textures: pc.Texture[] = [];
     let current = selectedRef.current;
+    let expandCurrent = expandedRef.current ? 1 : 0;
     let dragging = false;
     let dragStartX = 0;
     let dragStartValue = 0;
@@ -454,7 +479,7 @@ export function PortfolioCanvas({
         face.setLocalScale(1.42, 1, 2.14);
         root.addChild(face);
         cardsRoot.addChild(root);
-        cards.push({ root, index });
+        cards.push({ root, face, index });
 
         void paintProjectCard(project, index + 1, false).then((painted) => {
           if (destroyed || token !== generation) return;
@@ -487,10 +512,10 @@ export function PortfolioCanvas({
     rebuildRef.current = rebuild;
     rebuild();
 
-    const applyLayout = (value: number) => {
+    const applyLayout = (value: number, expand: number) => {
       const list = projectsRef.current;
       for (const card of cards) {
-        const slot = carouselSlot(card.index, value, list.length);
+        const slot = carouselSlot(card.index, value, list.length, expand);
         card.root.setLocalPosition(slot.x, slot.y, slot.z);
         card.root.setLocalScale(slot.scale, slot.scale, slot.scale);
         card.root.setLocalEulerAngles(0, slot.yaw, 0);
@@ -500,24 +525,35 @@ export function PortfolioCanvas({
     const onResize = () => app.resizeCanvas();
     window.addEventListener("resize", onResize);
 
-    const pickIndex = (clientX: number, clientY: number) => {
-      const list = projectsRef.current;
-      if (list.length === 0) return null;
+    const pickCard = (clientX: number, clientY: number): CardHit | null => {
+      if (cards.length === 0) return null;
       const rect = canvas.getBoundingClientRect();
-      let best = -1;
-      let bestDist = 90;
-      const screen = new pc.Vec3();
+      const sx = clientX - rect.left;
+      const sy = clientY - rect.top;
+      const from = cameraComponent.screenToWorld(sx, sy, cameraComponent.nearClip);
+      const to = cameraComponent.screenToWorld(sx, sy, cameraComponent.farClip);
+      const inv = new pc.Mat4();
+      const localFrom = new pc.Vec3();
+      const localTo = new pc.Vec3();
+      let best: CardHit | null = null;
+      let bestT = Number.POSITIVE_INFINITY;
+
       for (const card of cards) {
-        cameraComponent.worldToScreen(card.root.getPosition(), screen);
-        const dx = screen.x - (clientX - rect.left);
-        const dy = screen.y - (clientY - rect.top);
-        const dist = Math.hypot(dx, dy);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = card.index;
-        }
+        inv.copy(card.face.getWorldTransform()).invert();
+        inv.transformPoint(from, localFrom);
+        inv.transformPoint(to, localTo);
+        const dy = localTo.y - localFrom.y;
+        if (Math.abs(dy) < 1e-6) continue;
+        const t = -localFrom.y / dy;
+        if (t < 0 || t >= bestT) continue;
+        const x = localFrom.x + (localTo.x - localFrom.x) * t;
+        const z = localFrom.z + (localTo.z - localFrom.z) * t;
+        const uv = cardUvFromLocal(x, z);
+        if (!uv) continue;
+        bestT = t;
+        best = { index: card.index, play: uvHitsPlayButton(uv.u, uv.v) };
       }
-      return best >= 0 ? best : null;
+      return best;
     };
 
     const onPointerDown = (event: PointerEvent) => {
@@ -530,7 +566,15 @@ export function PortfolioCanvas({
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      if (!dragging) return;
+      if (!dragging) {
+        if (!interactiveRef.current) {
+          canvas.style.cursor = "default";
+          return;
+        }
+        const hover = pickCard(event.clientX, event.clientY);
+        canvas.style.cursor = hover ? (hover.play ? "pointer" : "grab") : "default";
+        return;
+      }
       const dx = event.clientX - dragStartX;
       if (Math.abs(dx) > 8) moved = true;
       const list = projectsRef.current;
@@ -552,14 +596,18 @@ export function PortfolioCanvas({
       const list = projectsRef.current;
       if (list.length === 0) return;
       if (!moved) {
-        const picked = pickIndex(event.clientX, event.clientY);
-        if (picked !== null) {
-          onSelectRef.current(picked);
-          if (picked === nearestIndex(current, list.length)) {
-            onActivateRef.current(picked);
+        const picked = pickCard(event.clientX, event.clientY);
+        if (picked) {
+          if (picked.play) {
+            onSelectRef.current(picked.index);
+            onActivateRef.current(picked.index);
+            return;
           }
+          onInspectRef.current(picked.index);
           return;
         }
+        onCollapseRef.current();
+        return;
       }
       const snapped = nearestIndex(current, list.length);
       onSelectRef.current(snapped);
@@ -590,7 +638,9 @@ export function PortfolioCanvas({
         const diff = wrapToward(current, target, list.length);
         current += diff * Math.min(1, dt * 7.5);
       }
-      applyLayout(current);
+      const expandTarget = expandedRef.current ? 1 : 0;
+      expandCurrent += (expandTarget - expandCurrent) * Math.min(1, dt * 8.5);
+      applyLayout(current, expandCurrent);
 
       const t = performance.now() * 0.001;
       ringMat.emissiveIntensity = 1.45 + Math.sin(t * 0.9) * 0.25;
@@ -618,13 +668,13 @@ export function PortfolioCanvas({
 
       fill.setPosition(Math.sin(t * 0.28) * 1.1, 2.55, 2.2 + Math.cos(t * 0.22) * 0.4);
 
-      const sway = interactiveRef.current ? 0.07 : 0.03;
+      const sway = (interactiveRef.current ? 0.07 : 0.03) * (1 - expandCurrent * 0.7);
       camera.setPosition(
         Math.sin(t * 0.12) * sway,
-        2.08 + Math.sin(t * 0.08) * 0.025,
-        7.55,
+        2.08 + Math.sin(t * 0.08) * 0.025 + expandCurrent * 0.12,
+        7.55 - expandCurrent * 0.7,
       );
-      camera.lookAt(0, 0.94, -0.3);
+      camera.lookAt(0, 0.94 + expandCurrent * 0.18, -0.3);
     });
 
     app.start();

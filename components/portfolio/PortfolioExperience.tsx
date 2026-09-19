@@ -35,6 +35,7 @@ export function PortfolioExperience() {
     updatedAt: null,
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [expanded, setExpanded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [section, setSection] = useState<PortfolioSection>("portfolio");
   const [editorOpen, setEditorOpen] = useState(false);
@@ -74,13 +75,24 @@ export function PortfolioExperience() {
   const activeIndex =
     projects.length === 0 ? 0 : Math.min(selectedIndex, projects.length - 1);
 
+  const browse = useCallback((index: number) => {
+    setSelectedIndex(index);
+    setExpanded(false);
+    setSection("portfolio");
+  }, []);
+
+  const inspect = useCallback((index: number) => {
+    setSelectedIndex(index);
+    setExpanded(true);
+    setSection("portfolio");
+  }, []);
+
   const go = useCallback(
     (delta: number) => {
       if (projects.length === 0) return;
-      setSelectedIndex((current) => wrapIndex(current + delta, projects.length));
-      setSection("portfolio");
+      browse(wrapIndex(selectedIndex + delta, projects.length));
     },
-    [projects.length],
+    [browse, projects.length, selectedIndex],
   );
 
   useEffect(() => {
@@ -91,6 +103,7 @@ export function PortfolioExperience() {
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") go(-1);
       if (event.key === "ArrowRight" || event.key === "ArrowDown") go(1);
       if (event.key === "Escape") {
+        setExpanded(false);
         setSection("portfolio");
         setEditorOpen(false);
       }
@@ -147,9 +160,12 @@ export function PortfolioExperience() {
         <PortfolioCanvas
           projects={projects}
           selectedIndex={activeIndex}
+          expanded={expanded && section === "portfolio"}
           interactive={section === "portfolio" && !editorOpen}
-          onSelect={setSelectedIndex}
+          onSelect={browse}
+          onInspect={inspect}
           onActivate={activate}
+          onCollapse={() => setExpanded(false)}
         />
         <div className="portfolio-vignette" />
         <div className="portfolio-neon" />
@@ -203,7 +219,7 @@ export function PortfolioExperience() {
       ) : null}
 
       {section === "portfolio" && selected ? (
-        <div className="portfolio-caption">
+        <div className={expanded ? "portfolio-caption is-expanded" : "portfolio-caption"}>
           <p>{String(activeIndex + 1).padStart(2, "0")}</p>
           <div>
             <strong>{selected.title}</strong>
@@ -211,6 +227,9 @@ export function PortfolioExperience() {
               {selected.category}
               {selected.year ? ` · ${selected.year}` : ""}
             </span>
+            {expanded ? (
+              <em>{selected.description}</em>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -230,7 +249,10 @@ export function PortfolioExperience() {
             key={item.id}
             type="button"
             className={section === item.id ? "is-active" : undefined}
-            onClick={() => setSection(item.id)}
+            onClick={() => {
+              setSection(item.id);
+              if (item.id !== "portfolio") setExpanded(false);
+            }}
           >
             <span aria-hidden>{iconFor(item.id)}</span>
             {item.label}
