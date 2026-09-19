@@ -175,6 +175,9 @@ export function PortfolioCanvas({
   const onActivateRef = useRef(onActivate);
   const onCollapseRef = useRef(onCollapse);
   const rebuildRef = useRef<(() => void) | null>(null);
+  const paintFocusRef = useRef<((expanded: boolean, index: number) => void) | null>(
+    null,
+  );
 
   useEffect(() => {
     projectsRef.current = projects;
@@ -190,6 +193,10 @@ export function PortfolioCanvas({
   useEffect(() => {
     rebuildRef.current?.();
   }, [projects]);
+
+  useEffect(() => {
+    paintFocusRef.current?.(expanded, selectedIndex);
+  }, [expanded, selectedIndex]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -481,32 +488,54 @@ export function PortfolioCanvas({
         cardsRoot.addChild(root);
         cards.push({ root, face, index });
 
-        void paintProjectCard(project, index + 1, false).then((painted) => {
+        const focused = expandedRef.current && index === selectedRef.current;
+        void paintProjectCard(project, index + 1, focused, focused).then((painted) => {
           if (destroyed || token !== generation) return;
-          if (!app.graphicsDevice) return;
-          let texture: pc.Texture;
-          try {
-            texture = textureFromCanvas(
-              app.graphicsDevice,
-              painted,
-              `card-${project.id}`,
-            );
-          } catch {
-            return;
-          }
-          if (destroyed || token !== generation) {
-            texture.destroy();
-            return;
-          }
-          textures.push(texture);
-          const material = cardMaterial(texture);
-          if (face.render) {
-            face.render.meshInstances.forEach((mesh) => {
-              mesh.material = material;
-            });
-          }
+          applyCardArt(face, painted, `card-${project.id}`, token);
         });
       });
+    };
+
+    const applyCardArt = (
+      face: pc.Entity,
+      painted: HTMLCanvasElement,
+      name: string,
+      token: number,
+    ) => {
+      if (!app.graphicsDevice) return;
+      let texture: pc.Texture;
+      try {
+        texture = textureFromCanvas(app.graphicsDevice, painted, name);
+      } catch {
+        return;
+      }
+      if (destroyed || token !== generation) {
+        texture.destroy();
+        return;
+      }
+      textures.push(texture);
+      const material = cardMaterial(texture);
+      if (face.render) {
+        face.render.meshInstances.forEach((mesh) => {
+          mesh.material = material;
+        });
+      }
+    };
+
+    paintFocusRef.current = (isExpanded, index) => {
+      const token = generation;
+      const list = projectsRef.current;
+      for (const card of cards) {
+        const project = list[card.index];
+        if (!project) continue;
+        const focused = isExpanded && card.index === index;
+        void paintProjectCard(project, card.index + 1, focused, focused).then(
+          (painted) => {
+            if (destroyed || token !== generation) return;
+            applyCardArt(card.face, painted, `card-${project.id}`, token);
+          },
+        );
+      }
     };
 
     rebuildRef.current = rebuild;
@@ -687,6 +716,7 @@ export function PortfolioCanvas({
 
     return () => {
       rebuildRef.current = null;
+      paintFocusRef.current = null;
       destroyed = true;
       clearCards();
       window.removeEventListener("resize", onResize);

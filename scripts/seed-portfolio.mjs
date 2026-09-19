@@ -76,7 +76,7 @@ await client.execute({
     "Solution-oriented engineer based in Des Moines, Iowa. I connect AI, autonomous systems, robotics, and advanced field technology to how work actually gets done — from FPV drone platforms to scaling capture programs across multi-billion-dollar data center projects. Photos, videos, and deeper write-ups will land on these cards next.",
     skills,
     "browens515@gmail.com",
-    "Des Moines, IA · 208.380.6882. I am glad to talk drones, Gaussian splats, field tech, and how to get data from the site to the office.",
+    "",
     now,
   ],
 });

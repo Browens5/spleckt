@@ -4,7 +4,11 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { wrapIndex } from "@/lib/portfolio/carousel";
-import { DEFAULT_LINKEDIN_URL, DEFAULT_PROFILE } from "@/lib/portfolio/defaults";
+import {
+  DEFAULT_LINKEDIN_URL,
+  DEFAULT_PHONE,
+  DEFAULT_PROFILE,
+} from "@/lib/portfolio/defaults";
 import type {
   PortfolioProfile,
   PortfolioProject,
@@ -159,8 +163,8 @@ export function PortfolioExperience() {
     if (section === "contact") {
       return {
         kicker: "Contact",
-        title: profile.contactEmail || "Get in touch",
-        body: profile.contactNote,
+        title: null,
+        body: null,
       };
     }
     return null;
@@ -233,31 +237,37 @@ export function PortfolioExperience() {
             ×
           </button>
           <p>{panel.kicker}</p>
-          <h2>{panel.title}</h2>
-          <div className="portfolio-panel__copy" data-portfolio-scroll>
-            <p>{panel.body}</p>
-          </div>
-          {section === "contact" ? (
-            <div className="portfolio-panel__actions">
-              {profile.contactEmail ? (
-                <a className="portfolio-btn" href={`mailto:${profile.contactEmail}`}>
-                  Send a message
-                </a>
-              ) : null}
-              <a
-                className="portfolio-btn"
-                href={DEFAULT_LINKEDIN_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                LinkedIn
-              </a>
+          {panel.title ? <h2>{panel.title}</h2> : null}
+          {panel.body ? (
+            <div className="portfolio-panel__copy" data-portfolio-scroll>
+              <p>{panel.body}</p>
             </div>
+          ) : null}
+          {section === "contact" ? (
+            <ul className="portfolio-contact-list">
+              {profile.contactEmail ? (
+                <li>
+                  <a href={`mailto:${profile.contactEmail}`}>{profile.contactEmail}</a>
+                </li>
+              ) : null}
+              <li>
+                <a href={`tel:+1${DEFAULT_PHONE.replace(/\D/g, "")}`}>{DEFAULT_PHONE}</a>
+              </li>
+              <li>
+                <a
+                  href={DEFAULT_LINKEDIN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  LinkedIn
+                </a>
+              </li>
+            </ul>
           ) : null}
         </section>
       ) : null}
 
-      {section === "portfolio" && selected && !expanded ? (
+      {section === "portfolio" && selected ? (
         <div className="portfolio-caption">
           <p>{String(activeIndex + 1).padStart(2, "0")}</p>
           <div>
@@ -268,49 +278,6 @@ export function PortfolioExperience() {
             </span>
           </div>
         </div>
-      ) : null}
-
-      {section === "portfolio" && selected && expanded ? (
-        <article
-          className="portfolio-focus-card"
-          data-portfolio-scroll
-          onClick={() => inspect(activeIndex)}
-        >
-          <p>{String(activeIndex + 1).padStart(2, "0")}</p>
-          {selected.imageUrl ? (
-            <div className="portfolio-focus-card__media">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={selected.imageUrl}
-                alt=""
-                onError={(event) => {
-                  event.currentTarget.parentElement?.setAttribute("hidden", "");
-                }}
-              />
-            </div>
-          ) : null}
-          <h2>{selected.title}</h2>
-          <span>
-            {selected.category}
-            {selected.year ? ` · ${selected.year}` : ""}
-          </span>
-          <div className="portfolio-focus-card__copy">
-            <p>{selected.description}</p>
-          </div>
-          {selected.linkUrl ? (
-            <button
-              type="button"
-              className="portfolio-focus-card__play"
-              aria-label={`Open ${selected.title}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                activate(activeIndex);
-              }}
-            >
-              ▶
-            </button>
-          ) : null}
-        </article>
       ) : null}
 
       {loading ? <p className="portfolio-status">Initializing deck…</p> : null}
