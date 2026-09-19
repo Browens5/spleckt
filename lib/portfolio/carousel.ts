@@ -48,37 +48,44 @@ function isNotchDelta(delta: number, deltaMode: number): boolean {
 
 /**
  * One card per trackpad flick, one card per mouse-wheel notch.
- * Inertia after a flick is ignored until the gesture settles.
+ * Inertia after a flick is ignored even if the event stream has gaps.
  */
 export function wheelStep(
   state: WheelNavState,
   event: { deltaX: number; deltaY: number; deltaMode: number },
   now: number,
-  options?: { threshold?: number; settleMs?: number; cooldownMs?: number },
+  options?: {
+    threshold?: number;
+    settleMs?: number;
+    cooldownMs?: number;
+    lockMs?: number;
+  },
 ): -1 | 0 | 1 {
   const threshold = options?.threshold ?? 48;
-  const settleMs = options?.settleMs ?? 180;
+  const settleMs = options?.settleMs ?? 220;
   const cooldownMs = options?.cooldownMs ?? 160;
+  const lockMs = options?.lockMs ?? 420;
 
   const primary = wheelPrimary(event);
   if (primary === 0) return 0;
 
-  if (now - state.lastEventAt > settleMs) {
-    state.leftover = 0;
-    state.armed = true;
-  }
-  state.lastEventAt = now;
+  const quiet = now - state.lastEventAt > settleMs;
+  if (quiet) state.leftover = 0;
 
   const notch = isNotchDelta(primary, event.deltaMode);
   if (!state.armed) {
-    if (notch && now - state.lastStepAt >= cooldownMs) {
-      state.armed = true;
-      state.leftover = 0;
-    } else {
+    const canNotch = notch && now - state.lastStepAt >= cooldownMs;
+    const canFlick =
+      !notch && quiet && now - state.lastStepAt >= lockMs;
+    if (!canNotch && !canFlick) {
+      state.lastEventAt = now;
       return 0;
     }
+    state.armed = true;
+    state.leftover = 0;
   }
 
+  state.lastEventAt = now;
   state.leftover += primary;
   if (Math.abs(state.leftover) < threshold) {
     return 0;
