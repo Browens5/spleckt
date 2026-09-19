@@ -10,7 +10,7 @@ import {
   nearestIndex,
 } from "@/lib/portfolio/carousel";
 import type { PortfolioProject } from "@/lib/portfolio/types";
-import { paintGridTexture, paintProjectCard } from "./cardTexture";
+import { paintDeckTexture, paintGridTexture, paintProjectCard } from "./cardTexture";
 
 type CanvasProps = {
   projects: PortfolioProject[];
@@ -260,54 +260,54 @@ export function PortfolioCanvas({
 
     addMesh(
       stage,
-      cylinderMesh(device, DECK_RADIUS, 0.16, 64),
+      cylinderMesh(device, DECK_RADIUS, 0.2, 64),
       metalDark,
       "deck-base",
     ).setLocalPosition(0, 0.02, 0);
     addMesh(
       stage,
-      cylinderMesh(device, DECK_RADIUS - 0.22, 0.05, 64),
+      cylinderMesh(device, DECK_RADIUS - 0.16, 0.06, 64),
       metal,
       "deck-plate",
-    ).setLocalPosition(0, 0.1, 0);
+    ).setLocalPosition(0, 0.12, 0);
     addMesh(
       stage,
-      cylinderMesh(device, 0.55, 0.14, 24),
+      cylinderMesh(device, 0.48, 0.12, 24),
       metal,
       "hub",
-    ).setLocalPosition(0, 0.14, 0);
+    ).setLocalPosition(0, 0.18, 0);
 
-    const trackRadii = [DECK_RADIUS - 0.08, CARD_RADIUS, 2.85, 1.7, 0.72];
-    const trackTubes = [0.03, 0.042, 0.018, 0.016, 0.02];
-    trackRadii.forEach((radius, index) => {
-      addMesh(
-        stage,
-        ringMesh(device, radius, trackTubes[index] ?? 0.02),
-        index === 1 ? ringMat : ringMatSoft,
-        `track-${index}`,
-      ).setLocalPosition(0, 0.13, 0);
-    });
+    const deckTexture = textureFromCanvas(device, paintDeckTexture(), "deck-rings");
+    const deckRingMat = new pc.StandardMaterial();
+    deckRingMat.useLighting = false;
+    deckRingMat.diffuse = new pc.Color(0, 0, 0);
+    deckRingMat.emissiveMap = deckTexture;
+    deckRingMat.emissive = new pc.Color(1, 1, 1);
+    deckRingMat.emissiveIntensity = 0.95;
+    deckRingMat.opacityMap = deckTexture;
+    deckRingMat.alphaTest = 0.12;
+    deckRingMat.update();
+    const deckFace = new pc.Entity("deck-face");
+    deckFace.addComponent("render", { type: "plane", material: deckRingMat });
+    deckFace.setLocalScale(DECK_RADIUS * 2.02, 1, DECK_RADIUS * 2.02);
+    deckFace.setLocalPosition(0, 0.155, 0);
+    stage.addChild(deckFace);
 
-    const spokeCount = 8;
-    for (let i = 0; i < spokeCount; i += 1) {
-      const yaw = (i / spokeCount) * 180;
-      const spoke = new pc.Entity("spoke");
-      spoke.addComponent("render", { type: "box", material: metal });
-      spoke.setLocalScale(0.045, 0.02, DECK_RADIUS * 1.86);
-      spoke.setLocalPosition(0, 0.11, 0);
-      spoke.setLocalEulerAngles(0, yaw, 0);
-      stage.addChild(spoke);
-
-      const inlay = new pc.Entity("spoke-inlay");
-      inlay.addComponent("render", { type: "box", material: tickMat });
-      inlay.setLocalScale(0.012, 0.008, DECK_RADIUS * 1.7);
-      inlay.setLocalPosition(0, 0.125, 0);
-      inlay.setLocalEulerAngles(0, yaw, 0);
-      stage.addChild(inlay);
-    }
+    addMesh(
+      stage,
+      ringMesh(device, DECK_RADIUS - 0.05, 0.032),
+      ringMat,
+      "rim-track",
+    ).setLocalPosition(0, 0.16, 0);
+    addMesh(
+      stage,
+      ringMesh(device, CARD_RADIUS, 0.04),
+      ringMat,
+      "card-track",
+    ).setLocalPosition(0, 0.16, 0);
 
     const tickRing = new pc.Entity("tick-ring");
-    tickRing.setLocalPosition(0, 0.135, 0);
+    tickRing.setLocalPosition(0, 0.175, 0);
     stage.addChild(tickRing);
     const tickCount = 48;
     for (let i = 0; i < tickCount; i += 1) {
@@ -326,7 +326,7 @@ export function PortfolioCanvas({
     }
 
     const gearRing = new pc.Entity("gear-ring");
-    gearRing.setLocalPosition(0, 0.14, 0);
+    gearRing.setLocalPosition(0, 0.18, 0);
     stage.addChild(gearRing);
     const teeth = 18;
     for (let i = 0; i < teeth; i += 1) {
@@ -341,7 +341,7 @@ export function PortfolioCanvas({
     addMesh(gearRing, ringMesh(device, 0.7, 0.018), ringMat, "hub-ring");
 
     const innerRing = new pc.Entity("inner-spin");
-    innerRing.setLocalPosition(0, 0.132, 0);
+    innerRing.setLocalPosition(0, 0.17, 0);
     stage.addChild(innerRing);
     addMesh(innerRing, ringMesh(device, 2.85, 0.012), tickMat, "inner-track");
 
@@ -604,7 +604,7 @@ export function PortfolioCanvas({
         const lane = index % 2 === 0 ? CARD_RADIUS : DECK_RADIUS - 0.08;
         const angle =
           t * (0.18 + (index % 3) * 0.04) + (index / runners.length) * Math.PI * 2;
-        runner.setLocalPosition(Math.sin(angle) * lane, 0.155, Math.cos(angle) * lane);
+        runner.setLocalPosition(Math.sin(angle) * lane, 0.18, Math.cos(angle) * lane);
         runner.setLocalEulerAngles(0, (angle * 180) / Math.PI, 0);
       });
 

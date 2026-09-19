@@ -84,7 +84,7 @@ await client.execute({
 await client.execute(
   `DELETE FROM portfolio_projects WHERE id IN (
     'pp_echoes','pp_horizon','pp_synapse','pp_neon','pp_abyss'
-  )`,
+  ) OR title IN ('Harbor Lofts', 'Studio Reel')`,
 );
 
 const projects = [

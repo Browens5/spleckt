@@ -344,6 +344,71 @@ export async function paintProjectCard(
   return canvas;
 }
 
+export function paintDeckTexture() {
+  const size = 1024;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const maxR = size / 2 - 6;
+
+  ctx.clearRect(0, 0, size, size);
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+  const fill = ctx.createRadialGradient(cx, cy, 16, cx, cy, maxR);
+  fill.addColorStop(0, "#0a1822");
+  fill.addColorStop(0.5, "#071018");
+  fill.addColorStop(1, "#04080c");
+  ctx.fillStyle = fill;
+  ctx.fill();
+
+  const rings = [0.18, 0.34, 0.52, 0.7, 0.86, 0.98];
+  rings.forEach((t, index) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxR * t, 0, Math.PI * 2);
+    ctx.strokeStyle =
+      index === rings.length - 1 || index === 3
+        ? "rgba(60, 231, 255, 0.95)"
+        : "rgba(60, 231, 255, 0.48)";
+    ctx.lineWidth = index === rings.length - 1 ? 8 : index === 3 ? 6 : 3;
+    ctx.stroke();
+  });
+
+  ctx.strokeStyle = "rgba(60, 231, 255, 0.22)";
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 8; i += 1) {
+    const a = (i / 8) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * maxR * 0.12, cy + Math.sin(a) * maxR * 0.12);
+    ctx.lineTo(cx + Math.cos(a) * maxR * 0.86, cy + Math.sin(a) * maxR * 0.86);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 64; i += 1) {
+    const a = (i / 64) * Math.PI * 2;
+    const major = i % 4 === 0;
+    const inner = maxR * (major ? 0.9 : 0.94);
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+    ctx.lineTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+    ctx.strokeStyle = major ? "rgba(60, 231, 255, 0.82)" : "rgba(60, 231, 255, 0.35)";
+    ctx.lineWidth = major ? 3 : 1.5;
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR * 0.08, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(60, 231, 255, 0.75)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  return canvas;
+}
+
 export function paintGridTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
