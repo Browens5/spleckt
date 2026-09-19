@@ -1,6 +1,6 @@
 export async function uploadFile(params: {
   file: File;
-  purpose: "splat" | "thumbnail" | "media" | "media-poster";
+  purpose: "splat" | "thumbnail" | "media" | "media-poster" | "portfolio";
   ownerId?: string;
 }) {
   const contentType = params.file.type || "application/octet-stream";

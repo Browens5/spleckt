@@ -8,6 +8,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 - **Better Auth** — email/password client portal
 - **Drizzle ORM + libSQL** — local SQLite in dev; Turso-compatible in production
 - **Cloudflare R2** — scalable splat/video storage (local `.data/uploads` fallback)
+- **PlayCanvas Engine** — interactive portfolio carousel on `portfolio.spleckt.com`
 - **PlayCanvas SuperSplat Viewer** — self-hosted from `@playcanvas/supersplat-viewer`
 - **PlayCanvas SuperSplat Editor** — self-hosted build in `public/editor`
 
@@ -22,6 +23,7 @@ Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian 
 7. **MenoKnow** kids game center on `menoknow.spleckt.com` (letters, numbers, simple activities) — not linked from the main marketing site
 8. **Cubemap** equirect→cubemap tool on `cubemap.spleckt.com` (browser projection; optional self-hosted YouTube import) — not linked from the main marketing site
 9. **Drones** scroll-driven Three.js services experience on `drones.spleckt.com` — not linked from the main marketing site
+10. **Portfolio** PlayCanvas project-card carousel on `portfolio.spleckt.com` — not linked from the main marketing site
 
 ### Roles
 
@@ -76,6 +78,20 @@ Scroll-driven Three.js marketing experience for Spleckt aerial services. Host-ba
 
 Point DNS for `drones.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_DRONES_URL`.
 
+## Portfolio (`portfolio.spleckt.com`)
+
+Brian Owens' interactive PlayCanvas carousel of project cards. Host-based routing sends `portfolio.spleckt.com` (and `portfolio.localhost:3000` in local dev) to the Portfolio UI. The main Spleckt site does not link to it; `/portfolio` paths return 404 on www/apex. Seed data starts from the resume; photos and videos can be added later in the editor.
+
+- Drag, wheel, or arrow keys to rotate the deck; click a card to focus it
+- About / Skills / Contact overlays read from an editable profile
+- Editors and admins open `/login` on the portfolio host (there is no public sign-in button) to add, reorder copy, upload stills, and publish or hide cards
+
+```bash
+npm run db:seed:portfolio
+```
+
+Point DNS for `portfolio.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_PORTFOLIO_URL`.
+
 ## Setup
 
 ```bash
@@ -86,6 +102,7 @@ cp .env.example .env.local
 npm run db:push
 npm run db:seed
 npm run db:seed:handoff
+npm run db:seed:portfolio
 npm run setup:editor   # first time only (clones + builds PlayCanvas SuperSplat)
 npm run dev
 ```
@@ -94,6 +111,7 @@ Local Handoff: open `http://handoff.localhost:3000` (same process as `npm run de
 Local MenoKnow: open `http://menoknow.localhost:3000`.
 Local Cubemap: open `http://cubemap.localhost:3000`.
 Local Drones: open `http://drones.localhost:3000`.
+Local Portfolio: open `http://portfolio.localhost:3000`.
 
 Default admin (change after first login):
 
@@ -109,6 +127,7 @@ Default admin (change after first login):
 | `NEXT_PUBLIC_MENOKNOW_URL` | Optional MenoKnow URL — defaults to `https://menoknow.spleckt.com` |
 | `NEXT_PUBLIC_CUBEMAP_URL` | Optional Cubemap URL — defaults to `https://cubemap.spleckt.com` |
 | `NEXT_PUBLIC_DRONES_URL` | Optional Drones URL — defaults to `https://drones.spleckt.com` |
+| `NEXT_PUBLIC_PORTFOLIO_URL` | Optional Portfolio URL — defaults to `https://portfolio.spleckt.com` |
 | `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
 | `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
 | `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
@@ -127,7 +146,7 @@ Set these in `.env.local` / Vercel:
 
 The app attempts to set R2 CORS automatically on upload. If browser uploads still fail with **Failed to fetch**, open Cloudflare → R2 → your bucket → **Settings → CORS policy** and allow:
 
-- Origins: `https://www.spleckt.com`, `https://spleckt.com`
+- Origins: `https://www.spleckt.com`, `https://spleckt.com`, `https://portfolio.spleckt.com`
 - Methods: `GET`, `PUT`, `HEAD`
 - Headers: `*`
 
@@ -189,3 +208,10 @@ Without R2, uploads are stored under `.data/uploads` and served from `/api/files
 | Route | Purpose |
 | --- | --- |
 | `/` | Scroll-driven aerial services Three.js experience |
+
+### Portfolio host (`portfolio.spleckt.com`)
+
+| Route | Purpose |
+| --- | --- |
+| `/` | PlayCanvas carousel of editable project cards |
+| `/login` | Editor/admin sign-in for card and profile edits |
