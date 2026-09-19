@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { wrapIndex } from "@/lib/portfolio/carousel";
@@ -239,8 +238,8 @@ export function PortfolioExperience() {
         ))}
       </nav>
 
-      <div className="portfolio-tools">
-        {canEdit ? (
+      {canEdit ? (
+        <div className="portfolio-tools">
           <button
             type="button"
             className="portfolio-btn"
@@ -251,12 +250,6 @@ export function PortfolioExperience() {
           >
             {editorOpen ? "Close editor" : "Edit cards"}
           </button>
-        ) : (
-          <Link className="portfolio-btn portfolio-btn--ghost" href="/login">
-            Sign in to edit
-          </Link>
-        )}
-        {canEdit ? (
           <button
             type="button"
             className="portfolio-btn portfolio-btn--ghost"
@@ -264,8 +257,8 @@ export function PortfolioExperience() {
           >
             Sign out
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {canEdit ? (
         <PortfolioEditor

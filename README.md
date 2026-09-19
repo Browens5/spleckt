@@ -84,7 +84,7 @@ Brian Owens' interactive PlayCanvas carousel of project cards. Host-based routin
 
 - Drag, wheel, or arrow keys to rotate the deck; click a card to focus it
 - About / Skills / Contact overlays read from an editable profile
-- Editors and admins sign in on the portfolio host to add, reorder copy, upload stills, and publish or hide cards
+- Editors and admins open `/login` on the portfolio host (there is no public sign-in button) to add, reorder copy, upload stills, and publish or hide cards
 
 ```bash
 npm run db:seed:portfolio
