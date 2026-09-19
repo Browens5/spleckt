@@ -1,7 +1,13 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { canEditSplats, canManageMarketing, getSession, isAdmin } from "@/lib/session";
+import {
+  canEditSplats,
+  canManageMarketing,
+  canManagePortfolio,
+  getSession,
+  isAdmin,
+} from "@/lib/session";
 import { ensureR2Cors, isR2Configured, putObject } from "@/lib/storage";
 
 /**
@@ -21,6 +27,7 @@ export async function PUT(request: NextRequest) {
 
   const role = session.user.role;
   const isMedia = key.startsWith("media/");
+  const isPortfolio = key.startsWith("portfolio/");
   const isOwnSplatPrefix =
     key.startsWith(`splats/${session.user.id}/`) ||
     key.startsWith(`thumbnails/${session.user.id}/`);
@@ -29,11 +36,15 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (!isMedia && !canEditSplats(role)) {
+  if (isPortfolio && !canManagePortfolio(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (!isMedia && !isAdmin(role) && !isOwnSplatPrefix) {
+  if (!isMedia && !isPortfolio && !canEditSplats(role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!isMedia && !isPortfolio && !isAdmin(role) && !isOwnSplatPrefix) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

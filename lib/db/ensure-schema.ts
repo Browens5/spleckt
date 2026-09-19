@@ -135,6 +135,31 @@ const statements = [
     code TEXT NOT NULL UNIQUE,
     issued_at INTEGER NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS portfolio_projects (
+    id TEXT PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT '',
+    year TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    image_key TEXT,
+    image_name TEXT,
+    content_type TEXT,
+    link_url TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_published INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS portfolio_profile (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL DEFAULT 'Portfolio',
+    tagline TEXT NOT NULL DEFAULT '',
+    about TEXT NOT NULL DEFAULT '',
+    skills_json TEXT NOT NULL DEFAULT '[]',
+    contact_email TEXT NOT NULL DEFAULT '',
+    contact_note TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL
+  )`,
 ];
 
 export async function ensureSchema() {

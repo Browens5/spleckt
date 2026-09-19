@@ -220,6 +220,40 @@ export const trainingCertifications = sqliteTable("training_certifications", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
 });
 
+/** Portfolio site (`portfolio.spleckt.com`) — editable project cards + profile. */
+export const portfolioProjects = sqliteTable("portfolio_projects", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  category: text("category").notNull().default(""),
+  year: text("year").notNull().default(""),
+  description: text("description").notNull().default(""),
+  imageKey: text("image_key"),
+  imageName: text("image_name"),
+  contentType: text("content_type"),
+  linkUrl: text("link_url"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
+export const portfolioProfile = sqliteTable("portfolio_profile", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull().default("Portfolio"),
+  tagline: text("tagline").notNull().default(""),
+  about: text("about").notNull().default(""),
+  skillsJson: text("skills_json").notNull().default("[]"),
+  contactEmail: text("contact_email").notNull().default(""),
+  contactNote: text("contact_note").notNull().default(""),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),

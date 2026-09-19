@@ -43,3 +43,8 @@ export function canManageUsers(role?: string | null) {
 export function canManageMarketing(role?: string | null) {
   return isAdmin(role);
 }
+
+/** Edit portfolio cards, images, and profile copy. */
+export function canManagePortfolio(role?: string | null) {
+  return isEditor(role);
+}
