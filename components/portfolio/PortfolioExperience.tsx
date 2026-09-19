@@ -280,7 +280,13 @@ export function PortfolioExperience() {
           {selected.imageUrl ? (
             <div className="portfolio-focus-card__media">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={selected.imageUrl} alt="" />
+              <img
+                src={selected.imageUrl}
+                alt=""
+                onError={(event) => {
+                  event.currentTarget.parentElement?.setAttribute("hidden", "");
+                }}
+              />
             </div>
           ) : null}
           <h2>{selected.title}</h2>
