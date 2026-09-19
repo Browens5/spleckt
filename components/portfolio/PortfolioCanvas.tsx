@@ -75,6 +75,17 @@ function metalMaterial(diffuse: pc.Color, emissive: pc.Color, intensity: number)
   return material;
 }
 
+function canvasPixelRatio() {
+  const dpr = window.devicePixelRatio || 1;
+  const coarse =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches;
+  const longEdge = Math.max(window.innerWidth, window.innerHeight);
+  const maxCss = coarse ? 1280 : 1920;
+  const sizeScale = Math.min(1, maxCss / Math.max(longEdge, 1));
+  return Math.min(dpr, coarse ? 1 : 1.25) * sizeScale;
+}
+
 function textureFromCanvas(
   device: pc.GraphicsDevice,
   canvas: HTMLCanvasElement,
@@ -202,16 +213,23 @@ export function PortfolioCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const coarsePointer =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches;
     const app = new pc.Application(canvas, {
       graphicsDeviceOptions: {
-        antialias: true,
+        antialias: !coarsePointer,
         alpha: false,
-        powerPreference: "high-performance",
+        powerPreference: "low-power",
       },
     });
     app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
     app.setCanvasResolution(pc.RESOLUTION_AUTO);
-    app.graphicsDevice.maxPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    const applyResolution = () => {
+      app.graphicsDevice.maxPixelRatio = canvasPixelRatio();
+      app.resizeCanvas();
+    };
+    applyResolution();
     app.scene.ambientLight = new pc.Color(0.02, 0.04, 0.06);
     app.scene.fog.type = pc.FOG_NONE;
 
@@ -221,6 +239,7 @@ export function PortfolioCanvas({
       fov: 34,
       nearClip: 0.1,
       farClip: 80,
+      toneMapping: pc.TONEMAP_ACES2,
     });
     camera.setPosition(0, 2.08, 7.55);
     camera.lookAt(0, 0.92, -0.35);
@@ -249,23 +268,6 @@ export function PortfolioCanvas({
     });
     fill.setPosition(0, 2.6, 2.2);
     app.root.addChild(fill);
-
-    let cameraFrame: pc.CameraFrame | null = null;
-    try {
-      cameraFrame = new pc.CameraFrame(app, cameraComponent);
-      cameraFrame.rendering.toneMapping = pc.TONEMAP_ACES2;
-      cameraFrame.rendering.samples = 2;
-      cameraFrame.bloom.intensity = 0.028;
-      cameraFrame.bloom.blurLevel = 8;
-      cameraFrame.vignette.inner = 0.58;
-      cameraFrame.vignette.outer = 1.4;
-      cameraFrame.vignette.curvature = 0.4;
-      cameraFrame.vignette.intensity = 0.9;
-      cameraFrame.vignette.color = new pc.Color(0, 0, 0);
-      cameraFrame.update();
-    } catch {
-      cameraFrame = null;
-    }
 
     const device = app.graphicsDevice;
     const cyan = new pc.Color(0.22, 0.9, 1);
@@ -437,7 +439,10 @@ export function PortfolioCanvas({
     stage.addChild(cardsRoot);
 
     const cards: CardNode[] = [];
-    const textures: pc.Texture[] = [];
+    const cardArt = new Map<
+      pc.Entity,
+      { texture: pc.Texture; material: pc.StandardMaterial }
+    >();
     let current = selectedRef.current;
     let expandCurrent = expandedRef.current ? 1 : 0;
     let dragging = false;
@@ -447,15 +452,25 @@ export function PortfolioCanvas({
     let generation = 0;
     let destroyed = false;
 
+    const releaseCardArt = (face: pc.Entity) => {
+      const previous = cardArt.get(face);
+      if (!previous) return;
+      previous.material.destroy();
+      previous.texture.destroy();
+      cardArt.delete(face);
+    };
+
     const clearCards = () => {
       for (const card of cards) {
+        releaseCardArt(card.face);
         card.root.destroy();
       }
       cards.length = 0;
-      for (const texture of textures) {
-        texture.destroy();
+      for (const art of cardArt.values()) {
+        art.material.destroy();
+        art.texture.destroy();
       }
-      textures.length = 0;
+      cardArt.clear();
     };
 
     const rebuild = () => {
@@ -513,8 +528,9 @@ export function PortfolioCanvas({
         texture.destroy();
         return;
       }
-      textures.push(texture);
+      releaseCardArt(face);
       const material = cardMaterial(texture);
+      cardArt.set(face, { texture, material });
       if (face.render) {
         face.render.meshInstances.forEach((mesh) => {
           mesh.material = material;
@@ -551,8 +567,13 @@ export function PortfolioCanvas({
       }
     };
 
-    const onResize = () => app.resizeCanvas();
+    const onResize = () => applyResolution();
+    const onVisibility = () => {
+      app.autoRender = !document.hidden;
+      app.timeScale = document.hidden ? 0 : 1;
+    };
     window.addEventListener("resize", onResize);
+    document.addEventListener("visibilitychange", onVisibility);
 
     const pickCard = (clientX: number, clientY: number): CardHit | null => {
       if (cards.length === 0) return null;
@@ -720,11 +741,11 @@ export function PortfolioCanvas({
       destroyed = true;
       clearCards();
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("wheel", onWheel, true);
-      cameraFrame?.destroy();
       app.destroy();
     };
   }, []);
