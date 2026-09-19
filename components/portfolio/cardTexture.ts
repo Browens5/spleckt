@@ -271,7 +271,7 @@ export async function paintProjectCard(
   ctx.clip();
 
   const imageTop = 86;
-  const imageHeight = expanded ? 300 : 560;
+  const imageHeight = expanded ? 280 : 430;
   const image = project.imageUrl ? await loadImage(project.imageUrl) : null;
   if (image) {
     const scale = Math.max(
@@ -296,7 +296,7 @@ export async function paintProjectCard(
     paintProcedural(ctx, project, 18, imageTop, WIDTH - 36, imageHeight);
   }
 
-  ctx.fillStyle = "rgba(2, 8, 14, 0.94)";
+  ctx.fillStyle = "rgba(1, 7, 12, 0.98)";
   ctx.fillRect(18, imageTop + imageHeight - 8, WIDTH - 36, HEIGHT - (imageTop + imageHeight) - 10);
 
   ctx.restore();
@@ -311,53 +311,63 @@ export async function paintProjectCard(
 
   drawCorners(ctx, 34, 34, WIDTH - 68, HEIGHT - 68, 28);
 
+  const hasLink = Boolean(project.linkUrl);
+  const copyWidth = WIDTH - (hasLink ? 200 : 112);
+
   ctx.fillStyle = CYAN;
-  ctx.font = "600 28px Orbitron, Rajdhani, sans-serif";
+  ctx.font = "700 30px Rajdhani, system-ui, sans-serif";
   ctx.fillText(String(displayIndex).padStart(2, "0"), 56, 72);
 
-  const titleY = expanded ? imageTop + imageHeight + 64 : 720;
-  ctx.fillStyle = "#f4fbff";
-  ctx.font = "700 42px Orbitron, Rajdhani, sans-serif";
-  wrapText(ctx, project.title.toUpperCase(), 56, titleY, WIDTH - 200, 48, 2);
+  const titleY = imageTop + imageHeight + 58;
+  ctx.fillStyle = "#f7fcff";
+  ctx.font = "700 50px Rajdhani, system-ui, sans-serif";
+  ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+  ctx.shadowBlur = 10;
+  wrapText(ctx, project.title, 56, titleY, copyWidth, 52, 2);
 
-  const metaY = titleY + 100;
+  const metaY = titleY + 96;
   const meta = [project.category, project.year].filter(Boolean).join("  ·  ");
-  ctx.fillStyle = CYAN;
-  ctx.font = "600 22px Rajdhani, sans-serif";
-  ctx.fillText(meta.toUpperCase(), 56, metaY);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#6cf0ff";
+  ctx.font = "700 30px Rajdhani, system-ui, sans-serif";
+  ctx.fillText(meta, 56, metaY);
 
-  ctx.fillStyle = "rgba(214, 236, 246, 0.82)";
-  ctx.font = "500 24px Rajdhani, sans-serif";
+  ctx.fillStyle = "#eef8fc";
+  ctx.font = "600 32px Rajdhani, system-ui, sans-serif";
+  ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+  ctx.shadowBlur = 6;
   wrapText(
     ctx,
     project.description || "Add a description for this project.",
     56,
-    metaY + 50,
-    WIDTH - 180,
-    32,
-    expanded ? 14 : 4,
+    metaY + 52,
+    copyWidth,
+    40,
+    expanded ? 12 : 5,
   );
-
-  const bx = PLAY_BUTTON.cx;
-  const by = PLAY_BUTTON.cy;
-  const hasLink = Boolean(project.linkUrl);
-  ctx.beginPath();
-  ctx.arc(bx, by, 30, 0, Math.PI * 2);
-  ctx.fillStyle = hasLink ? "rgba(60, 231, 255, 0.18)" : "rgba(60, 231, 255, 0.06)";
-  ctx.fill();
-  ctx.shadowColor = hasLink ? "rgba(60, 231, 255, 0.7)" : "rgba(60, 231, 255, 0.2)";
-  ctx.shadowBlur = hasLink ? 16 : 0;
-  ctx.strokeStyle = hasLink ? CYAN : "rgba(60, 231, 255, 0.45)";
-  ctx.lineWidth = 3;
-  ctx.stroke();
   ctx.shadowBlur = 0;
-  ctx.fillStyle = hasLink ? CYAN : "rgba(60, 231, 255, 0.45)";
-  ctx.beginPath();
-  ctx.moveTo(bx - 6, by - 12);
-  ctx.lineTo(bx + 14, by);
-  ctx.lineTo(bx - 6, by + 12);
-  ctx.closePath();
-  ctx.fill();
+
+  if (hasLink) {
+    const bx = PLAY_BUTTON.cx;
+    const by = PLAY_BUTTON.cy;
+    ctx.beginPath();
+    ctx.arc(bx, by, 30, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(60, 231, 255, 0.18)";
+    ctx.fill();
+    ctx.shadowColor = "rgba(60, 231, 255, 0.7)";
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = CYAN;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = CYAN;
+    ctx.beginPath();
+    ctx.moveTo(bx - 6, by - 12);
+    ctx.lineTo(bx + 14, by);
+    ctx.lineTo(bx - 6, by + 12);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   return canvas;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { wrapIndex } from "@/lib/portfolio/carousel";
 import {
@@ -23,13 +23,6 @@ const PortfolioCanvas = dynamic(
     loading: () => <div className="portfolio-canvas-fallback" aria-hidden />,
   },
 );
-
-const SECTIONS: Array<{ id: PortfolioSection; label: string }> = [
-  { id: "about", label: "About" },
-  { id: "portfolio", label: "Portfolio" },
-  { id: "skills", label: "Skills" },
-  { id: "contact", label: "Contact" },
-];
 
 export function PortfolioExperience() {
   const [canEdit, setCanEdit] = useState(false);
@@ -145,30 +138,7 @@ export function PortfolioExperience() {
     if (index >= 0) setSelectedIndex(index);
   };
 
-  const panel = useMemo(() => {
-    if (section === "about") {
-      return {
-        kicker: "About",
-        title: profile.name,
-        body: profile.about,
-      };
-    }
-    if (section === "skills") {
-      return {
-        kicker: "Skills",
-        title: "Capabilities",
-        body: profile.skills.join(" · ") || "Add skills in the editor.",
-      };
-    }
-    if (section === "contact") {
-      return {
-        kicker: "Contact",
-        title: null,
-        body: null,
-      };
-    }
-    return null;
-  }, [profile, section]);
+  const showContact = section === "contact";
 
   return (
     <div
@@ -226,7 +196,7 @@ export function PortfolioExperience() {
         ›
       </button>
 
-      {panel ? (
+      {showContact ? (
         <section className="portfolio-panel" aria-live="polite">
           <button
             type="button"
@@ -236,34 +206,26 @@ export function PortfolioExperience() {
           >
             ×
           </button>
-          <p>{panel.kicker}</p>
-          {panel.title ? <h2>{panel.title}</h2> : null}
-          {panel.body ? (
-            <div className="portfolio-panel__copy" data-portfolio-scroll>
-              <p>{panel.body}</p>
-            </div>
-          ) : null}
-          {section === "contact" ? (
-            <ul className="portfolio-contact-list">
-              {profile.contactEmail ? (
-                <li>
-                  <a href={`mailto:${profile.contactEmail}`}>{profile.contactEmail}</a>
-                </li>
-              ) : null}
+          <p>Contact</p>
+          <ul className="portfolio-contact-list">
+            {profile.contactEmail ? (
               <li>
-                <a href={`tel:+1${DEFAULT_PHONE.replace(/\D/g, "")}`}>{DEFAULT_PHONE}</a>
+                <a href={`mailto:${profile.contactEmail}`}>{profile.contactEmail}</a>
               </li>
-              <li>
-                <a
-                  href={DEFAULT_LINKEDIN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  LinkedIn
-                </a>
-              </li>
-            </ul>
-          ) : null}
+            ) : null}
+            <li>
+              <a href={`tel:+1${DEFAULT_PHONE.replace(/\D/g, "")}`}>{DEFAULT_PHONE}</a>
+            </li>
+            <li>
+              <a
+                href={DEFAULT_LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                LinkedIn
+              </a>
+            </li>
+          </ul>
         </section>
       ) : null}
 
@@ -289,22 +251,18 @@ export function PortfolioExperience() {
         </p>
       ) : null}
 
-      <nav className="portfolio-dock" aria-label="Portfolio sections">
-        {SECTIONS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={section === item.id ? "is-active" : undefined}
-            onClick={() => {
-              setSection(item.id);
-              if (item.id !== "portfolio") setExpanded(false);
-            }}
-          >
-            <span aria-hidden>{iconFor(item.id)}</span>
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      <button
+        type="button"
+        className={
+          showContact ? "portfolio-contact-fab is-active" : "portfolio-contact-fab"
+        }
+        onClick={() => {
+          setSection(showContact ? "portfolio" : "contact");
+          setExpanded(false);
+        }}
+      >
+        {showContact ? "Close" : "Contact"}
+      </button>
 
       {canEdit ? (
         <div className="portfolio-tools">
@@ -341,11 +299,4 @@ export function PortfolioExperience() {
       ) : null}
     </div>
   );
-}
-
-function iconFor(section: PortfolioSection) {
-  if (section === "about") return "◎";
-  if (section === "skills") return "⬡";
-  if (section === "contact") return "✉";
-  return "◉";
 }
