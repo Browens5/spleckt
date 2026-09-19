@@ -68,12 +68,7 @@ export async function uploadFile(params: {
     publicUrl: string;
   };
 
-  const useProxyFirst =
-    presign.mode === "r2" &&
-    params.purpose === "portfolio" &&
-    params.file.size <= PROXY_MAX_BYTES;
-
-  if (useProxyFirst) {
+  if (presign.mode === "local" || params.purpose === "portfolio") {
     await putViaProxy(presign.key, params.file, contentType);
     return {
       key: presign.key,
@@ -87,29 +82,20 @@ export async function uploadFile(params: {
     putRes = await fetch(presign.uploadUrl, {
       method: "PUT",
       body: params.file,
-      ...(presign.mode === "local"
-        ? {
-            headers: {
-              "Content-Type": contentType,
-            },
-          }
-        : {}),
     });
   } catch {
-    if (presign.mode === "r2" && params.file.size <= PROXY_MAX_BYTES) {
+    if (params.file.size <= PROXY_MAX_BYTES) {
       await putViaProxy(presign.key, params.file, contentType);
       return {
         key: presign.key,
         publicUrl: presign.publicUrl,
       };
     }
-    throw new Error(
-      presign.mode === "r2" ? corsHelp() : "Upload failed to reach the server.",
-    );
+    throw new Error(corsHelp());
   }
 
   if (!putRes.ok) {
-    if (presign.mode === "r2" && params.file.size <= PROXY_MAX_BYTES) {
+    if (params.file.size <= PROXY_MAX_BYTES) {
       await putViaProxy(presign.key, params.file, contentType);
       return {
         key: presign.key,

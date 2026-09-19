@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getLocalObject, isR2Configured } from "@/lib/storage";
+import { getObjectBuffer } from "@/lib/storage";
 
 const CONTENT_TYPES: Record<string, string> = {
   ply: "application/octet-stream",
@@ -11,6 +11,7 @@ const CONTENT_TYPES: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   webp: "image/webp",
+  gif: "image/gif",
   mp4: "video/mp4",
   webm: "video/webm",
   mov: "video/quicktime",
@@ -20,18 +21,14 @@ export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ key: string[] }> },
 ) {
-  if (isR2Configured() && process.env.R2_PUBLIC_URL) {
-    return NextResponse.json(
-      { error: "Use the public R2 URL for this asset." },
-      { status: 404 },
-    );
-  }
-
   const { key } = await context.params;
   const objectKey = key.join("/");
+  if (!objectKey || objectKey.includes("..")) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   try {
-    const data = await getLocalObject(objectKey);
+    const data = await getObjectBuffer(objectKey);
     const ext = objectKey.split(".").pop()?.toLowerCase() ?? "";
     return new NextResponse(new Uint8Array(data), {
       headers: {

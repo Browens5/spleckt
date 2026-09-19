@@ -1,4 +1,3 @@
-import { publicAssetUrl } from "@/lib/storage";
 import type { PortfolioProfile, PortfolioProject } from "./types";
 
 type ProjectRow = {
@@ -58,7 +57,7 @@ export function mapProject(row: ProjectRow): PortfolioProject {
     description: row.description,
     imageKey: row.imageKey,
     imageName: row.imageName,
-    imageUrl: row.imageKey ? publicAssetUrl(row.imageKey) : null,
+    imageUrl: row.imageKey ? `/api/files/${row.imageKey}` : null,
     linkUrl: row.linkUrl,
     sortOrder: row.sortOrder,
     isPublished: row.isPublished,
