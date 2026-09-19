@@ -56,7 +56,10 @@ export async function bootstrapPortfolio() {
       .update(portfolioProfile)
       .set(profileValues(now))
       .where(eq(portfolioProfile.id, DEFAULT_PROFILE.id));
-  } else if (existing.contactNote.includes("LinkedIn")) {
+  } else if (
+    existing.contactNote.includes("LinkedIn") ||
+    existing.contactNote.includes("I am glad")
+  ) {
     await db
       .update(portfolioProfile)
       .set({

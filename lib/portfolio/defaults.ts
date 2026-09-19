@@ -31,10 +31,10 @@ export const DEFAULT_PROFILE: Omit<PortfolioProfile, "updatedAt"> = {
     "3D Printing / Prototyping",
   ],
   contactEmail: "browens515@gmail.com",
-  contactNote:
-    "Des Moines, IA · 208.380.6882. I am glad to talk drones, Gaussian splats, field tech, and how to get data from the site to the office.",
+  contactNote: "",
 };
 
+export const DEFAULT_PHONE = "208.380.6882";
 export const DEFAULT_LINKEDIN_URL = "https://www.linkedin.com/in/brianowens-engineer";
 
 export const DEFAULT_PROJECTS: Array<

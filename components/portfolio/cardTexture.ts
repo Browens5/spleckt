@@ -252,6 +252,7 @@ export async function paintProjectCard(
   project: PortfolioProject,
   displayIndex: number,
   highlighted: boolean,
+  expanded = false,
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
@@ -270,7 +271,7 @@ export async function paintProjectCard(
   ctx.clip();
 
   const imageTop = 86;
-  const imageHeight = 560;
+  const imageHeight = expanded ? 300 : 560;
   const image = project.imageUrl ? await loadImage(project.imageUrl) : null;
   if (image) {
     const scale = Math.max(
@@ -314,18 +315,28 @@ export async function paintProjectCard(
   ctx.font = "600 28px Orbitron, Rajdhani, sans-serif";
   ctx.fillText(String(displayIndex).padStart(2, "0"), 56, 72);
 
+  const titleY = expanded ? imageTop + imageHeight + 64 : 720;
   ctx.fillStyle = "#f4fbff";
   ctx.font = "700 42px Orbitron, Rajdhani, sans-serif";
-  wrapText(ctx, project.title.toUpperCase(), 56, 720, WIDTH - 200, 48, 2);
+  wrapText(ctx, project.title.toUpperCase(), 56, titleY, WIDTH - 200, 48, 2);
 
+  const metaY = titleY + 100;
   const meta = [project.category, project.year].filter(Boolean).join("  ·  ");
   ctx.fillStyle = CYAN;
   ctx.font = "600 22px Rajdhani, sans-serif";
-  ctx.fillText(meta.toUpperCase(), 56, 820);
+  ctx.fillText(meta.toUpperCase(), 56, metaY);
 
   ctx.fillStyle = "rgba(214, 236, 246, 0.82)";
   ctx.font = "500 24px Rajdhani, sans-serif";
-  wrapText(ctx, project.description || "Add a description for this project.", 56, 870, WIDTH - 180, 32, 4);
+  wrapText(
+    ctx,
+    project.description || "Add a description for this project.",
+    56,
+    metaY + 50,
+    WIDTH - 180,
+    32,
+    expanded ? 14 : 4,
+  );
 
   const bx = PLAY_BUTTON.cx;
   const by = PLAY_BUTTON.cy;
