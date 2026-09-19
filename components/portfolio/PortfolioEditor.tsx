@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { prepareCardImage } from "@/lib/prepare-image";
 import { uploadFile } from "@/lib/upload-client";
 import type { PortfolioProfile, PortfolioProject } from "@/lib/portfolio/types";
 
@@ -55,10 +56,11 @@ export function PortfolioEditor({
       let imageName: string | undefined;
       let contentType: string | undefined;
       if (file instanceof File && file.size > 0) {
-        const uploaded = await uploadFile({ file, purpose: "portfolio" });
+        const prepared = await prepareCardImage(file);
+        const uploaded = await uploadFile({ file: prepared, purpose: "portfolio" });
         imageKey = uploaded.key;
         imageName = file.name;
-        contentType = file.type || "image/jpeg";
+        contentType = prepared.type || "image/jpeg";
       }
 
       const payload = {
@@ -228,7 +230,7 @@ export function PortfolioEditor({
             </label>
             <label>
               Card image
-              <input name="image" type="file" accept="image/*" />
+              <input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/*" />
             </label>
             {selected?.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element

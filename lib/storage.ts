@@ -13,7 +13,21 @@ import { getTrustedOrigins } from "@/lib/env";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "uploads");
 
-let corsEnsured = false;
+type CorsState = {
+  checked: boolean;
+  managed: boolean | null;
+  error: string | null;
+};
+
+let corsState: CorsState = {
+  checked: false,
+  managed: null,
+  error: null,
+};
+
+function isAccessDenied(message: string) {
+  return /access denied|not authorized|forbidden|explicit deny/i.test(message);
+}
 
 function hasR2() {
   return Boolean(
@@ -78,8 +92,22 @@ function desiredCorsRules(): CORSRule[] {
 
 /** Best-effort CORS setup so browser PUTs to R2 succeed. */
 export async function ensureR2Cors() {
-  if (!hasR2() || corsEnsured) {
-    return { configured: hasR2(), ok: !hasR2() || corsEnsured, error: null as string | null };
+  if (!hasR2()) {
+    return {
+      configured: false,
+      ok: null as boolean | null,
+      managed: null as boolean | null,
+      error: null as string | null,
+    };
+  }
+
+  if (corsState.checked) {
+    return {
+      configured: true,
+      ok: corsState.managed === true ? true : null,
+      managed: corsState.managed,
+      error: corsState.error,
+    };
   }
 
   const client = getR2Client();
@@ -94,13 +122,44 @@ export async function ensureR2Cors() {
         },
       }),
     );
-    corsEnsured = true;
-    return { configured: true, ok: true, error: null as string | null };
+    corsState = { checked: true, managed: true, error: null };
+    return { configured: true, ok: true, managed: true, error: null };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not update R2 CORS";
-    // Token may lack permission — still report so health/upload can explain.
-    return { configured: true, ok: false, error: message };
+    // Object-only tokens cannot change bucket CORS. Dashboard CORS can still be valid.
+    const unmanaged = isAccessDenied(message);
+    corsState = {
+      checked: true,
+      managed: unmanaged ? false : null,
+      error: message,
+    };
+    return {
+      configured: true,
+      ok: null,
+      managed: unmanaged ? false : null,
+      error: message,
+    };
+  }
+}
+
+async function probePublicUrl() {
+  const publicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, "") || null;
+  if (!publicUrl) {
+    return { publicUrl: null, publicUrlReachable: null as boolean | null };
+  }
+
+  try {
+    const response = await fetch(publicUrl, {
+      method: "GET",
+      redirect: "follow",
+    });
+    return {
+      publicUrl,
+      publicUrlReachable: response.status < 500,
+    };
+  } catch {
+    return { publicUrl, publicUrlReachable: false };
   }
 }
 
@@ -109,8 +168,13 @@ export async function getR2Status() {
     return {
       configured: false,
       corsOk: null as boolean | null,
+      corsManaged: null as boolean | null,
       corsError: null as string | null,
+      corsReadable: null as boolean | null,
       bucket: null as string | null,
+      publicUrl: null as string | null,
+      publicUrlConfigured: false,
+      publicUrlReachable: null as boolean | null,
     };
   }
 
@@ -128,13 +192,17 @@ export async function getR2Status() {
     corsReadable = false;
   }
 
+  const publicProbe = await probePublicUrl();
+
   return {
     configured: true,
     bucket: process.env.R2_BUCKET_NAME ?? null,
     corsOk: cors.ok,
+    corsManaged: cors.managed,
     corsError: cors.error,
     corsReadable,
     publicUrlConfigured: Boolean(process.env.R2_PUBLIC_URL),
+    ...publicProbe,
   };
 }
 

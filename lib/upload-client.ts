@@ -1,3 +1,32 @@
+const PROXY_MAX_BYTES = 4.2 * 1024 * 1024;
+
+function corsHelp() {
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://www.spleckt.com";
+  return `Upload to Cloudflare R2 failed (often missing bucket CORS). Open /api/health and check r2.corsOk, or set CORS on the R2 bucket for ${origin} (and https://www.spleckt.com / https://portfolio.spleckt.com).`;
+}
+
+async function putViaProxy(key: string, file: File, contentType: string) {
+  const putRes = await fetch(`/api/upload/local?key=${encodeURIComponent(key)}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": contentType,
+    },
+    body: file,
+  });
+
+  if (!putRes.ok) {
+    const data = await putRes.json().catch(() => ({}));
+    const detail =
+      typeof data.error === "string" ? data.error : (await putRes.text().catch(() => "")).slice(0, 180);
+    throw new Error(
+      putRes.status === 413
+        ? `${corsHelp()} Large files need a direct R2 upload.`
+        : `Upload failed (${putRes.status})${detail ? `: ${detail}` : ""}`,
+    );
+  }
+}
+
 export async function uploadFile(params: {
   file: File;
   purpose: "splat" | "thumbnail" | "media" | "media-poster" | "portfolio";
@@ -39,29 +68,40 @@ export async function uploadFile(params: {
     publicUrl: string;
   };
 
+  if (presign.mode === "local" || params.purpose === "portfolio") {
+    await putViaProxy(presign.key, params.file, contentType);
+    return {
+      key: presign.key,
+      publicUrl: presign.publicUrl,
+    };
+  }
+
   let putRes: Response;
   try {
     // For R2, avoid sending a Content-Type that wasn't part of the signature.
     putRes = await fetch(presign.uploadUrl, {
       method: "PUT",
       body: params.file,
-      ...(presign.mode === "local"
-        ? {
-            headers: {
-              "Content-Type": contentType,
-            },
-          }
-        : {}),
     });
   } catch {
-    throw new Error(
-      presign.mode === "r2"
-        ? "Upload to Cloudflare R2 failed (often missing bucket CORS). Open /api/health and check r2.corsOk, or set CORS on the R2 bucket for https://www.spleckt.com."
-        : "Upload failed to reach the server.",
-    );
+    if (params.file.size <= PROXY_MAX_BYTES) {
+      await putViaProxy(presign.key, params.file, contentType);
+      return {
+        key: presign.key,
+        publicUrl: presign.publicUrl,
+      };
+    }
+    throw new Error(corsHelp());
   }
 
   if (!putRes.ok) {
+    if (params.file.size <= PROXY_MAX_BYTES) {
+      await putViaProxy(presign.key, params.file, contentType);
+      return {
+        key: presign.key,
+        publicUrl: presign.publicUrl,
+      };
+    }
     const detail = await putRes.text().catch(() => "");
     throw new Error(
       `Upload failed (${putRes.status})${detail ? `: ${detail.slice(0, 180)}` : ""}`,
