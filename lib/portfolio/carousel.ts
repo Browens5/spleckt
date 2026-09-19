@@ -129,14 +129,14 @@ export function carouselSlot(
   const lift = amount * focus;
 
   return {
-    x: Math.sin(angle) * (CARD_RADIUS - lift * 0.35),
-    y: CARD_Y + lift * 0.28,
-    z: Math.cos(angle) * CARD_RADIUS + lift * 1.15,
-    yaw: ((angle * 180) / Math.PI) * (0.55 * (1 - lift * 0.85)),
+    x: Math.sin(angle) * (CARD_RADIUS - lift * 0.2),
+    y: CARD_Y + lift * 0.16,
+    z: Math.cos(angle) * CARD_RADIUS + lift * 0.55,
+    yaw: ((angle * 180) / Math.PI) * (0.55 * (1 - lift * 0.7)),
     scale:
       (1.08 - Math.min(0.28, Math.abs(delta) * 0.12)) *
-      (1 + lift * 0.55) *
-      (1 - amount * (1 - focus) * 0.18),
+      (1 + lift * 0.26) *
+      (1 - amount * (1 - focus) * 0.12),
     delta,
   };
 }

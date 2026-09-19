@@ -668,13 +668,13 @@ export function PortfolioCanvas({
 
       fill.setPosition(Math.sin(t * 0.28) * 1.1, 2.55, 2.2 + Math.cos(t * 0.22) * 0.4);
 
-      const sway = (interactiveRef.current ? 0.07 : 0.03) * (1 - expandCurrent * 0.7);
+      const sway = (interactiveRef.current ? 0.07 : 0.03) * (1 - expandCurrent * 0.55);
       camera.setPosition(
         Math.sin(t * 0.12) * sway,
-        2.08 + Math.sin(t * 0.08) * 0.025 + expandCurrent * 0.12,
-        7.55 - expandCurrent * 0.7,
+        2.08 + Math.sin(t * 0.08) * 0.025 + expandCurrent * 0.06,
+        7.55 - expandCurrent * 0.32,
       );
-      camera.lookAt(0, 0.94 + expandCurrent * 0.18, -0.3);
+      camera.lookAt(0, 0.94 + expandCurrent * 0.08, -0.3);
     });
 
     app.start();
