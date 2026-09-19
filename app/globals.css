@@ -5469,6 +5469,7 @@ textarea {
   height: 100%;
   display: block;
   background: #010308;
+  touch-action: none;
 }
 
 .portfolio-vignette {
