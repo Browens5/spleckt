@@ -142,13 +142,27 @@ Set these in `.env.local` / Vercel:
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET_NAME`
-- `R2_PUBLIC_URL` (public bucket or custom domain)
+- `R2_PUBLIC_URL` (public r2.dev hostname or custom domain, no trailing slash)
 
-The app attempts to set R2 CORS automatically on upload. Portfolio card images (under ~4 MB) also upload through a same-origin proxy so they still land in R2 when the bucket CORS policy is stale. If large browser uploads fail with **Failed to fetch**, open Cloudflare → R2 → your bucket → **Settings → CORS policy** and allow:
+The R2 API token is often object-only. `/api/health` then reports `corsError: "Access Denied"` and `corsManaged: false` — that does **not** mean the dashboard CORS policy failed. Set CORS in Cloudflare → R2 → bucket → **Settings → CORS policy**:
 
-- Origins: `https://www.spleckt.com`, `https://spleckt.com`, `https://portfolio.spleckt.com`
-- Methods: `GET`, `PUT`, `HEAD`
-- Headers: `*`
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://www.spleckt.com",
+      "https://spleckt.com",
+      "https://portfolio.spleckt.com"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Portfolio card images (under ~4 MB) also upload through a same-origin proxy so they still land in R2 when the bucket CORS policy is stale. Large browser uploads still need that dashboard policy, including the host you are on.
 
 Without R2, uploads are stored under `.data/uploads` and served from `/api/files/...` (local only).
 
