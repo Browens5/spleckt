@@ -599,7 +599,7 @@ export function PortfolioCanvas({
         const picked = pickCard(event.clientX, event.clientY);
         if (picked) {
           if (picked.play) {
-            onSelectRef.current(picked.index);
+            onInspectRef.current(picked.index);
             onActivateRef.current(picked.index);
             return;
           }
