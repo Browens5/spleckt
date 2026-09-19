@@ -88,8 +88,8 @@ export function PortfolioExperience() {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
         return;
       }
-      if (event.key === "ArrowLeft") go(-1);
-      if (event.key === "ArrowRight") go(1);
+      if (event.key === "ArrowLeft" || event.key === "ArrowUp") go(-1);
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") go(1);
       if (event.key === "Escape") {
         setSection("portfolio");
         setEditorOpen(false);

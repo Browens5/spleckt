@@ -7,7 +7,9 @@ import {
   CARD_Y,
   DECK_RADIUS,
   carouselSlot,
+  createWheelNavState,
   nearestIndex,
+  wheelStep,
 } from "@/lib/portfolio/carousel";
 import type { PortfolioProject } from "@/lib/portfolio/types";
 import { paintDeckTexture, paintGridTexture, paintProjectCard } from "./cardTexture";
@@ -563,20 +565,22 @@ export function PortfolioCanvas({
       onSelectRef.current(snapped);
     };
 
+    const wheelNav = createWheelNavState();
     const onWheel = (event: WheelEvent) => {
       if (!interactiveRef.current) return;
       event.preventDefault();
       const list = projectsRef.current;
       if (list.length === 0) return;
-      const next =
-        nearestIndex(selectedRef.current, list.length) + (event.deltaY > 0 ? 1 : -1);
+      const step = wheelStep(wheelNav, event, event.timeStamp);
+      if (step === 0) return;
+      const next = nearestIndex(selectedRef.current, list.length) + step;
       onSelectRef.current(nearestIndex(next, list.length));
     };
 
     canvas.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
-    canvas.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("wheel", onWheel, { passive: false, capture: true });
 
     const gridOffset = new pc.Vec2();
     app.on("update", (dt: number) => {
@@ -633,7 +637,7 @@ export function PortfolioCanvas({
       canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
-      canvas.removeEventListener("wheel", onWheel);
+      window.removeEventListener("wheel", onWheel, true);
       cameraFrame?.destroy();
       app.destroy();
     };
