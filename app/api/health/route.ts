@@ -55,7 +55,7 @@ export async function GET() {
         ? "R2 env vars missing — uploads fall back to local (not suitable on Vercel)."
         : r2.corsOk
           ? "R2 CORS looks configured for browser uploads."
-          : "Could not set R2 CORS automatically. In Cloudflare R2 → bucket → Settings → CORS, allow PUT from https://www.spleckt.com.",
+          : "Could not set R2 CORS automatically. In Cloudflare R2 → bucket → Settings → CORS, allow PUT from https://www.spleckt.com and https://portfolio.spleckt.com.",
     },
     authSecretConfigured: Boolean(process.env.BETTER_AUTH_SECRET),
   });

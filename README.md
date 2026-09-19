@@ -144,7 +144,7 @@ Set these in `.env.local` / Vercel:
 - `R2_BUCKET_NAME`
 - `R2_PUBLIC_URL` (public bucket or custom domain)
 
-The app attempts to set R2 CORS automatically on upload. If browser uploads still fail with **Failed to fetch**, open Cloudflare → R2 → your bucket → **Settings → CORS policy** and allow:
+The app attempts to set R2 CORS automatically on upload. Portfolio card images (under ~4 MB) also upload through a same-origin proxy so they still land in R2 when the bucket CORS policy is stale. If large browser uploads fail with **Failed to fetch**, open Cloudflare → R2 → your bucket → **Settings → CORS policy** and allow:
 
 - Origins: `https://www.spleckt.com`, `https://spleckt.com`, `https://portfolio.spleckt.com`
 - Methods: `GET`, `PUT`, `HEAD`
