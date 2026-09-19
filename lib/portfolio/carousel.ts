@@ -134,8 +134,8 @@ export function carouselSlot(
     z: Math.cos(angle) * CARD_RADIUS + lift * 0.62,
     yaw: ((angle * 180) / Math.PI) * (0.55 * (1 - lift * 0.75)),
     scale:
-      (1.16 - Math.min(0.24, Math.abs(delta) * 0.1)) *
-      (1 + lift * 0.3) *
+      (1.12 - Math.min(0.26, Math.abs(delta) * 0.11)) *
+      (1 + lift * 0.32) *
       (1 - amount * (1 - focus) * 0.1),
     delta,
   };

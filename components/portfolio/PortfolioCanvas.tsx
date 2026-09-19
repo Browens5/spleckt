@@ -241,8 +241,8 @@ export function PortfolioCanvas({
       farClip: 80,
       toneMapping: pc.TONEMAP_ACES2,
     });
-    camera.setPosition(0, 1.72, 6.35);
-    camera.lookAt(0, 0.86, -0.2);
+    camera.setPosition(0, 1.94, 7.05);
+    camera.lookAt(0, 0.9, -0.28);
     app.root.addChild(camera);
     const cameraComponent = camera.camera;
     if (!cameraComponent) {
@@ -498,7 +498,7 @@ export function PortfolioCanvas({
         const face = new pc.Entity("face");
         face.addComponent("render", { type: "plane" });
         face.setLocalEulerAngles(90, 0, 0);
-        face.setLocalScale(1.62, 1, 2.44);
+        face.setLocalScale(1.5, 1, 2.26);
         root.addChild(face);
         cardsRoot.addChild(root);
         cards.push({ root, face, index });
@@ -728,13 +728,13 @@ export function PortfolioCanvas({
 
       fill.setPosition(Math.sin(t * 0.28) * 1.1, 2.55, 2.2 + Math.cos(t * 0.22) * 0.4);
 
-      const sway = (interactiveRef.current ? 0.05 : 0.02) * (1 - expandCurrent * 0.55);
+      const sway = (interactiveRef.current ? 0.06 : 0.025) * (1 - expandCurrent * 0.55);
       camera.setPosition(
         Math.sin(t * 0.12) * sway,
-        1.72 + Math.sin(t * 0.08) * 0.02 + expandCurrent * 0.18,
-        6.35 - expandCurrent * 0.24,
+        1.94 + Math.sin(t * 0.08) * 0.02 + expandCurrent * 0.18,
+        7.05 - expandCurrent * 0.22,
       );
-      camera.lookAt(0, 0.86 + expandCurrent * 0.3, -0.18);
+      camera.lookAt(0, 0.9 + expandCurrent * 0.3, -0.26);
     });
 
     app.start();
