@@ -55,11 +55,11 @@ export default function PortfolioLoginPage() {
   return (
     <div className="portfolio-auth">
       <div className="portfolio-auth__card">
-        <p className="portfolio-auth__kicker">PORTFOLIO</p>
+        <p className="portfolio-auth__kicker">BRIAN OWENS</p>
         <h1>Sign in to edit</h1>
         <p>
-          Editors and admins can add project cards, upload images, and rewrite
-          descriptions on the PlayCanvas deck.
+          Editors and admins can add photos, videos, and descriptions to the
+          PlayCanvas project deck.
         </p>
         <form className="portfolio-editor__form" onSubmit={onSubmit}>
           <label>

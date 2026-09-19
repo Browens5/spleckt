@@ -153,10 +153,18 @@ export function PortfolioExperience() {
           onActivate={activate}
         />
         <div className="portfolio-vignette" />
+        <div className="portfolio-neon" />
         <div className="portfolio-scan" />
+        <div className="portfolio-frame" aria-hidden>
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
       </div>
 
       <header className="portfolio-chrome">
+        <p className="portfolio-name">{profile.name}</p>
         <div className="portfolio-title">
           <span />
           <h1>PORTFOLIO</h1>

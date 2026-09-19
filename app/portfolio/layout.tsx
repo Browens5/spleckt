@@ -15,11 +15,11 @@ const sans = Rajdhani({
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Portfolio — Interactive project deck",
-    template: "%s · Portfolio",
+    absolute: "Brian Owens — Portfolio",
+    template: "%s · Brian Owens",
   },
   description:
-    "A PlayCanvas carousel of interactive project cards. Sign in to add images, titles, and descriptions.",
+    "VDC & Field Solutions Engineer. AI, autonomy, and 3D capture for the jobsite.",
 };
 
 export default function PortfolioRootLayout({

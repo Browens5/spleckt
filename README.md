@@ -80,7 +80,7 @@ Point DNS for `drones.spleckt.com` at the same Vercel deployment as www. Optiona
 
 ## Portfolio (`portfolio.spleckt.com`)
 
-Interactive PlayCanvas carousel of project cards. Host-based routing sends `portfolio.spleckt.com` (and `portfolio.localhost:3000` in local dev) to the Portfolio UI. The main Spleckt site does not link to it; `/portfolio` paths return 404 on www/apex.
+Brian Owens' interactive PlayCanvas carousel of project cards. Host-based routing sends `portfolio.spleckt.com` (and `portfolio.localhost:3000` in local dev) to the Portfolio UI. The main Spleckt site does not link to it; `/portfolio` paths return 404 on www/apex. Seed data starts from the resume; photos and videos can be added later in the editor.
 
 - Drag, wheel, or arrow keys to rotate the deck; click a card to focus it
 - About / Skills / Contact overlays read from an editable profile

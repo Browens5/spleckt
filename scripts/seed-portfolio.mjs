@@ -43,14 +43,18 @@ await client.execute(`
 `);
 
 const skills = JSON.stringify([
-  "Gaussian Splats",
-  "PlayCanvas",
-  "Cinematic Lighting",
+  "Gaussian Splatting",
   "Photogrammetry",
-  "Drone Capture",
-  "Interactive 3D",
-  "Visual Design",
-  "Real-time Worlds",
+  "3D Scanning & Modeling",
+  "Part 107 UAS Pilot",
+  "Autonomous Drone Docks",
+  "DroneDeploy",
+  "Python",
+  "C++",
+  "SolidWorks CSWP",
+  "Onshape",
+  "Fusion 360",
+  "3D Printing / Prototyping",
 ]);
 
 await client.execute({
@@ -67,55 +71,61 @@ await client.execute({
     updated_at = excluded.updated_at`,
   args: [
     "default",
-    "Spleckt",
-    "Lifelike 3D captures, cinematic worlds, and interactive experiences.",
-    "Spleckt builds hyperrealistic 3D Gaussian Splat captures and interactive worlds for real estate, construction, and cinematic storytelling. This portfolio is a living reel — swap the cards, drop in stills, and write the story behind each project.",
+    "Brian Owens",
+    "VDC & Field Solutions Engineer — AI, autonomy, and 3D capture for the jobsite.",
+    "Solution-oriented engineer based in Des Moines, Iowa. I connect AI, autonomous systems, robotics, and advanced field technology to how work actually gets done — from FPV drone platforms to scaling capture programs across multi-billion-dollar data center projects. Photos, videos, and deeper write-ups will land on these cards next.",
     skills,
-    "hello@spleckt.com",
-    "Tell us about a site, a story, or a world you want people to walk through. We will reply with a capture plan.",
+    "browens515@gmail.com",
+    "Des Moines, IA · 208.380.6882 · LinkedIn. I am glad to talk drones, Gaussian splats, field tech, and how to get data from the site to the office.",
     now,
   ],
 });
 
+await client.execute(
+  `DELETE FROM portfolio_projects WHERE id IN (
+    'pp_echoes','pp_horizon','pp_synapse','pp_neon','pp_abyss'
+  )`,
+);
+
 const projects = [
   [
-    "pp_echoes",
-    "Echoes of Tomorrow",
-    "Cinematic",
+    "pp_field",
+    "Field Solutions",
+    "Construction Tech",
     "2024",
-    "A cinematic exploration of future cities where technology and humanity converge.",
+    "Founded and lead Field Solutions at Weitz / Orascom Construction USA, putting cutting-edge tech in the hands of crews on multi-billion-dollar data center jobs.",
     1,
   ],
   [
-    "pp_horizon",
-    "Beyond Horizon",
-    "Visual Design",
-    "2024",
-    "Exploring the unknown reaches of space and time.",
+    "pp_fleet",
+    "Enterprise Fleet",
+    "UAS Program",
+    "2025",
+    "Run an 80+ drone, 50-pilot enterprise program that keeps multi-site capture consistent and in the hands of project teams.",
     2,
   ],
   [
-    "pp_synapse",
-    "Synapse",
-    "Motion Graphics",
-    "2023",
-    "Neural connections in constant motion.",
+    "pp_docks",
+    "Autonomous Docks",
+    "BVLOS",
+    "2025",
+    "Secured an FAA nationwide BVLOS waiver and deployed five autonomous drone docks for daily site collection and analysis.",
     3,
   ],
   [
-    "pp_neon",
-    "Neon Drive",
-    "3D Animation",
-    "2024",
-    "High speed through a neon dreamscape.",
+    "pp_splats",
+    "Splat Pipelines",
+    "3D Capture",
+    "2025",
+    "Built 3D Gaussian Splatting pipelines that make contractor-client communication clearer on live construction sites.",
     4,
   ],
   [
-    "pp_abyss",
-    "Abyss",
-    "Digital Art",
-    "2023",
-    "An abstract dive into the depths of the unknown.",
+    "pp_rising",
+    "Rising Star",
+    "Award",
+    "2025",
+    "DroneDeploy Rising Star 2025 for boosting field-to-office coordination with DroneDeploy Ground.",
     5,
   ],
 ];
@@ -131,10 +141,11 @@ for (const [id, title, category, year, description, sort] of projects) {
       year = excluded.year,
       description = excluded.description,
       sort_order = excluded.sort_order,
+      is_published = 1,
       updated_at = excluded.updated_at`,
     args: [id, title, category, year, description, sort, now, now],
   });
 }
 
-console.log("Portfolio profile and demo cards are ready.");
-console.log("Open http://portfolio.localhost:3000 and sign in as an editor to replace them.");
+console.log("Brian Owens portfolio profile and starter cards are ready.");
+console.log("Open http://portfolio.localhost:3000 — add photos later from the editor.");

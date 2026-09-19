@@ -3,7 +3,6 @@ import type { PortfolioProject } from "@/lib/portfolio/types";
 const WIDTH = 768;
 const HEIGHT = 1152;
 const CYAN = "#3ce7ff";
-const CYAN_DIM = "rgba(60, 231, 255, 0.35)";
 
 function hashString(value: string) {
   let hash = 2166136261;
@@ -89,17 +88,23 @@ function paintProcedural(
   h: number,
 ) {
   const seed = hashString(`${project.id}:${project.title}`);
-  const variant = seed % 5;
-  const hue = 190 + (seed % 40);
+  const theme =
+    project.id === "pp_docks" || project.id === "pp_splats"
+      ? 0
+      : project.id === "pp_fleet" || project.id === "pp_rising"
+        ? 1
+        : project.id === "pp_field"
+          ? 3
+          : seed % 5;
 
   const sky = ctx.createLinearGradient(x, y, x, y + h);
-  sky.addColorStop(0, `hsl(${hue} 80% 8%)`);
-  sky.addColorStop(0.45, `hsl(${hue + 12} 90% 16%)`);
-  sky.addColorStop(1, "#031018");
+  sky.addColorStop(0, "#02060d");
+  sky.addColorStop(0.4, "#041525");
+  sky.addColorStop(1, "#01040a");
   ctx.fillStyle = sky;
   ctx.fillRect(x, y, w, h);
 
-  if (variant === 0) {
+  if (theme === 0) {
     const cx = x + w * 0.5;
     const cy = y + h * 0.42;
     for (let i = 8; i >= 1; i -= 1) {
@@ -117,7 +122,7 @@ function paintProcedural(
     ctx.beginPath();
     ctx.arc(cx, cy, 90, 0, Math.PI * 2);
     ctx.fill();
-  } else if (variant === 1) {
+  } else if (theme === 1) {
     const cx = x + w * 0.72;
     const cy = y + h * 0.28;
     const planet = ctx.createRadialGradient(cx - 20, cy - 20, 10, cx, cy, 120);
@@ -139,7 +144,7 @@ function paintProcedural(
       ctx.fillStyle = `rgba(200, 240, 255, ${0.2 + (i % 5) * 0.12})`;
       ctx.fillRect(px, py, 2, 2);
     }
-  } else if (variant === 2) {
+  } else if (theme === 2) {
     ctx.strokeStyle = "rgba(120, 80, 255, 0.85)";
     ctx.lineWidth = 2;
     for (let i = 0; i < 18; i += 1) {
@@ -168,7 +173,7 @@ function paintProcedural(
     bloom.addColorStop(1, "rgba(0, 0, 0, 0)");
     ctx.fillStyle = bloom;
     ctx.fillRect(x, y, w, h);
-  } else if (variant === 3) {
+  } else if (theme === 3) {
     for (let i = 0; i < 16; i += 1) {
       const bx = x + 20 + ((i * 47 + seed) % (w - 80));
       const bh = 40 + ((i * 31 + seed) % (h * 0.55));
@@ -289,15 +294,15 @@ export async function paintProjectCard(
     paintProcedural(ctx, project, 18, imageTop, WIDTH - 36, imageHeight);
   }
 
-  ctx.fillStyle = "rgba(4, 14, 24, 0.88)";
+  ctx.fillStyle = "rgba(2, 8, 14, 0.94)";
   ctx.fillRect(18, imageTop + imageHeight - 8, WIDTH - 36, HEIGHT - (imageTop + imageHeight) - 10);
 
   ctx.restore();
 
   ctx.shadowColor = highlighted ? "rgba(60, 231, 255, 0.85)" : "rgba(60, 231, 255, 0.4)";
   ctx.shadowBlur = highlighted ? 28 : 14;
-  ctx.strokeStyle = highlighted ? CYAN : CYAN_DIM;
-  ctx.lineWidth = highlighted ? 5 : 3;
+  ctx.strokeStyle = CYAN;
+  ctx.lineWidth = highlighted ? 6 : 4;
   roundRect(ctx, 18, 18, WIDTH - 36, HEIGHT - 36, 36);
   ctx.stroke();
   ctx.shadowBlur = 0;
@@ -346,9 +351,9 @@ export function paintGridTexture() {
   const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
 
-  ctx.fillStyle = "#02060b";
+  ctx.fillStyle = "#03070c";
   ctx.fillRect(0, 0, 1024, 1024);
-  ctx.strokeStyle = "rgba(60, 231, 255, 0.16)";
+  ctx.strokeStyle = "rgba(60, 231, 255, 0.1)";
   ctx.lineWidth = 1;
   for (let i = 0; i <= 1024; i += 64) {
     ctx.beginPath();
