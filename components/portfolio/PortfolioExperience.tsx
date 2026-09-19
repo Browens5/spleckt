@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { wrapIndex } from "@/lib/portfolio/carousel";
-import { DEFAULT_PROFILE } from "@/lib/portfolio/defaults";
+import { DEFAULT_LINKEDIN_URL, DEFAULT_PROFILE } from "@/lib/portfolio/defaults";
 import type {
   PortfolioProfile,
   PortfolioProject,
@@ -81,11 +81,23 @@ export function PortfolioExperience() {
     setSection("portfolio");
   }, []);
 
-  const inspect = useCallback((index: number) => {
-    setSelectedIndex(index);
-    setExpanded(true);
-    setSection("portfolio");
-  }, []);
+  const inspect = useCallback(
+    (index: number, mode: "toggle" | "open" = "toggle") => {
+      setSection("portfolio");
+      if (mode === "open") {
+        setSelectedIndex(index);
+        setExpanded(true);
+        return;
+      }
+      if (index === selectedIndex && expanded) {
+        setExpanded(false);
+        return;
+      }
+      setSelectedIndex(index);
+      setExpanded(true);
+    },
+    [expanded, selectedIndex],
+  );
 
   const go = useCallback(
     (delta: number) => {
@@ -155,7 +167,13 @@ export function PortfolioExperience() {
   }, [profile, section]);
 
   return (
-    <div className="portfolio-experience">
+    <div
+      className={
+        expanded && section === "portfolio"
+          ? "portfolio-experience is-card-expanded"
+          : "portfolio-experience"
+      }
+    >
       <div className="portfolio-stage" aria-hidden>
         <PortfolioCanvas
           projects={projects}
@@ -185,7 +203,6 @@ export function PortfolioExperience() {
           <h1>PORTFOLIO</h1>
           <span />
         </div>
-        <p className="portfolio-tagline">{profile.tagline}</p>
       </header>
 
       <button
@@ -207,19 +224,41 @@ export function PortfolioExperience() {
 
       {panel ? (
         <section className="portfolio-panel" aria-live="polite">
+          <button
+            type="button"
+            className="portfolio-panel__close"
+            aria-label="Back to portfolio"
+            onClick={() => setSection("portfolio")}
+          >
+            ×
+          </button>
           <p>{panel.kicker}</p>
           <h2>{panel.title}</h2>
-          <p>{panel.body}</p>
-          {section === "contact" && profile.contactEmail ? (
-            <a className="portfolio-btn" href={`mailto:${profile.contactEmail}`}>
-              Send a message
-            </a>
+          <div className="portfolio-panel__copy" data-portfolio-scroll>
+            <p>{panel.body}</p>
+          </div>
+          {section === "contact" ? (
+            <div className="portfolio-panel__actions">
+              {profile.contactEmail ? (
+                <a className="portfolio-btn" href={`mailto:${profile.contactEmail}`}>
+                  Send a message
+                </a>
+              ) : null}
+              <a
+                className="portfolio-btn"
+                href={DEFAULT_LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                LinkedIn
+              </a>
+            </div>
           ) : null}
         </section>
       ) : null}
 
-      {section === "portfolio" && selected ? (
-        <div className={expanded ? "portfolio-caption is-expanded" : "portfolio-caption"}>
+      {section === "portfolio" && selected && !expanded ? (
+        <div className="portfolio-caption">
           <p>{String(activeIndex + 1).padStart(2, "0")}</p>
           <div>
             <strong>{selected.title}</strong>
@@ -227,11 +266,45 @@ export function PortfolioExperience() {
               {selected.category}
               {selected.year ? ` · ${selected.year}` : ""}
             </span>
-            {expanded ? (
-              <em>{selected.description}</em>
-            ) : null}
           </div>
         </div>
+      ) : null}
+
+      {section === "portfolio" && selected && expanded ? (
+        <article
+          className="portfolio-focus-card"
+          data-portfolio-scroll
+          onClick={() => inspect(activeIndex)}
+        >
+          <p>{String(activeIndex + 1).padStart(2, "0")}</p>
+          {selected.imageUrl ? (
+            <div className="portfolio-focus-card__media">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={selected.imageUrl} alt="" />
+            </div>
+          ) : null}
+          <h2>{selected.title}</h2>
+          <span>
+            {selected.category}
+            {selected.year ? ` · ${selected.year}` : ""}
+          </span>
+          <div className="portfolio-focus-card__copy">
+            <p>{selected.description}</p>
+          </div>
+          {selected.linkUrl ? (
+            <button
+              type="button"
+              className="portfolio-focus-card__play"
+              aria-label={`Open ${selected.title}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                activate(activeIndex);
+              }}
+            >
+              ▶
+            </button>
+          ) : null}
+        </article>
       ) : null}
 
       {loading ? <p className="portfolio-status">Initializing deck…</p> : null}

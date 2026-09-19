@@ -26,7 +26,7 @@ type CanvasProps = {
   expanded: boolean;
   interactive: boolean;
   onSelect: (index: number) => void;
-  onInspect: (index: number) => void;
+  onInspect: (index: number, mode?: "toggle" | "open") => void;
   onActivate: (index: number) => void;
   onCollapse: () => void;
 };
@@ -599,7 +599,7 @@ export function PortfolioCanvas({
         const picked = pickCard(event.clientX, event.clientY);
         if (picked) {
           if (picked.play) {
-            onInspectRef.current(picked.index);
+            onInspectRef.current(picked.index, "open");
             onActivateRef.current(picked.index);
             return;
           }
@@ -615,6 +615,12 @@ export function PortfolioCanvas({
 
     const wheelNav = createWheelNavState();
     const onWheel = (event: WheelEvent) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest("[data-portfolio-scroll]")
+      ) {
+        return;
+      }
       if (!interactiveRef.current) return;
       event.preventDefault();
       const list = projectsRef.current;
@@ -671,10 +677,10 @@ export function PortfolioCanvas({
       const sway = (interactiveRef.current ? 0.07 : 0.03) * (1 - expandCurrent * 0.55);
       camera.setPosition(
         Math.sin(t * 0.12) * sway,
-        2.08 + Math.sin(t * 0.08) * 0.025 + expandCurrent * 0.06,
-        7.55 - expandCurrent * 0.32,
+        2.08 + Math.sin(t * 0.08) * 0.025 + expandCurrent * 0.22,
+        7.55 - expandCurrent * 0.28,
       );
-      camera.lookAt(0, 0.94 + expandCurrent * 0.08, -0.3);
+      camera.lookAt(0, 0.94 + expandCurrent * 0.36, -0.3);
     });
 
     app.start();

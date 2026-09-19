@@ -65,14 +65,6 @@ function wrapText(
   }
   if (lines.length < maxLines && line) lines.push(line);
 
-  if (lines.length === maxLines && words.length > 0) {
-    let last = lines[maxLines - 1];
-    while (ctx.measureText(`${last}…`).width > maxWidth && last.length > 1) {
-      last = last.slice(0, -1);
-    }
-    lines[maxLines - 1] = last.endsWith("…") ? last : `${last}…`;
-  }
-
   lines.forEach((item, index) => {
     ctx.fillText(item, x, y + index * lineHeight);
   });
