@@ -315,7 +315,7 @@ export async function paintProjectCard(
 
   ctx.fillStyle = "#f4fbff";
   ctx.font = "700 42px Orbitron, Rajdhani, sans-serif";
-  wrapText(ctx, project.title.toUpperCase(), 56, 720, WIDTH - 160, 48, 2);
+  wrapText(ctx, project.title.toUpperCase(), 56, 720, WIDTH - 200, 48, 2);
 
   const meta = [project.category, project.year].filter(Boolean).join("  ·  ");
   ctx.fillStyle = CYAN;

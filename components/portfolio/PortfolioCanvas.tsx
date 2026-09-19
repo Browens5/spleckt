@@ -436,14 +436,14 @@ export function PortfolioCanvas({
 
         const stem = new pc.Entity("stem");
         stem.addComponent("render", { type: "cylinder", material: metal });
-        stem.setLocalScale(0.08, CARD_Y - 0.22, 0.08);
-        stem.setLocalPosition(0, -(CARD_Y - 0.22) / 2, 0);
+        stem.setLocalScale(0.07, 0.52, 0.07);
+        stem.setLocalPosition(0, -1.02, -0.08);
         root.addChild(stem);
 
         const foot = new pc.Entity("foot");
         foot.addComponent("render", { type: "box", material: tickMat });
         foot.setLocalScale(0.42, 0.03, 0.12);
-        foot.setLocalPosition(0, -CARD_Y + 0.16, 0);
+        foot.setLocalPosition(0, -CARD_Y + 0.16, -0.04);
         root.addChild(foot);
 
         const face = new pc.Entity("face");
