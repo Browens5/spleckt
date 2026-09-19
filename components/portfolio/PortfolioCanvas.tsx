@@ -2,7 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import * as pc from "playcanvas";
-import { carouselSlot, nearestIndex } from "@/lib/portfolio/carousel";
+import {
+  CARD_RADIUS,
+  CARD_Y,
+  DECK_RADIUS,
+  carouselSlot,
+  nearestIndex,
+} from "@/lib/portfolio/carousel";
 import type { PortfolioProject } from "@/lib/portfolio/types";
 import { paintGridTexture, paintProjectCard } from "./cardTexture";
 
@@ -16,7 +22,6 @@ type CanvasProps = {
 
 type CardNode = {
   root: pc.Entity;
-  glow: pc.Entity;
   index: number;
 };
 
@@ -35,11 +40,30 @@ function emissiveMaterial(
   material.blendType =
     opacity < 1 || additive ? pc.BLEND_ADDITIVEALPHA : pc.BLEND_NONE;
   material.depthWrite = opacity >= 1 && !additive;
+  material.cull = pc.CULLFACE_NONE;
   material.update();
   return material;
 }
 
-function textureFromCanvas(device: pc.GraphicsDevice, canvas: HTMLCanvasElement, name: string) {
+function metalMaterial(diffuse: pc.Color, emissive: pc.Color, intensity: number) {
+  const material = new pc.StandardMaterial();
+  material.useLighting = true;
+  material.diffuse = diffuse;
+  material.emissive = emissive;
+  material.emissiveIntensity = intensity;
+  material.useMetalness = true;
+  material.metalness = 0.82;
+  material.shininess = 70;
+  material.update();
+  return material;
+}
+
+function textureFromCanvas(
+  device: pc.GraphicsDevice,
+  canvas: HTMLCanvasElement,
+  name: string,
+  repeat = false,
+) {
   const texture = new pc.Texture(device, {
     name,
     width: canvas.width,
@@ -47,8 +71,8 @@ function textureFromCanvas(device: pc.GraphicsDevice, canvas: HTMLCanvasElement,
     format: pc.PIXELFORMAT_RGBA8,
     magFilter: pc.FILTER_LINEAR,
     minFilter: pc.FILTER_LINEAR,
-    addressU: pc.ADDRESS_CLAMP_TO_EDGE,
-    addressV: pc.ADDRESS_CLAMP_TO_EDGE,
+    addressU: repeat ? pc.ADDRESS_REPEAT : pc.ADDRESS_CLAMP_TO_EDGE,
+    addressV: repeat ? pc.ADDRESS_REPEAT : pc.ADDRESS_CLAMP_TO_EDGE,
     mipmaps: false,
     flipY: false,
   });
@@ -62,13 +86,56 @@ function cardMaterial(texture: pc.Texture) {
   material.diffuse = new pc.Color(0, 0, 0);
   material.emissive = new pc.Color(1, 1, 1);
   material.emissiveMap = texture;
-  material.emissiveIntensity = 1.12;
+  material.emissiveIntensity = 1.05;
   material.opacityMap = texture;
   material.blendType = pc.BLEND_PREMULTIPLIED;
   material.alphaTest = 0.04;
   material.cull = pc.CULLFACE_NONE;
   material.update();
   return material;
+}
+
+function addMesh(
+  parent: pc.Entity,
+  mesh: pc.Mesh,
+  material: pc.StandardMaterial,
+  name: string,
+) {
+  const entity = new pc.Entity(name);
+  entity.addComponent("render", {
+    meshInstances: [new pc.MeshInstance(mesh, material)],
+  });
+  parent.addChild(entity);
+  return entity;
+}
+
+function ringMesh(device: pc.GraphicsDevice, radius: number, tube: number) {
+  return pc.Mesh.fromGeometry(
+    device,
+    new pc.TorusGeometry({
+      ringRadius: radius,
+      tubeRadius: tube,
+      segments: 96,
+      sides: 8,
+    }),
+  );
+}
+
+function cylinderMesh(
+  device: pc.GraphicsDevice,
+  radius: number,
+  height: number,
+  segments = 48,
+) {
+  return pc.Mesh.fromGeometry(
+    device,
+    new pc.CylinderGeometry({
+      radius,
+      height,
+      heightSegments: 1,
+      capSegments: segments,
+    }),
+  );
 }
 
 export function PortfolioCanvas({
@@ -112,18 +179,18 @@ export function PortfolioCanvas({
     app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
     app.setCanvasResolution(pc.RESOLUTION_AUTO);
     app.graphicsDevice.maxPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-    app.scene.ambientLight = new pc.Color(0.04, 0.08, 0.12);
+    app.scene.ambientLight = new pc.Color(0.02, 0.04, 0.06);
     app.scene.fog.type = pc.FOG_NONE;
 
     const camera = new pc.Entity("camera");
     camera.addComponent("camera", {
-      clearColor: new pc.Color(0.01, 0.025, 0.045),
-      fov: 38,
+      clearColor: new pc.Color(0.004, 0.007, 0.012),
+      fov: 34,
       nearClip: 0.1,
       farClip: 80,
     });
-    camera.setPosition(0, 2.05, 7.15);
-    camera.lookAt(0, 1.15, 0);
+    camera.setPosition(0, 2.08, 7.55);
+    camera.lookAt(0, 0.92, -0.35);
     app.root.addChild(camera);
     const cameraComponent = camera.camera;
     if (!cameraComponent) {
@@ -134,20 +201,20 @@ export function PortfolioCanvas({
     const keyLight = new pc.Entity("key");
     keyLight.addComponent("light", {
       type: "directional",
-      color: new pc.Color(0.55, 0.85, 1),
-      intensity: 0.85,
+      color: new pc.Color(0.35, 0.55, 0.7),
+      intensity: 0.55,
     });
-    keyLight.setEulerAngles(35, 12, 0);
+    keyLight.setEulerAngles(48, 12, 0);
     app.root.addChild(keyLight);
 
     const fill = new pc.Entity("fill");
     fill.addComponent("light", {
       type: "point",
-      color: new pc.Color(0.2, 0.85, 1),
-      intensity: 8,
-      range: 18,
+      color: new pc.Color(0.2, 0.7, 1),
+      intensity: 1.15,
+      range: 12,
     });
-    fill.setPosition(0, 3.2, 2.4);
+    fill.setPosition(0, 2.6, 2.2);
     app.root.addChild(fill);
 
     let cameraFrame: pc.CameraFrame | null = null;
@@ -155,82 +222,186 @@ export function PortfolioCanvas({
       cameraFrame = new pc.CameraFrame(app, cameraComponent);
       cameraFrame.rendering.toneMapping = pc.TONEMAP_ACES2;
       cameraFrame.rendering.samples = 2;
-      cameraFrame.bloom.intensity = 0.045;
-      cameraFrame.bloom.blurLevel = 12;
-      cameraFrame.vignette.inner = 0.45;
-      cameraFrame.vignette.outer = 1;
-      cameraFrame.vignette.curvature = 0.6;
-      cameraFrame.vignette.intensity = 0.55;
+      cameraFrame.bloom.intensity = 0.028;
+      cameraFrame.bloom.blurLevel = 8;
+      cameraFrame.vignette.inner = 0.58;
+      cameraFrame.vignette.outer = 1.4;
+      cameraFrame.vignette.curvature = 0.4;
+      cameraFrame.vignette.intensity = 0.9;
+      cameraFrame.vignette.color = new pc.Color(0, 0, 0);
       cameraFrame.update();
     } catch {
       cameraFrame = null;
     }
 
+    const device = app.graphicsDevice;
     const cyan = new pc.Color(0.22, 0.9, 1);
-    const deckMat = emissiveMaterial(new pc.Color(0.02, 0.05, 0.08), 0.6);
-    const ringMat = emissiveMaterial(cyan, 2.4, 0.85, true);
-    const ringMatSoft = emissiveMaterial(cyan, 1.3, 0.45, true);
-    const pillarMat = emissiveMaterial(cyan, 1.6, 0.55, true);
-    const darkMat = emissiveMaterial(new pc.Color(0.02, 0.04, 0.07), 0.4);
+    const cyanHot = new pc.Color(0.55, 0.97, 1);
+    const metal = metalMaterial(
+      new pc.Color(0.03, 0.045, 0.06),
+      new pc.Color(0.04, 0.12, 0.16),
+      0.18,
+    );
+    const metalDark = metalMaterial(
+      new pc.Color(0.015, 0.02, 0.03),
+      new pc.Color(0.02, 0.06, 0.08),
+      0.1,
+    );
+    const ringMat = emissiveMaterial(cyan, 1.7, 1, false);
+    const ringMatSoft = emissiveMaterial(cyan, 0.9, 0.7, true);
+    const runnerMat = emissiveMaterial(cyanHot, 2.1, 0.95, true);
+    const beamMat = emissiveMaterial(cyan, 1.15, 0.8, true);
+    const tickMat = emissiveMaterial(cyan, 1.35, 1, false);
+    const pulseMats = [ringMat, ringMatSoft, runnerMat, beamMat, tickMat];
 
-    const deck = new pc.Entity("deck");
-    deck.addComponent("render", { type: "cylinder", material: deckMat });
-    deck.setLocalScale(9.4, 0.08, 9.4);
-    deck.setPosition(0, 0, 0.2);
-    app.root.addChild(deck);
+    const stage = new pc.Entity("stage");
+    stage.setPosition(0, 0, -3.15);
+    app.root.addChild(stage);
 
-    const makeRing = (scale: number, y: number, material: pc.StandardMaterial) => {
-      const ring = new pc.Entity("ring");
-      ring.addComponent("render", { type: "torus", material });
-      ring.setLocalScale(scale, 0.018, scale);
-      ring.setPosition(0, y, 0.2);
-      ring.setLocalEulerAngles(90, 0, 0);
-      app.root.addChild(ring);
-    };
-    makeRing(8.8, 0.08, ringMat);
-    makeRing(7.2, 0.07, ringMatSoft);
-    makeRing(5.4, 0.09, ringMat);
+    addMesh(
+      stage,
+      cylinderMesh(device, DECK_RADIUS, 0.16, 64),
+      metalDark,
+      "deck-base",
+    ).setLocalPosition(0, 0.02, 0);
+    addMesh(
+      stage,
+      cylinderMesh(device, DECK_RADIUS - 0.22, 0.05, 64),
+      metal,
+      "deck-plate",
+    ).setLocalPosition(0, 0.1, 0);
+    addMesh(
+      stage,
+      cylinderMesh(device, 0.55, 0.14, 24),
+      metal,
+      "hub",
+    ).setLocalPosition(0, 0.14, 0);
+
+    const trackRadii = [DECK_RADIUS - 0.08, CARD_RADIUS, 2.85, 1.7, 0.72];
+    const trackTubes = [0.03, 0.042, 0.018, 0.016, 0.02];
+    trackRadii.forEach((radius, index) => {
+      addMesh(
+        stage,
+        ringMesh(device, radius, trackTubes[index] ?? 0.02),
+        index === 1 ? ringMat : ringMatSoft,
+        `track-${index}`,
+      ).setLocalPosition(0, 0.13, 0);
+    });
+
+    const spokeCount = 8;
+    for (let i = 0; i < spokeCount; i += 1) {
+      const yaw = (i / spokeCount) * 180;
+      const spoke = new pc.Entity("spoke");
+      spoke.addComponent("render", { type: "box", material: metal });
+      spoke.setLocalScale(0.045, 0.02, DECK_RADIUS * 1.86);
+      spoke.setLocalPosition(0, 0.11, 0);
+      spoke.setLocalEulerAngles(0, yaw, 0);
+      stage.addChild(spoke);
+
+      const inlay = new pc.Entity("spoke-inlay");
+      inlay.addComponent("render", { type: "box", material: tickMat });
+      inlay.setLocalScale(0.012, 0.008, DECK_RADIUS * 1.7);
+      inlay.setLocalPosition(0, 0.125, 0);
+      inlay.setLocalEulerAngles(0, yaw, 0);
+      stage.addChild(inlay);
+    }
+
+    const tickRing = new pc.Entity("tick-ring");
+    tickRing.setLocalPosition(0, 0.135, 0);
+    stage.addChild(tickRing);
+    const tickCount = 48;
+    for (let i = 0; i < tickCount; i += 1) {
+      const angle = (i / tickCount) * Math.PI * 2;
+      const major = i % 4 === 0;
+      const tick = new pc.Entity("tick");
+      tick.addComponent("render", { type: "box", material: tickMat });
+      tick.setLocalScale(major ? 0.045 : 0.018, 0.012, major ? 0.22 : 0.1);
+      tick.setLocalPosition(
+        Math.sin(angle) * (DECK_RADIUS - 0.28),
+        0,
+        Math.cos(angle) * (DECK_RADIUS - 0.28),
+      );
+      tick.setLocalEulerAngles(0, (angle * 180) / Math.PI, 0);
+      tickRing.addChild(tick);
+    }
+
+    const gearRing = new pc.Entity("gear-ring");
+    gearRing.setLocalPosition(0, 0.14, 0);
+    stage.addChild(gearRing);
+    const teeth = 18;
+    for (let i = 0; i < teeth; i += 1) {
+      const angle = (i / teeth) * Math.PI * 2;
+      const tooth = new pc.Entity("tooth");
+      tooth.addComponent("render", { type: "box", material: metal });
+      tooth.setLocalScale(0.08, 0.05, 0.16);
+      tooth.setLocalPosition(Math.sin(angle) * 0.78, 0, Math.cos(angle) * 0.78);
+      tooth.setLocalEulerAngles(0, (angle * 180) / Math.PI, 0);
+      gearRing.addChild(tooth);
+    }
+    addMesh(gearRing, ringMesh(device, 0.7, 0.018), ringMat, "hub-ring");
+
+    const innerRing = new pc.Entity("inner-spin");
+    innerRing.setLocalPosition(0, 0.132, 0);
+    stage.addChild(innerRing);
+    addMesh(innerRing, ringMesh(device, 2.85, 0.012), tickMat, "inner-track");
 
     const gridTexture = textureFromCanvas(
-      app.graphicsDevice,
+      device,
       paintGridTexture(),
       "grid",
+      true,
     );
     const gridMat = new pc.StandardMaterial();
     gridMat.useLighting = false;
     gridMat.diffuse = new pc.Color(0, 0, 0);
     gridMat.emissiveMap = gridTexture;
     gridMat.emissive = new pc.Color(1, 1, 1);
-    gridMat.emissiveIntensity = 0.7;
+    gridMat.emissiveIntensity = 0.32;
     gridMat.update();
     const floor = new pc.Entity("floor");
     floor.addComponent("render", { type: "plane", material: gridMat });
-    floor.setLocalScale(28, 1, 28);
-    floor.setPosition(0, -0.02, 0);
+    floor.setLocalScale(36, 1, 36);
+    floor.setPosition(0, -0.08, 0);
     app.root.addChild(floor);
 
-    for (const x of [-6.4, 6.4]) {
-      const pillar = new pc.Entity("pillar");
-      pillar.addComponent("render", { type: "box", material: pillarMat });
-      pillar.setLocalScale(0.08, 7.5, 0.08);
-      pillar.setPosition(x, 3.6, -4.8);
-      app.root.addChild(pillar);
-    }
-
-    const lintel = new pc.Entity("lintel");
-    lintel.addComponent("render", { type: "box", material: pillarMat });
-    lintel.setLocalScale(13.2, 0.08, 0.08);
-    lintel.setPosition(0, 7.2, -4.8);
-    app.root.addChild(lintel);
+    const addBeam = (
+      sx: number,
+      sy: number,
+      sz: number,
+      x: number,
+      y: number,
+      z: number,
+    ) => {
+      const beam = new pc.Entity("beam");
+      beam.addComponent("render", { type: "box", material: beamMat });
+      beam.setLocalScale(sx, sy, sz);
+      beam.setPosition(x, y, z);
+      app.root.addChild(beam);
+    };
+    addBeam(0.03, 8.4, 0.03, -7.4, 4.1, -6.4);
+    addBeam(0.03, 8.4, 0.03, 7.4, 4.1, -6.4);
+    addBeam(14.8, 0.025, 0.025, 0, 8.3, -6.4);
+    addBeam(11.2, 0.02, 0.02, 0, 7.4, -6.4);
+    addBeam(0.02, 0.02, 10.2, -7.4, 8.3, -1.8);
+    addBeam(0.02, 0.02, 10.2, 7.4, 8.3, -1.8);
 
     const backWall = new pc.Entity("wall");
-    backWall.addComponent("render", { type: "box", material: darkMat });
-    backWall.setLocalScale(22, 12, 0.2);
-    backWall.setPosition(0, 4, -8.4);
+    backWall.addComponent("render", { type: "box", material: metalDark });
+    backWall.setLocalScale(30, 16, 0.18);
+    backWall.setPosition(0, 4.4, -10.2);
     app.root.addChild(backWall);
 
+    const runners: pc.Entity[] = [];
+    for (let i = 0; i < 14; i += 1) {
+      const runner = new pc.Entity("runner");
+      runner.addComponent("render", { type: "box", material: runnerMat });
+      runner.setLocalScale(0.06, 0.03, 0.28);
+      stage.addChild(runner);
+      runners.push(runner);
+    }
+
     const cardsRoot = new pc.Entity("cards");
-    app.root.addChild(cardsRoot);
+    stage.addChild(cardsRoot);
 
     const cards: CardNode[] = [];
     const textures: pc.Texture[] = [];
@@ -262,15 +433,18 @@ export function PortfolioCanvas({
 
       list.forEach((project, index) => {
         const root = new pc.Entity(`card-${project.id}`);
-        const glow = new pc.Entity("glow");
-        glow.addComponent("render", {
-          type: "plane",
-          material: ringMatSoft,
-        });
-        glow.setLocalEulerAngles(90, 0, 0);
-        glow.setLocalScale(1.52, 1, 2.28);
-        glow.setLocalPosition(0, 0, -0.03);
-        root.addChild(glow);
+
+        const stem = new pc.Entity("stem");
+        stem.addComponent("render", { type: "cylinder", material: metal });
+        stem.setLocalScale(0.08, CARD_Y - 0.22, 0.08);
+        stem.setLocalPosition(0, -(CARD_Y - 0.22) / 2, 0);
+        root.addChild(stem);
+
+        const foot = new pc.Entity("foot");
+        foot.addComponent("render", { type: "box", material: tickMat });
+        foot.setLocalScale(0.42, 0.03, 0.12);
+        foot.setLocalPosition(0, -CARD_Y + 0.16, 0);
+        root.addChild(foot);
 
         const face = new pc.Entity("face");
         face.addComponent("render", { type: "plane" });
@@ -278,32 +452,33 @@ export function PortfolioCanvas({
         face.setLocalScale(1.42, 1, 2.14);
         root.addChild(face);
         cardsRoot.addChild(root);
-        cards.push({ root, glow, index });
+        cards.push({ root, index });
 
-        void paintProjectCard(project, index + 1, false).then(
-          (painted) => {
-            if (destroyed || token !== generation) return;
-            const device = app.graphicsDevice;
-            if (!device) return;
-            let texture: pc.Texture;
-            try {
-              texture = textureFromCanvas(device, painted, `card-${project.id}`);
-            } catch {
-              return;
-            }
-            if (destroyed || token !== generation) {
-              texture.destroy();
-              return;
-            }
-            textures.push(texture);
-            const material = cardMaterial(texture);
-            if (face.render) {
-              face.render.meshInstances.forEach((mesh) => {
-                mesh.material = material;
-              });
-            }
-          },
-        );
+        void paintProjectCard(project, index + 1, false).then((painted) => {
+          if (destroyed || token !== generation) return;
+          if (!app.graphicsDevice) return;
+          let texture: pc.Texture;
+          try {
+            texture = textureFromCanvas(
+              app.graphicsDevice,
+              painted,
+              `card-${project.id}`,
+            );
+          } catch {
+            return;
+          }
+          if (destroyed || token !== generation) {
+            texture.destroy();
+            return;
+          }
+          textures.push(texture);
+          const material = cardMaterial(texture);
+          if (face.render) {
+            face.render.meshInstances.forEach((mesh) => {
+              mesh.material = material;
+            });
+          }
+        });
       });
     };
 
@@ -314,10 +489,9 @@ export function PortfolioCanvas({
       const list = projectsRef.current;
       for (const card of cards) {
         const slot = carouselSlot(card.index, value, list.length);
-        card.root.setPosition(slot.x, slot.y, slot.z);
+        card.root.setLocalPosition(slot.x, slot.y, slot.z);
         card.root.setLocalScale(slot.scale, slot.scale, slot.scale);
-        card.root.setEulerAngles(0, slot.yaw, 0);
-        card.glow.enabled = Math.abs(slot.delta) < 0.45;
+        card.root.setLocalEulerAngles(0, slot.yaw, 0);
       }
     };
 
@@ -404,6 +578,7 @@ export function PortfolioCanvas({
     window.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("wheel", onWheel, { passive: false });
 
+    const gridOffset = new pc.Vec2();
     app.on("update", (dt: number) => {
       const list = projectsRef.current;
       if (!dragging) {
@@ -414,9 +589,38 @@ export function PortfolioCanvas({
       applyLayout(current);
 
       const t = performance.now() * 0.001;
-      const sway = interactiveRef.current ? 0.12 : 0.04;
-      camera.setPosition(Math.sin(t * 0.18) * sway, 2.05 + Math.sin(t * 0.11) * 0.04, 7.15);
-      camera.lookAt(0, 1.18, 0.1);
+      ringMat.emissiveIntensity = 1.45 + Math.sin(t * 0.9) * 0.25;
+      ringMatSoft.emissiveIntensity = 0.75 + Math.sin(t * 0.7 + 1) * 0.18;
+      runnerMat.emissiveIntensity = 1.7 + Math.sin(t * 1.6) * 0.35;
+      beamMat.emissiveIntensity = 0.95 + Math.sin(t * 0.55 + 0.8) * 0.2;
+      tickMat.emissiveIntensity = 1.15 + Math.sin(t * 0.8) * 0.2;
+      for (const material of pulseMats) material.update();
+
+      tickRing.setLocalEulerAngles(0, t * 6.5, 0);
+      gearRing.setLocalEulerAngles(0, t * -11, 0);
+      innerRing.setLocalEulerAngles(0, t * -4.2, 0);
+
+      runners.forEach((runner, index) => {
+        const lane = index % 2 === 0 ? CARD_RADIUS : DECK_RADIUS - 0.08;
+        const angle =
+          t * (0.18 + (index % 3) * 0.04) + (index / runners.length) * Math.PI * 2;
+        runner.setLocalPosition(Math.sin(angle) * lane, 0.155, Math.cos(angle) * lane);
+        runner.setLocalEulerAngles(0, (angle * 180) / Math.PI, 0);
+      });
+
+      gridOffset.set(t * 0.01, t * 0.007);
+      gridMat.emissiveMapOffset = gridOffset;
+      gridMat.update();
+
+      fill.setPosition(Math.sin(t * 0.28) * 1.1, 2.55, 2.2 + Math.cos(t * 0.22) * 0.4);
+
+      const sway = interactiveRef.current ? 0.07 : 0.03;
+      camera.setPosition(
+        Math.sin(t * 0.12) * sway,
+        2.08 + Math.sin(t * 0.08) * 0.025,
+        7.55,
+      );
+      camera.lookAt(0, 0.94, -0.3);
     });
 
     app.start();
