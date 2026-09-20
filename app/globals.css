@@ -5663,13 +5663,17 @@ textarea {
 .portfolio-readout {
   pointer-events: auto;
   z-index: 6;
-  right: 1.4rem;
-  top: 18%;
-  width: min(28rem, 36vw);
-  max-height: min(62vh, 38rem);
-  padding: 1.1rem 1.2rem 1.15rem 1.25rem;
-  border-left: 2px solid var(--pf-cyan);
-  background: rgba(2, 8, 14, 0.9);
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 4.6rem;
+  width: min(42rem, calc(100vw - 10rem));
+  transform: translateX(-50%);
+  max-height: min(24vh, 13.5rem);
+  padding: 0.8rem 1.15rem 0.85rem;
+  border-left: 0;
+  border-top: 2px solid var(--pf-cyan);
+  background: rgba(2, 8, 14, 0.92);
   color: #f4fbff;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -5691,7 +5695,7 @@ textarea {
 }
 
 .portfolio-readout__copy {
-  max-height: min(42vh, 24rem);
+  max-height: min(16vh, 9rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -6097,6 +6101,7 @@ textarea {
     top: auto;
     bottom: 4.2rem;
     width: auto;
+    transform: none;
     max-height: 34vh;
     padding: 0.95rem 1rem 1rem;
     border-left: 0;
