@@ -1,217 +1,78 @@
 # Spleckt
 
-Marketing site and client portal for **Spleckt** — hyperrealistic 3D Gaussian Splat capture and hosting for real estate, construction, businesses, and scenes.
+This repository is a **development hub** for web-based prototyping and ideating.
+
+One Next.js app hosts the public Spleckt product and a set of independent sites on their own hosts. Shared auth, storage, and deploy mean a new idea can get a real URL without a new codebase. Experiments stay first-class products — they are not linked from the marketing site, and their paths 404 on `www`.
+
+**Spleckt** itself is hyperrealistic 3D Gaussian splat capture and hosting for real estate, construction, businesses, and scenes. The other hosts in this repo are where interaction ideas, tools, training flows, and 3D web techniques get tried in the open.
+
+Live: [www.spleckt.com](https://www.spleckt.com)
+
+## Sites
+
+Every site below is the same process. Locally, swap `.spleckt.com` for `.localhost:3000` (for example `http://handoff.localhost:3000`).
+
+| Host | What it is |
+| --- | --- |
+| [www.spleckt.com](https://www.spleckt.com) | Marketing site and client portal for 3D splat capture, hosting, and sharing |
+| [handoff.spleckt.com](https://handoff.spleckt.com) | Training: modules, tests, and certifications — a clean pass of knowledge to the next teammate |
+| [menoknow.spleckt.com](https://menoknow.spleckt.com) | Kids game center (letters, numbers, simple play) |
+| [cubemap.spleckt.com](https://cubemap.spleckt.com) | Browser tool: equirectangular 360 video or photos → cubemap faces |
+| [drones.spleckt.com](https://drones.spleckt.com) | Scroll-driven Three.js experience for aerial capture services |
+| [portfolio.spleckt.com](https://portfolio.spleckt.com) | Interactive PlayCanvas carousel of project cards |
+
+### Spleckt
+
+Capture a space, host the splat, share a link. The marketing site shows the process and featured scenes. The client portal is where captures live.
+
+- **Viewer** — assigned splats only (default for new accounts)
+- **Editor** — upload, edit, share, and open the self-hosted SuperSplat editor
+- **Admin** — everything editors can do, plus marketing media and user roles
+
+Public share links (`/s/[hash]`) let anyone explore a capture without an account.
+
+### Handoff
+
+Named for a relay baton pass. Sign in on the Handoff host (same accounts as Spleckt) to work through tool and technique modules, take tests, and earn certificate codes.
+
+### MenoKnow
+
+Play zones for early learners: Monster Trucks (letter rally), Cow Farm (count 0–100), and a Construction zone in progress.
+
+### Cubemap
+
+Runs in the browser. Point it at a 360° MP4, a ZIP of equirectangular frames, or a YouTube 360 link; it projects cube faces on-device. Optional photogrammetry masks (people, cars, sky) export beside the faces. Local files stay local.
+
+### Drones
+
+A scroll-scrubbed downtown → construction → survey → neighborhood flythrough with a stylized drone. A prototype of how aerial services can be *shown*, not just described.
+
+### Portfolio
+
+A rotatable deck of project cards with about / skills / contact overlays. Editors and admins sign in on the portfolio host to add stills, rewrite copy, reorder, and publish or hide cards.
 
 ## Stack
 
-- **Next.js** (App Router) + React — web + future mobile-friendly API surface
-- **Better Auth** — email/password client portal
-- **Drizzle ORM + libSQL** — local SQLite in dev; Turso-compatible in production
-- **Cloudflare R2** — scalable splat/video storage (local `.data/uploads` fallback)
-- **PlayCanvas Engine** — interactive portfolio carousel on `portfolio.spleckt.com`
-- **PlayCanvas SuperSplat Viewer** — self-hosted from `@playcanvas/supersplat-viewer`
-- **PlayCanvas SuperSplat Editor** — self-hosted build in `public/editor`
+- **Next.js** (App Router) + React
+- **Better Auth** — email/password, shared across Spleckt hosts
+- **Drizzle ORM + libSQL** — SQLite in development; Turso-compatible in production
+- **Cloudflare R2** — splat and media storage (local `.data/uploads` fallback)
+- **PlayCanvas** — SuperSplat viewer/editor and the portfolio carousel
+- **Three.js** — drones experience and other 3D sketches
 
-## Features (MVP)
-
-1. Light, professional marketing landing page with process media + featured splats
-2. Client portal with roles: **viewer** (default), **editor**, **admin**
-3. Public hashed share links (`/s/[hash]`)
-4. Admin marketing media upload UI + user role management
-5. Self-hosted SuperSplat viewer + editor
-6. **Handoff** training surface on `handoff.spleckt.com` (modules, tests, certifications) — not linked from the main marketing site
-7. **MenoKnow** kids game center on `menoknow.spleckt.com` (letters, numbers, simple activities) — not linked from the main marketing site
-8. **Cubemap** equirect→cubemap tool on `cubemap.spleckt.com` (browser projection; optional self-hosted YouTube import) — not linked from the main marketing site
-9. **Drones** scroll-driven Three.js services experience on `drones.spleckt.com` — not linked from the main marketing site
-10. **Portfolio** PlayCanvas project-card carousel on `portfolio.spleckt.com` — not linked from the main marketing site
-
-### Roles
-
-| Role | Access |
-| --- | --- |
-| `viewer` | View assigned splats only (default for new signups) |
-| `editor` | Upload, edit, share, and use the SuperSplat editor |
-| `admin` | Everything editors can do, plus marketing media + change user roles |
-
-## Handoff (`handoff.spleckt.com`)
-
-Separate training product hosted in the same Next.js app. Named for the **relay baton handoff** in track and field: a clean pass of knowledge to the next teammate. Host-based routing sends `handoff.spleckt.com` (and `handoff.localhost:3000` in local dev) to the Handoff UI. The main Spleckt site does not link to it; `/handoff` paths return 404 on www/apex.
-
-- Shared Better Auth users/credentials (cross-subdomain cookies on `.spleckt.com`)
-- Direct login/signup on Handoff → training center
-- Modules for tools / software / techniques, certification tests, and issued certificate codes
-
-```bash
-npm run db:seed:handoff
-npm run db:seed:portalcam   # XGRIDS PortalCam interactive construction module
-```
-
-Point DNS for `handoff.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_HANDOFF_URL`.
-
-## MenoKnow (`menoknow.spleckt.com`)
-
-Kids educational game center for ages ~3–4. Host-based routing sends `menoknow.spleckt.com` (and `menoknow.localhost:3000` in local dev) to the MenoKnow UI. The main Spleckt site does not link to it; `/menoknow` paths return 404 on www/apex.
-
-Theme play zones (Monster Trucks, Construction, Cow Farm) are scaffolded on the main page; letter/number/activity games come next.
-
-Point DNS for `menoknow.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_MENOKNOW_URL`.
-
-## Cubemap (`cubemap.spleckt.com`)
-
-Browser tool that converts equirectangular 360° MP4 — or a YouTube 360 file saved locally from a link — into cubemap face images. Host-based routing sends `cubemap.spleckt.com` (and `cubemap.localhost:3000` in local dev) to the Cubemap UI. The main Spleckt site does not link to it; `/cubemap` paths return 404 on www/apex.
-
-- Choose input video (or a ZIP of equirectangular photos/frames) and output folder via the File System Access API (Chromium); other browsers fall back to downloads
-- Paste a YouTube 360 URL and use **Save to folder & process**: the host resolves the stream with `youtubei.js` (npm only — no yt-dlp/ffmpeg), the browser saves the file into a folder you pick via the File System Access API, then loads it for cubemap export. 360/EAC sources use the YouTube EAC input projection in WebGL. Optional host convert remains available only when `yt-dlp` is installed self-hosted.
-- Set frames/sec (video), an optional start/end time or start/end frame export window, input projection (equirect or YouTube EAC 3×2 for local downloads), face size, FOV, faces per frame, top/bottom inclusion, yaw, layout (separate / strip / cross), and image format
-- Optional photogrammetry masks (people / cars / sky) export as black=exclude, white=keep PNGs beside each face
-- Cubemap projection uses HTML video + WebGL in the browser. Local files stay on-device; YouTube save-to-folder only uses the host as a byte proxy for CDN media.
-
-Point DNS for `cubemap.spleckt.com` at the same Vercel deployment as www for the browser UI. YouTube **Save to folder & process** works without host binaries; optional host convert still needs self-hosted `yt-dlp`/`ffmpeg`. Optionally set `NEXT_PUBLIC_CUBEMAP_URL`.
-
-## Drones (`drones.spleckt.com`)
-
-Scroll-driven Three.js marketing experience for Spleckt aerial services. Host-based routing sends `drones.spleckt.com` (and `drones.localhost:3000` in local dev) to the Drones UI. The main Spleckt site does not link to it; `/drones` paths return 404 on www/apex.
-
-- Procedural downtown → construction → survey → neighborhood scenes scrubbed by scroll
-- Stylized Inspire-class drone with pointer lean
-- Per-scene theme rotation for overlays and lighting
-
-Point DNS for `drones.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_DRONES_URL`.
-
-## Portfolio (`portfolio.spleckt.com`)
-
-Brian Owens' interactive PlayCanvas carousel of project cards. Host-based routing sends `portfolio.spleckt.com` (and `portfolio.localhost:3000` in local dev) to the Portfolio UI. The main Spleckt site does not link to it; `/portfolio` paths return 404 on www/apex. Seed data starts from the resume; photos and videos can be added later in the editor.
-
-- Drag, wheel, or arrow keys to rotate the deck; click a card to focus it
-- About / Skills / Contact overlays read from an editable profile
-- Editors and admins open `/login` on the portfolio host (there is no public sign-in button) to add, reorder copy, upload stills, and publish or hide cards
-
-```bash
-npm run db:seed:portfolio
-```
-
-Point DNS for `portfolio.spleckt.com` at the same Vercel deployment as www. Optionally set `NEXT_PUBLIC_PORTFOLIO_URL`.
-
-## Setup
+## Run locally
 
 ```bash
 npm install
-cp .env.example .env.local
-# set BETTER_AUTH_SECRET to a long random string
-
+cp .env.example .env.local   # set BETTER_AUTH_SECRET
+mkdir -p .data
 npm run db:push
 npm run db:seed
-npm run db:seed:handoff
-npm run db:seed:portfolio
-npm run setup:editor   # first time only (clones + builds PlayCanvas SuperSplat)
 npm run dev
 ```
 
-Local Handoff: open `http://handoff.localhost:3000` (same process as `npm run dev`).
-Local MenoKnow: open `http://menoknow.localhost:3000`.
-Local Cubemap: open `http://cubemap.localhost:3000`.
-Local Drones: open `http://drones.localhost:3000`.
-Local Portfolio: open `http://portfolio.localhost:3000`.
+Then open [http://localhost:3000](http://localhost:3000). Product hosts are `http://<name>.localhost:3000`. Seed scripts for Handoff and Portfolio are optional and idempotent (`npm run db:seed:handoff`, `npm run db:seed:portfolio`).
 
-Default admin (change after first login):
+See `.env.example` for URLs, auth, Turso, and R2. Without R2, uploads stay on disk under `.data/uploads`. The SuperSplat viewer is installed automatically; the editor build (`npm run setup:editor`) is only needed for `/portal/editor`.
 
-- Email: `admin@spleckt.com`
-- Password: `changeme123`
-
-## Environment variables
-
-| Variable | What it is |
-| --- | --- |
-| `NEXT_PUBLIC_APP_URL` | Your public site URL — use `https://www.spleckt.com` (apex redirects to www) |
-| `NEXT_PUBLIC_HANDOFF_URL` | Optional Handoff URL — defaults to `https://handoff.spleckt.com` |
-| `NEXT_PUBLIC_MENOKNOW_URL` | Optional MenoKnow URL — defaults to `https://menoknow.spleckt.com` |
-| `NEXT_PUBLIC_CUBEMAP_URL` | Optional Cubemap URL — defaults to `https://cubemap.spleckt.com` |
-| `NEXT_PUBLIC_DRONES_URL` | Optional Drones URL — defaults to `https://drones.spleckt.com` |
-| `NEXT_PUBLIC_PORTFOLIO_URL` | Optional Portfolio URL — defaults to `https://portfolio.spleckt.com` |
-| `BETTER_AUTH_URL` | Same URL as above for auth callbacks |
-| `BETTER_AUTH_SECRET` | Random secret you generate: `openssl rand -base64 32` |
-| `TURSO_DATABASE_URL` | From Turso dashboard → your database → Connect |
-| `TURSO_AUTH_TOKEN` | From Turso dashboard → your database → Tokens |
-| `R2_*` | From Cloudflare R2 bucket + API token |
-
-## Cloudflare R2
-
-Set these in `.env.local` / Vercel:
-
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET_NAME`
-- `R2_PUBLIC_URL` (public bucket or custom domain)
-
-The app attempts to set R2 CORS automatically on upload. If browser uploads still fail with **Failed to fetch**, open Cloudflare → R2 → your bucket → **Settings → CORS policy** and allow:
-
-- Origins: `https://www.spleckt.com`, `https://spleckt.com`, `https://portfolio.spleckt.com`
-- Methods: `GET`, `PUT`, `HEAD`
-- Headers: `*`
-
-Without R2, uploads are stored under `.data/uploads` and served from `/api/files/...` (local only).
-
-## Production notes
-
-- Keep the Next.js app on **Vercel** and put large assets on **R2**.
-- Use Turso via `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN`.
-- Set `NEXT_PUBLIC_APP_URL` and `BETTER_AUTH_URL` to `https://spleckt.com`.
-- After first deploy: `npm run db:push && npm run db:seed` with prod env loaded.
-- Rebuild the editor periodically with `npm run setup:editor`.
-
-## Key routes
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Marketing landing |
-| `/login`, `/signup` | Portal auth |
-| `/portal` | Client splat library |
-| `/portal/upload` | Upload splat |
-| `/portal/media` | Admin marketing media |
-| `/portal/splats/[id]` | Viewer + share links |
-| `/portal/editor/[id]` | Self-hosted SuperSplat editor |
-| `/s/[hash]` | Public share viewer |
-| `/viewer` | Generic viewer with query params |
-
-### Handoff host (`handoff.spleckt.com`)
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Handoff landing |
-| `/login`, `/signup` | Training auth (shared credentials) |
-| `/center` | Training modules |
-| `/center/modules/[slug]` | Module content |
-| `/center/modules/[slug]/test` | Certification test |
-| `/center/certifications` | Earned certificates |
-
-### MenoKnow host (`menoknow.spleckt.com`)
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Kids game center landing |
-| `/play` | Play zone hub |
-| `/play/trucks` | Monster Trucks zone hub |
-| `/play/trucks/letters` | Letter Rally (listen, case, picture) |
-| `/play/build` | Construction zone (game modules next) |
-| `/play/farm` | Cow Farm zone hub |
-| `/play/farm/count` | Count the cows (numbers 0–100) |
-
-### Cubemap host (`cubemap.spleckt.com`)
-
-| Route | Purpose |
-| --- | --- |
-| `/` | On-device equirect MP4 → cubemap extractor |
-
-### Drones host (`drones.spleckt.com`)
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Scroll-driven aerial services Three.js experience |
-
-### Portfolio host (`portfolio.spleckt.com`)
-
-| Route | Purpose |
-| --- | --- |
-| `/` | PlayCanvas carousel of editable project cards |
-| `/login` | Editor/admin sign-in for card and profile edits |
+This is a lab as much as a product. New hosts and sketches are expected.
