@@ -35,6 +35,7 @@ type CardNode = {
   root: pc.Entity;
   face: pc.Entity;
   index: number;
+  id: string;
 };
 
 type CardHit = {
@@ -485,10 +486,28 @@ export function PortfolioCanvas({
       cardArt.clear();
     };
 
+    const paintCard = (card: CardNode, token: number) => {
+      const project = projectsRef.current[card.index];
+      if (!project) return;
+      const focused = expandedRef.current && card.index === selectedRef.current;
+      void paintProjectCard(project, card.index + 1, focused).then((painted) => {
+        if (destroyed || token !== generation) return;
+        applyCardArt(card.face, painted, `card-${project.id}`, token);
+      });
+    };
+
     const rebuild = () => {
+      const list = projectsRef.current;
+      const sameSet =
+        cards.length === list.length &&
+        cards.every((card, index) => card.id === list[index]?.id);
+      if (sameSet) {
+        cards.forEach((card) => paintCard(card, generation));
+        return;
+      }
+
       generation += 1;
       const token = generation;
-      const list = projectsRef.current;
       clearCards();
       if (list.length === 0) return;
 
@@ -513,13 +532,9 @@ export function PortfolioCanvas({
         face.setLocalScale(1.5, 1, 2.26);
         root.addChild(face);
         cardsRoot.addChild(root);
-        cards.push({ root, face, index });
-
-        const focused = expandedRef.current && index === selectedRef.current;
-        void paintProjectCard(project, index + 1, focused).then((painted) => {
-          if (destroyed || token !== generation) return;
-          applyCardArt(face, painted, `card-${project.id}`, token);
-        });
+        const card = { root, face, index, id: project.id };
+        cards.push(card);
+        paintCard(card, token);
       });
     };
 
@@ -550,20 +565,8 @@ export function PortfolioCanvas({
       }
     };
 
-    paintFocusRef.current = (isExpanded, index) => {
-      const token = generation;
-      const list = projectsRef.current;
-      for (const card of cards) {
-        const project = list[card.index];
-        if (!project) continue;
-        const focused = isExpanded && card.index === index;
-        void paintProjectCard(project, card.index + 1, focused).then(
-          (painted) => {
-            if (destroyed || token !== generation) return;
-            applyCardArt(card.face, painted, `card-${project.id}`, token);
-          },
-        );
-      }
+    paintFocusRef.current = () => {
+      cards.forEach((card) => paintCard(card, generation));
     };
 
     rebuildRef.current = rebuild;
