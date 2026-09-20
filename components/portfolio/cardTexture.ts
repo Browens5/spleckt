@@ -252,7 +252,6 @@ export async function paintProjectCard(
   project: PortfolioProject,
   displayIndex: number,
   highlighted: boolean,
-  expanded = false,
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
@@ -271,7 +270,7 @@ export async function paintProjectCard(
   ctx.clip();
 
   const imageTop = 86;
-  const imageHeight = expanded ? 280 : 430;
+  const imageHeight = 640;
   const image = project.imageUrl ? await loadImage(project.imageUrl) : null;
   if (image) {
     const scale = Math.max(
@@ -318,34 +317,18 @@ export async function paintProjectCard(
   ctx.font = "700 30px Rajdhani, system-ui, sans-serif";
   ctx.fillText(String(displayIndex).padStart(2, "0"), 56, 72);
 
-  const titleY = imageTop + imageHeight + 58;
+  const titleY = imageTop + imageHeight + 62;
   ctx.fillStyle = "#f7fcff";
-  ctx.font = "700 50px Rajdhani, system-ui, sans-serif";
+  ctx.font = "700 52px Rajdhani, system-ui, sans-serif";
   ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
   ctx.shadowBlur = 10;
-  wrapText(ctx, project.title, 56, titleY, copyWidth, 52, 2);
+  wrapText(ctx, project.title, 56, titleY, copyWidth, 54, 2);
 
-  const metaY = titleY + 96;
   const meta = [project.category, project.year].filter(Boolean).join("  ·  ");
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#6cf0ff";
-  ctx.font = "700 30px Rajdhani, system-ui, sans-serif";
-  ctx.fillText(meta, 56, metaY);
-
-  ctx.fillStyle = "#eef8fc";
-  ctx.font = "600 32px Rajdhani, system-ui, sans-serif";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
-  ctx.shadowBlur = 6;
-  wrapText(
-    ctx,
-    project.description || "Add a description for this project.",
-    56,
-    metaY + 52,
-    copyWidth,
-    40,
-    expanded ? 12 : 5,
-  );
-  ctx.shadowBlur = 0;
+  ctx.font = "700 32px Rajdhani, system-ui, sans-serif";
+  ctx.fillText(meta, 56, titleY + 108);
 
   if (hasLink) {
     const bx = PLAY_BUTTON.cx;

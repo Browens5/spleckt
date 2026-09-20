@@ -514,7 +514,7 @@ export function PortfolioCanvas({
         cards.push({ root, face, index });
 
         const focused = expandedRef.current && index === selectedRef.current;
-        void paintProjectCard(project, index + 1, focused, focused).then((painted) => {
+        void paintProjectCard(project, index + 1, focused).then((painted) => {
           if (destroyed || token !== generation) return;
           applyCardArt(face, painted, `card-${project.id}`, token);
         });
@@ -555,7 +555,7 @@ export function PortfolioCanvas({
         const project = list[card.index];
         if (!project) continue;
         const focused = isExpanded && card.index === index;
-        void paintProjectCard(project, card.index + 1, focused, focused).then(
+        void paintProjectCard(project, card.index + 1, focused).then(
           (painted) => {
             if (destroyed || token !== generation) return;
             applyCardArt(card.face, painted, `card-${project.id}`, token);

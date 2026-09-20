@@ -5619,7 +5619,8 @@ textarea {
 
 .portfolio-caption,
 .portfolio-panel,
-.portfolio-status {
+.portfolio-status,
+.portfolio-readout {
   position: absolute;
   z-index: 4;
   pointer-events: none;
@@ -5657,6 +5658,51 @@ textarea {
 
 .portfolio-caption em {
   display: none;
+}
+
+.portfolio-readout {
+  pointer-events: auto;
+  z-index: 6;
+  right: 1.4rem;
+  top: 18%;
+  width: min(26rem, 34vw);
+  max-height: min(58vh, 36rem);
+  padding: 0.15rem 0.2rem 0.2rem 1rem;
+  border-left: 2px solid var(--pf-cyan);
+  background: linear-gradient(90deg, rgba(1, 6, 12, 0.72), rgba(1, 6, 12, 0.12));
+  color: #f4fbff;
+  font-family: var(--pf-sans);
+}
+
+.portfolio-readout p:first-of-type {
+  margin: 0 0 0.35rem;
+  color: var(--pf-cyan);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.portfolio-readout h2 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.portfolio-readout__copy {
+  max-height: min(42vh, 24rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.portfolio-readout__copy p {
+  margin: 0;
+  color: #eef6fa;
+  font-size: 1.08rem;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
 }
 
 .portfolio-contact-list {
@@ -6043,6 +6089,31 @@ textarea {
     bottom: 1.1rem;
     font-size: 0.95rem;
     padding: 0.65rem 0.95rem;
+  }
+
+  .portfolio-readout {
+    left: 0.85rem;
+    right: 0.85rem;
+    top: auto;
+    bottom: 4.4rem;
+    width: auto;
+    max-height: 30vh;
+    padding: 0.75rem 0.15rem 0.15rem;
+    border-left: 0;
+    border-top: 2px solid var(--pf-cyan);
+    background: linear-gradient(180deg, rgba(1, 6, 12, 0.82), rgba(1, 6, 12, 0.2));
+  }
+
+  .portfolio-readout h2 {
+    font-size: 1.28rem;
+  }
+
+  .portfolio-readout__copy {
+    max-height: 18vh;
+  }
+
+  .portfolio-readout__copy p {
+    font-size: 1.02rem;
   }
 }
 
