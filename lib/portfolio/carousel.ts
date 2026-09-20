@@ -130,7 +130,7 @@ export function carouselSlot(
 
   const amount = Math.max(0, Math.min(1, expand));
   const delta = wrapDelta(index - selected, count);
-  const spacing = count <= 3 ? 0.36 : count <= 5 ? 0.318 : 0.27;
+  const spacing = count <= 3 ? 0.42 : count <= 5 ? 0.378 : 0.325;
   const angle = delta * spacing;
   const focus = Math.max(0, 1 - Math.abs(delta));
   const neighbor = 1 - focus;
@@ -141,10 +141,10 @@ export function carouselSlot(
     (1 - amount * neighbor * 0.06);
 
   return {
-    x: Math.sin(angle) * (CARD_RADIUS + neighbor * 0.04),
+    x: Math.sin(angle) * (CARD_RADIUS + neighbor * 0.08),
     y: cardSeatY(scale) + lift * 0.015,
-    z: Math.cos(angle) * CARD_RADIUS - neighbor * 0.16 + lift * 0.04,
-    yaw: ((angle * 180) / Math.PI) * (0.78 * (1 - lift * 0.7)),
+    z: Math.cos(angle) * CARD_RADIUS - neighbor * 0.26 + lift * 0.04,
+    yaw: ((angle * 180) / Math.PI) * (0.84 * (1 - lift * 0.7)),
     scale,
     delta,
   };
