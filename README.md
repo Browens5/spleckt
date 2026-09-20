@@ -20,6 +20,7 @@ Every site below is the same process. Locally, swap `.spleckt.com` for `.localho
 | [cubemap.spleckt.com](https://cubemap.spleckt.com) | Browser tool: equirectangular 360 video or photos → cubemap faces |
 | [drones.spleckt.com](https://drones.spleckt.com) | Scroll-driven Three.js experience for aerial capture services |
 | [portfolio.spleckt.com](https://portfolio.spleckt.com) | Interactive PlayCanvas carousel of project cards |
+| [games.spleckt.com](https://games.spleckt.com) | Multiplayer game studio — an isometric PlayCanvas board game lounge |
 
 ### Spleckt
 
@@ -50,6 +51,10 @@ A scroll-scrubbed downtown → construction → survey → neighborhood flythrou
 ### Portfolio
 
 A rotatable deck of project cards with about / skills / contact overlays. Editors and admins sign in on the portfolio host to add stills, rewrite copy, reorder, and publish or hide cards.
+
+### Games
+
+A groovy 70s board game lounge rendered in isometric PlayCanvas. Sign in at the front desk with a player handle, pick a table to see its game, and start or join a match. Starting a game mints a 5-character code to share with friends; the first two players at a table play, everyone after that watches. Table 1 hosts checkers, with real-time multiplayer over the shared database.
 
 ## Stack
 

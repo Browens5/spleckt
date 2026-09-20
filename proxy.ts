@@ -4,6 +4,7 @@ import {
   hostnameFromHostHeader,
   isCubemapHostname,
   isDronesHostname,
+  isGamesHostname,
   isHandoffHostname,
   isMenoknowHostname,
   isPortfolioHostname,
@@ -59,6 +60,7 @@ export function proxy(request: NextRequest) {
   const cubemapHost = isCubemapHostname(hostname);
   const dronesHost = isDronesHostname(hostname);
   const portfolioHost = isPortfolioHostname(hostname);
+  const gamesHost = isGamesHostname(hostname);
 
   // Keep product paths invisible on the main Spleckt hosts.
   if (hideInternalPath(pathname, "handoff", handoffHost)) {
@@ -74,6 +76,9 @@ export function proxy(request: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
   if (hideInternalPath(pathname, "portfolio", portfolioHost)) {
+    return new NextResponse(null, { status: 404 });
+  }
+  if (hideInternalPath(pathname, "games", gamesHost)) {
     return new NextResponse(null, { status: 404 });
   }
 
@@ -99,6 +104,10 @@ export function proxy(request: NextRequest) {
 
   if (portfolioHost) {
     return rewriteToProduct(request, pathname, search, "portfolio");
+  }
+
+  if (gamesHost) {
+    return rewriteToProduct(request, pathname, search, "games");
   }
 
   return NextResponse.next();
