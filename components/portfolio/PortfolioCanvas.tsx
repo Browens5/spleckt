@@ -3,8 +3,8 @@
 import { useEffect, useRef } from "react";
 import * as pc from "playcanvas";
 import {
+  CARD_FACE_HEIGHT,
   CARD_RADIUS,
-  CARD_Y,
   DECK_RADIUS,
   cardUvFromLocal,
   carouselSlot,
@@ -89,9 +89,9 @@ function canvasPixelRatio() {
 function cameraRig(expand: number, portrait: boolean) {
   const amount = Math.max(0, Math.min(1, expand));
   return {
-    y: portrait ? 2.06 : 1.96,
-    z: (portrait ? 8.05 : 7.22) - amount * 0.08,
-    lookY: (portrait ? 0.7 : 0.78) + amount * 0.03,
+    y: portrait ? 2.22 : 2.12,
+    z: (portrait ? 8.28 : 7.52) - amount * 0.04,
+    lookY: (portrait ? 1.02 : 1.08) + amount * 0.1,
   };
 }
 
@@ -125,8 +125,10 @@ function cardMaterial(texture: pc.Texture) {
   material.emissiveMap = texture;
   material.emissiveIntensity = 1.05;
   material.opacityMap = texture;
-  material.blendType = pc.BLEND_PREMULTIPLIED;
-  material.alphaTest = 0.04;
+  material.alphaTest = 0.12;
+  material.blendType = pc.BLEND_NONE;
+  material.depthWrite = true;
+  material.depthTest = true;
   material.cull = pc.CULLFACE_NONE;
   material.update();
   return material;
@@ -495,14 +497,14 @@ export function PortfolioCanvas({
 
         const stem = new pc.Entity("stem");
         stem.addComponent("render", { type: "cylinder", material: metal });
-        stem.setLocalScale(0.07, 0.52, 0.07);
-        stem.setLocalPosition(0, -1.02, -0.08);
+        stem.setLocalScale(0.07, 0.46, 0.07);
+        stem.setLocalPosition(0, -CARD_FACE_HEIGHT * 0.5 + 0.18, -0.08);
         root.addChild(stem);
 
         const foot = new pc.Entity("foot");
         foot.addComponent("render", { type: "box", material: tickMat });
         foot.setLocalScale(0.42, 0.03, 0.12);
-        foot.setLocalPosition(0, -CARD_Y + 0.16, -0.04);
+        foot.setLocalPosition(0, -CARD_FACE_HEIGHT * 0.5 - 0.02, -0.04);
         root.addChild(foot);
 
         const face = new pc.Entity("face");
@@ -574,6 +576,10 @@ export function PortfolioCanvas({
         card.root.setLocalPosition(slot.x, slot.y, slot.z);
         card.root.setLocalScale(slot.scale, slot.scale, slot.scale);
         card.root.setLocalEulerAngles(0, slot.yaw, 0);
+        const drawOrder = 800 - Math.round(Math.min(8, Math.abs(slot.delta)) * 40);
+        card.face.render?.meshInstances.forEach((mesh) => {
+          mesh.drawOrder = drawOrder;
+        });
       }
     };
 

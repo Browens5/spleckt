@@ -98,9 +98,16 @@ export function wheelStep(
   return direction;
 }
 
-export const CARD_RADIUS = 4.05;
-export const CARD_Y = 1.28;
+export const CARD_RADIUS = 4.2;
+export const CARD_FACE_HEIGHT = 2.26;
 export const DECK_RADIUS = 5.05;
+export const DECK_SURFACE_Y = 0.2;
+/** Card-center height that keeps the face sitting on the turntable. */
+export const CARD_Y = DECK_SURFACE_Y + CARD_FACE_HEIGHT * 0.5;
+
+export function cardSeatY(scale: number) {
+  return DECK_SURFACE_Y + CARD_FACE_HEIGHT * 0.5 * scale;
+}
 
 export type CarouselSlot = {
   x: number;
@@ -123,20 +130,22 @@ export function carouselSlot(
 
   const amount = Math.max(0, Math.min(1, expand));
   const delta = wrapDelta(index - selected, count);
-  const spacing = count <= 3 ? 0.5 : count <= 5 ? 0.4 : 0.3;
+  const spacing = count <= 3 ? 0.64 : count <= 5 ? 0.54 : 0.44;
   const angle = delta * spacing;
   const focus = Math.max(0, 1 - Math.abs(delta));
+  const neighbor = 1 - focus;
   const lift = amount * focus;
+  const scale =
+    (1.06 - Math.min(0.18, Math.abs(delta) * 0.08)) *
+    (1 + lift * 0.06) *
+    (1 - amount * neighbor * 0.1);
 
   return {
-    x: Math.sin(angle) * CARD_RADIUS,
-    y: CARD_Y + lift * 0.04,
-    z: Math.cos(angle) * CARD_RADIUS + lift * 0.18,
-    yaw: ((angle * 180) / Math.PI) * (0.55 * (1 - lift * 0.85)),
-    scale:
-      (1.12 - Math.min(0.26, Math.abs(delta) * 0.11)) *
-      (1 + lift * 0.12) *
-      (1 - amount * (1 - focus) * 0.08),
+    x: Math.sin(angle) * (CARD_RADIUS + neighbor * 0.32),
+    y: cardSeatY(scale) + lift * 0.02,
+    z: Math.cos(angle) * CARD_RADIUS - neighbor * 0.7 + lift * 0.08,
+    yaw: ((angle * 180) / Math.PI) * (0.9 * (1 - lift * 0.72)),
+    scale,
     delta,
   };
 }

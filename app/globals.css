@@ -5663,13 +5663,16 @@ textarea {
 .portfolio-readout {
   pointer-events: auto;
   z-index: 6;
-  right: 1.4rem;
-  top: 18%;
-  width: min(28rem, 36vw);
-  max-height: min(62vh, 38rem);
-  padding: 1.1rem 1.2rem 1.15rem 1.25rem;
-  border-left: 2px solid var(--pf-cyan);
-  background: rgba(2, 8, 14, 0.9);
+  left: 1.5rem;
+  right: 1.5rem;
+  top: auto;
+  bottom: 4.7rem;
+  width: auto;
+  max-height: min(28vh, 16rem);
+  padding: 0.95rem 1.2rem 1rem;
+  border-left: 0;
+  border-top: 2px solid var(--pf-cyan);
+  background: rgba(2, 8, 14, 0.92);
   color: #f4fbff;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -5691,7 +5694,7 @@ textarea {
 }
 
 .portfolio-readout__copy {
-  max-height: min(42vh, 24rem);
+  max-height: min(16vh, 9rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
