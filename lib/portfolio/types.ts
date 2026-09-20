@@ -25,4 +25,4 @@ export type PortfolioProfile = {
   updatedAt: Date | string | number | null;
 };
 
-export type PortfolioSection = "about" | "portfolio" | "skills" | "contact";
+export type PortfolioSection = "portfolio" | "contact";
