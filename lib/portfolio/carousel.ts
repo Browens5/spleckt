@@ -98,10 +98,10 @@ export function wheelStep(
   return direction;
 }
 
-export const CARD_RADIUS = 4.72;
+export const CARD_RADIUS = 4.88;
 export const CARD_FACE_HEIGHT = 2.26;
 export const DECK_RADIUS = 5.05;
-export const DECK_SURFACE_Y = 0.165;
+export const DECK_SURFACE_Y = 0.16;
 /** Card-center height that keeps the face sitting on the turntable. */
 export const CARD_Y = DECK_SURFACE_Y + CARD_FACE_HEIGHT * 0.5;
 
