@@ -241,8 +241,8 @@ export function PortfolioCanvas({
       farClip: 80,
       toneMapping: pc.TONEMAP_ACES2,
     });
-    camera.setPosition(0, 1.94, 7.05);
-    camera.lookAt(0, 0.9, -0.28);
+    camera.setPosition(0, 2.08, 7.2);
+    camera.lookAt(0, 0.42, -0.2);
     app.root.addChild(camera);
     const cameraComponent = camera.camera;
     if (!cameraComponent) {
@@ -290,7 +290,7 @@ export function PortfolioCanvas({
     const pulseMats = [ringMat, ringMatSoft, runnerMat, beamMat, tickMat];
 
     const stage = new pc.Entity("stage");
-    stage.setPosition(0, 0, -3.15);
+    stage.setPosition(0, -0.42, -3.15);
     app.root.addChild(stage);
 
     addMesh(
@@ -728,13 +728,13 @@ export function PortfolioCanvas({
 
       fill.setPosition(Math.sin(t * 0.28) * 1.1, 2.55, 2.2 + Math.cos(t * 0.22) * 0.4);
 
-      const sway = (interactiveRef.current ? 0.06 : 0.025) * (1 - expandCurrent * 0.55);
+      const sway = (interactiveRef.current ? 0.05 : 0.02) * (1 - expandCurrent * 0.7);
       camera.setPosition(
         Math.sin(t * 0.12) * sway,
-        1.94 + Math.sin(t * 0.08) * 0.02 + expandCurrent * 0.18,
-        7.05 - expandCurrent * 0.22,
+        2.08 + Math.sin(t * 0.08) * 0.015,
+        7.2 - expandCurrent * 0.1,
       );
-      camera.lookAt(0, 0.9 + expandCurrent * 0.3, -0.26);
+      camera.lookAt(0, 0.42 + expandCurrent * 0.04, -0.16);
     });
 
     app.start();

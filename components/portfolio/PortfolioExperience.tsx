@@ -161,7 +161,6 @@ export function PortfolioExperience() {
         />
         <div className="portfolio-vignette" />
         <div className="portfolio-neon" />
-        <div className="portfolio-scan" />
         <div className="portfolio-frame" aria-hidden>
           <i />
           <i />
