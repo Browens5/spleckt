@@ -228,7 +228,7 @@ export function PortfolioExperience() {
         </section>
       ) : null}
 
-      {section === "portfolio" && selected ? (
+      {section === "portfolio" && selected && !expanded ? (
         <div className="portfolio-caption">
           <p>{String(activeIndex + 1).padStart(2, "0")}</p>
           <div>
@@ -239,6 +239,19 @@ export function PortfolioExperience() {
             </span>
           </div>
         </div>
+      ) : null}
+
+      {section === "portfolio" && selected && expanded ? (
+        <aside className="portfolio-readout" data-portfolio-scroll aria-live="polite">
+          <p>
+            {selected.category}
+            {selected.year ? ` · ${selected.year}` : ""}
+          </p>
+          <h2>{selected.title}</h2>
+          <div className="portfolio-readout__copy">
+            <p>{selected.description || "Add a description for this project."}</p>
+          </div>
+        </aside>
       ) : null}
 
       {loading ? <p className="portfolio-status">Initializing deck…</p> : null}
