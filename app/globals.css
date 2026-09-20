@@ -5665,28 +5665,28 @@ textarea {
   z-index: 6;
   right: 1.4rem;
   top: 18%;
-  width: min(26rem, 34vw);
-  max-height: min(58vh, 36rem);
-  padding: 0.15rem 0.2rem 0.2rem 1rem;
+  width: min(28rem, 36vw);
+  max-height: min(62vh, 38rem);
+  padding: 1.1rem 1.2rem 1.15rem 1.25rem;
   border-left: 2px solid var(--pf-cyan);
-  background: linear-gradient(90deg, rgba(1, 6, 12, 0.72), rgba(1, 6, 12, 0.12));
+  background: rgba(2, 8, 14, 0.9);
   color: #f4fbff;
-  font-family: var(--pf-sans);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .portfolio-readout p:first-of-type {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.4rem;
   color: var(--pf-cyan);
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
 }
 
 .portfolio-readout h2 {
-  margin: 0 0 0.75rem;
-  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+  margin: 0 0 0.8rem;
+  font-size: clamp(1.4rem, 2.1vw, 1.85rem);
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.015em;
   line-height: 1.2;
 }
 
@@ -5698,11 +5698,11 @@ textarea {
 
 .portfolio-readout__copy p {
   margin: 0;
-  color: #eef6fa;
-  font-size: 1.08rem;
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: 0.01em;
+  color: #eef4f8;
+  font-size: 1.12rem;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0;
 }
 
 .portfolio-contact-list {
@@ -6092,16 +6092,16 @@ textarea {
   }
 
   .portfolio-readout {
-    left: 0.85rem;
-    right: 0.85rem;
+    left: 0.7rem;
+    right: 0.7rem;
     top: auto;
-    bottom: 4.4rem;
+    bottom: 4.2rem;
     width: auto;
-    max-height: 30vh;
-    padding: 0.75rem 0.15rem 0.15rem;
+    max-height: 34vh;
+    padding: 0.95rem 1rem 1rem;
     border-left: 0;
     border-top: 2px solid var(--pf-cyan);
-    background: linear-gradient(180deg, rgba(1, 6, 12, 0.82), rgba(1, 6, 12, 0.2));
+    background: rgba(2, 8, 14, 0.94);
   }
 
   .portfolio-readout h2 {
@@ -6109,11 +6109,12 @@ textarea {
   }
 
   .portfolio-readout__copy {
-    max-height: 18vh;
+    max-height: 20vh;
   }
 
   .portfolio-readout__copy p {
-    font-size: 1.02rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
   }
 }
 
