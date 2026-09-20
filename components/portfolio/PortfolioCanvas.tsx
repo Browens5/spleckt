@@ -89,9 +89,9 @@ function canvasPixelRatio() {
 function cameraRig(expand: number, portrait: boolean) {
   const amount = Math.max(0, Math.min(1, expand));
   return {
-    y: portrait ? 2.22 : 2.12,
-    z: (portrait ? 8.28 : 7.52) - amount * 0.04,
-    lookY: (portrait ? 1.02 : 1.08) + amount * 0.1,
+    y: portrait ? 2.42 : 2.34,
+    z: (portrait ? 8.2 : 7.38) + amount * 0.06,
+    lookY: (portrait ? 0.78 : 0.82) + amount * 0.16,
   };
 }
 
