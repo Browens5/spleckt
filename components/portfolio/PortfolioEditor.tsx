@@ -236,6 +236,7 @@ export function PortfolioEditor({
                 className="portfolio-editor__preview"
                 src={selected.imageUrl}
                 alt=""
+                crossOrigin="anonymous"
               />
             ) : null}
             <label className="portfolio-editor__check">

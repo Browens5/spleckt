@@ -70,14 +70,44 @@ function wrapText(
   });
 }
 
-function loadImage(url: string) {
+const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
+
+function isSameOrigin(url: string) {
+  if (url.startsWith("/") && !url.startsWith("//")) return true;
+  try {
+    return new URL(url, window.location.origin).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+function decodeImage(url: string, cors: boolean) {
   return new Promise<HTMLImageElement | null>((resolve) => {
     const image = new Image();
-    image.crossOrigin = "anonymous";
+    if (cors) image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => resolve(null);
     image.src = url;
   });
+}
+
+function loadImage(url: string) {
+  const cached = imageCache.get(url);
+  if (cached) return cached;
+
+  const request = (async () => {
+    const sameOrigin = isSameOrigin(url);
+    const first = await decodeImage(url, !sameOrigin);
+    if (first) return first;
+    const retryUrl = `${url}${url.includes("?") ? "&" : "?"}cb=${Date.now()}`;
+    return decodeImage(retryUrl, true);
+  })();
+
+  imageCache.set(url, request);
+  request.then((image) => {
+    if (!image) imageCache.delete(url);
+  });
+  return request;
 }
 
 function paintProcedural(

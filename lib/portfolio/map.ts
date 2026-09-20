@@ -1,5 +1,10 @@
-import { publicAssetUrl } from "@/lib/storage";
 import type { PortfolioProfile, PortfolioProject } from "./types";
+
+/** Same-origin so PlayCanvas card textures are not blocked by R2 CORS. */
+export function portfolioImageUrl(key: string | null | undefined) {
+  if (!key) return null;
+  return `/api/files/${key}`;
+}
 
 type ProjectRow = {
   id: string;
@@ -58,7 +63,7 @@ export function mapProject(row: ProjectRow): PortfolioProject {
     description: row.description,
     imageKey: row.imageKey,
     imageName: row.imageName,
-    imageUrl: row.imageKey ? publicAssetUrl(row.imageKey) : null,
+    imageUrl: portfolioImageUrl(row.imageKey),
     linkUrl: row.linkUrl,
     sortOrder: row.sortOrder,
     isPublished: row.isPublished,

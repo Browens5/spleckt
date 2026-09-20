@@ -39,12 +39,25 @@ export async function PATCH(
   }
 
   const data = parsed.data;
+  const patch: Partial<typeof portfolioProjects.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+  if (data.title !== undefined) patch.title = data.title;
+  if (data.category !== undefined) patch.category = data.category;
+  if (data.year !== undefined) patch.year = data.year;
+  if (data.description !== undefined) patch.description = data.description;
+  if (data.linkUrl !== undefined) patch.linkUrl = data.linkUrl;
+  if (data.sortOrder !== undefined) patch.sortOrder = data.sortOrder;
+  if (data.isPublished !== undefined) patch.isPublished = data.isPublished;
+  if (data.imageKey !== undefined) {
+    patch.imageKey = data.imageKey;
+    if (data.imageName !== undefined) patch.imageName = data.imageName;
+    if (data.contentType !== undefined) patch.contentType = data.contentType;
+  }
+
   const [row] = await db
     .update(portfolioProjects)
-    .set({
-      ...data,
-      updatedAt: new Date(),
-    })
+    .set(patch)
     .where(eq(portfolioProjects.id, id))
     .returning();
 
