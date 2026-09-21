@@ -277,15 +277,6 @@ export function GamesExperience() {
 
   const onSquareClick = useCallback(
     (index: number) => {
-      // eslint-disable-next-line no-console
-      console.log("[games-debug] onSquareClick", {
-        index,
-        hasState: Boolean(state),
-        myTurn,
-        busy,
-        effectiveSelected,
-        movableFroms: availableMoves.map((m) => m.from),
-      });
       if (!state || !myTurn || busy) return;
       if (effectiveSelected !== null) {
         const move = availableMoves.find(

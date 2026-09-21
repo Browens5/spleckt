@@ -59,12 +59,14 @@ type ViewRig = {
   look: pc.Vec3;
   orthoHeight: number;
   pitch: number;
+  /** Minimum visible world half-width, so narrow screens zoom out to fit. */
+  minHalfWidth: number;
 };
 
 const VIEW_RIGS: Record<LoungeView, ViewRig> = {
-  lounge: { look: new pc.Vec3(0.1, 1.05, -0.3), orthoHeight: 4.75, pitch: 32 },
-  table: { look: new pc.Vec3(TABLE.x, 0.85, TABLE.z), orthoHeight: 2.5, pitch: 39 },
-  game: { look: new pc.Vec3(TABLE.x, 0.82, TABLE.z), orthoHeight: 1.32, pitch: 55 },
+  lounge: { look: new pc.Vec3(0.1, 1.05, -0.3), orthoHeight: 4.75, pitch: 32, minHalfWidth: 5.2 },
+  table: { look: new pc.Vec3(TABLE.x, 0.85, TABLE.z), orthoHeight: 2.5, pitch: 39, minHalfWidth: 2.4 },
+  game: { look: new pc.Vec3(TABLE.x, 0.82, TABLE.z), orthoHeight: 1.32, pitch: 55, minHalfWidth: 1.35 },
 };
 
 const CAMERA_YAW = (45 * Math.PI) / 180;
@@ -268,7 +270,12 @@ export function LoungeCanvas({
         camState.look.z + Math.cos(CAMERA_YAW) * horiz,
       );
       camera.lookAt(camState.look);
-      cameraComponent.orthoHeight = camState.orthoHeight;
+      const aspect = Math.max(0.3, canvas.clientWidth / Math.max(1, canvas.clientHeight));
+      const rig = VIEW_RIGS[viewRef.current];
+      cameraComponent.orthoHeight = Math.max(
+        camState.orthoHeight,
+        rig.minHalfWidth / aspect,
+      );
     };
     placeCamera();
 
@@ -851,14 +858,6 @@ export function LoungeCanvas({
 
       if (viewRef.current === "game") {
         const index = pickBoardSquare(event.clientX, event.clientY);
-        // eslint-disable-next-line no-console
-        console.log("[games-debug] pointerup in game view", {
-          clientX: event.clientX,
-          clientY: event.clientY,
-          picked: index,
-          row: index !== null ? Math.floor(index / 8) : null,
-          col: index !== null ? index % 8 : null,
-        });
         if (index !== null) onSquareRef.current(index);
         return;
       }
@@ -870,52 +869,6 @@ export function LoungeCanvas({
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
-
-    // TEMP debug hook for automated click testing — remove before merge.
-    (window as unknown as Record<string, unknown>).__gamesDebug = {
-      squareToScreen: (index: number) => {
-        const world = squareCenter(index, new pc.Vec3());
-        const screen = cameraComponent.worldToScreen(world);
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        return {
-          x: rect.left + screen.x / scaleX,
-          y: rect.top + screen.y / scaleY,
-          raw: { x: screen.x, y: screen.y },
-        };
-      },
-      view: () => viewRef.current,
-      probe: (index: number) => {
-        const world = squareCenter(index, new pc.Vec3());
-        const screen = cameraComponent.worldToScreen(world);
-        const from = cameraComponent.screenToWorld(
-          screen.x,
-          screen.y,
-          cameraComponent.nearClip,
-        );
-        const to = cameraComponent.screenToWorld(
-          screen.x,
-          screen.y,
-          cameraComponent.farClip,
-        );
-        const t = (BOARD_TOP_Y - from.y) / (to.y - from.y);
-        const hitX = from.x + (to.x - from.x) * t;
-        const hitZ = from.z + (to.z - from.z) * t;
-        return {
-          world: { x: world.x, z: world.z },
-          screen: { x: screen.x, y: screen.y },
-          hit: { x: hitX, z: hitZ },
-          errX: hitX - world.x,
-          errZ: hitZ - world.z,
-          clientRect: {
-            w: app.graphicsDevice.clientRect.width,
-            h: app.graphicsDevice.clientRect.height,
-          },
-          rect: canvas.getBoundingClientRect().toJSON(),
-        };
-      },
-    };
 
     const onResize = () => applyResolution();
     window.addEventListener("resize", onResize);
@@ -954,7 +907,7 @@ export function LoungeCanvas({
       tableLabel.setPosition(TABLE.x, 2.08 + Math.sin(t * 1.4) * 0.05, TABLE.z);
 
       if (tween) {
-        tween.t = Math.min(1, tween.t + dt * 3.4);
+        tween.t = Math.min(1, tween.t + dt * 1.8);
         const k = tween.t;
         const smoothed = k * k * (3 - 2 * k);
         const x = tween.from.x + (tween.to.x - tween.from.x) * smoothed;
