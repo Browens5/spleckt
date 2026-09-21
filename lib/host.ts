@@ -1,11 +1,12 @@
-/** Host helpers for Spleckt product surfaces (handoff, menoknow, cubemap, drones, portfolio). */
+/** Host helpers for Spleckt product surfaces (handoff, menoknow, cubemap, drones, portfolio, games). */
 
 export type ProductHost =
   | "handoff"
   | "menoknow"
   | "cubemap"
   | "drones"
-  | "portfolio";
+  | "portfolio"
+  | "games";
 
 export function hostnameFromHostHeader(hostHeader: string | null | undefined) {
   if (!hostHeader) return "";
@@ -40,6 +41,10 @@ export function isDronesHostname(hostname: string) {
 
 export function isPortfolioHostname(hostname: string) {
   return matchesProductHostname(hostname, "portfolio");
+}
+
+export function isGamesHostname(hostname: string) {
+  return matchesProductHostname(hostname, "games");
 }
 
 function deriveProductUrl(
@@ -105,5 +110,13 @@ export function getPortfolioUrl() {
     "portfolio",
     process.env.NEXT_PUBLIC_PORTFOLIO_URL,
     "http://portfolio.localhost:3000",
+  );
+}
+
+export function getGamesUrl() {
+  return deriveProductUrl(
+    "games",
+    process.env.NEXT_PUBLIC_GAMES_URL,
+    "http://games.localhost:3000",
   );
 }

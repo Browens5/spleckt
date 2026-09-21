@@ -254,6 +254,22 @@ export const portfolioProfile = sqliteTable("portfolio_profile", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
 });
 
+/** Games lounge — one row per live multiplayer match, joined by 5-char code. */
+export const gameSessions = sqliteTable("game_sessions", {
+  id: text("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  game: text("game").notNull().default("checkers"),
+  status: text("status").notNull().default("waiting"), // waiting | playing | finished
+  stateJson: text("state_json").notNull().default("{}"),
+  version: integer("version").notNull().default(1),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+});
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),

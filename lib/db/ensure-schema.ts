@@ -160,6 +160,16 @@ const statements = [
     contact_note TEXT NOT NULL DEFAULT '',
     updated_at INTEGER NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS game_sessions (
+    id TEXT PRIMARY KEY NOT NULL,
+    code TEXT NOT NULL UNIQUE,
+    game TEXT NOT NULL DEFAULT 'checkers',
+    status TEXT NOT NULL DEFAULT 'waiting',
+    state_json TEXT NOT NULL DEFAULT '{}',
+    version INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
 ];
 
 export async function ensureSchema() {
