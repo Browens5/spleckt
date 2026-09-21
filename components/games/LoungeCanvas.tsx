@@ -16,7 +16,10 @@ import {
   paintWall,
 } from "./loungeTextures";
 
+import type { TableInfo } from "@/lib/games/types";
+
 export type LoungeView = "lounge" | "table" | "game";
+export type LoungeTableId = TableInfo["id"];
 
 export type BoardHighlights = {
   /** Squares of pieces the local player may pick up. */
@@ -32,17 +35,20 @@ export type BoardHighlights = {
 
 type LoungeCanvasProps = {
   view: LoungeView;
+  focusTable?: LoungeTableId;
   board: Board | null;
   highlights: BoardHighlights;
   /** Seat whose home row should sit at the bottom of the screen. */
   facingSeat?: Seat | null;
   showTrophy?: boolean;
   onDeskClick: () => void;
-  onTableClick: () => void;
+  onTableClick: (tableId: LoungeTableId) => void;
   onSquareClick: (index: number) => void;
 };
 
 const TABLE = new pc.Vec3(1.9, 0, -0.7);
+const SCUM_TABLE = new pc.Vec3(-2.15, 0, -2.05);
+const SHIP_TABLE = new pc.Vec3(0.35, 0, 2.65);
 const DESK = new pc.Vec3(-3.4, 0, 2.4);
 const TABLE_TOP_Y = 0.78;
 const BOARD_TOP_Y = TABLE_TOP_Y + 0.05;
@@ -204,6 +210,7 @@ function rayPointDistance(from: pc.Vec3, dir: pc.Vec3, point: pc.Vec3) {
 
 export function LoungeCanvas({
   view,
+  focusTable = "table-1",
   board,
   highlights,
   facingSeat = null,
@@ -214,6 +221,7 @@ export function LoungeCanvas({
 }: LoungeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewRef = useRef(view);
+  const focusRef = useRef(focusTable);
   const boardRef = useRef(board);
   const highlightsRef = useRef(highlights);
   const facingSeatRef = useRef(facingSeat);
@@ -226,6 +234,7 @@ export function LoungeCanvas({
 
   useEffect(() => {
     viewRef.current = view;
+    focusRef.current = focusTable;
     boardRef.current = board;
     highlightsRef.current = highlights;
     facingSeatRef.current = facingSeat;
@@ -359,6 +368,26 @@ export function LoungeCanvas({
     });
     tableLamp.setPosition(TABLE.x, 2.35, TABLE.z);
     app.root.addChild(tableLamp);
+
+    const scumLamp = new pc.Entity("scum-light");
+    scumLamp.addComponent("light", {
+      type: "point",
+      color: new pc.Color(1, 0.88, 0.95),
+      intensity: 1.05,
+      range: 5,
+    });
+    scumLamp.setPosition(SCUM_TABLE.x, 2.3, SCUM_TABLE.z);
+    app.root.addChild(scumLamp);
+
+    const shipLamp = new pc.Entity("ship-light");
+    shipLamp.addComponent("light", {
+      type: "point",
+      color: new pc.Color(0.75, 0.9, 1),
+      intensity: 1.05,
+      range: 5,
+    });
+    shipLamp.setPosition(SHIP_TABLE.x, 2.3, SHIP_TABLE.z);
+    app.root.addChild(shipLamp);
 
     const discoLight = new pc.Entity("disco-light");
     discoLight.addComponent("light", {
@@ -611,7 +640,7 @@ export function LoungeCanvas({
       return bag;
     };
     addBeanbag(app.root, beanbagMats.purple, -4.4, -1.6, 40);
-    addBeanbag(app.root, beanbagMats.green, -3.4, -2.5, -20, 0.9);
+    addBeanbag(app.root, beanbagMats.green, -4.85, -3.15, -20, 0.9);
     addBeanbag(app.root, beanbagMats.orange, 4.3, 1.4, 110);
     addBeanbag(app.root, beanbagMats.purple, 3.6, 2.5, 200, 0.85);
     addBeanbag(app.root, beanbagMats.green, 5.1, -1.6, -80, 0.88);
@@ -810,6 +839,106 @@ export function LoungeCanvas({
       [1.35, 1, 0.85],
       [90, 45, 0],
       "table-label",
+    );
+
+    // ---- scum table ---------------------------------------------------
+    const scumRoot = new pc.Entity("table-2");
+    scumRoot.setPosition(SCUM_TABLE.x, 0, SCUM_TABLE.z);
+    app.root.addChild(scumRoot);
+    addPrim(scumRoot, "cylinder", woodDark, [0, 0.08, 0], [0.9, 0.16, 0.9]);
+    addPrim(scumRoot, "cylinder", woodDark, [0, 0.4, 0], [0.18, 0.72, 0.18]);
+    addPrim(scumRoot, "cylinder", goldMat, [0, 0.72, 0], [0.22, 0.04, 0.22]);
+    const scumTop = addPrim(
+      scumRoot,
+      "cylinder",
+      wood,
+      [0, TABLE_TOP_Y - 0.035, 0],
+      [2.28, 0.08, 2.28],
+    );
+    scumTop.render!.receiveShadows = true;
+    addPrim(scumRoot, "cylinder", goldMat, [0, TABLE_TOP_Y + 0.008, 0], [2.34, 0.015, 2.34]);
+    const feltMat = litMaterial("#3d1848", { gloss: 22 });
+    addPrim(scumRoot, "cylinder", feltMat, [0, TABLE_TOP_Y + 0.02, 0], [1.7, 0.012, 1.7]);
+
+    addLoungeChair(scumRoot, beanbagMats.purple, 0.1, -1.58, 0, 1);
+    addLoungeChair(scumRoot, beanbagMats.orange, -0.08, 1.58, 180, 1);
+    addLoungeChair(scumRoot, beanbagMats.green, 1.52, 0.08, 90, 0.92);
+    addLoungeChair(scumRoot, beanbagMats.purple, -1.5, -0.06, -90, 0.92);
+
+    const cardBack = litMaterial("#6d1b4a", { gloss: 48 });
+    const cardFace = creamMat;
+    addPrim(scumRoot, "box", cardBack, [-0.18, TABLE_TOP_Y + 0.03, 0.05], [0.22, 0.012, 0.32], [0, 18, 0]);
+    addPrim(scumRoot, "box", cardBack, [-0.12, TABLE_TOP_Y + 0.042, 0.02], [0.22, 0.012, 0.32], [0, 8, 0]);
+    addPrim(scumRoot, "box", cardFace, [0.22, TABLE_TOP_Y + 0.03, -0.18], [0.2, 0.01, 0.3], [0, -22, 0]);
+    addPrim(scumRoot, "box", cardBack, [0.32, TABLE_TOP_Y + 0.04, -0.12], [0.2, 0.01, 0.3], [0, -8, 0]);
+    addPrim(scumRoot, "box", woodDark, [0.72, TABLE_TOP_Y + 0.05, 0.48], [0.28, 0.08, 0.2]);
+    addPrim(scumRoot, "cylinder", mugMat, [-0.78, TABLE_TOP_Y + 0.06, 0.52], [0.11, 0.11, 0.11]);
+    addPrim(scumRoot, "cylinder", creamMat, [-0.78, TABLE_TOP_Y + 0.125, 0.52], [0.09, 0.02, 0.09]);
+
+    const scumLabelMat = texturedMaterial(
+      textureFromCanvas(
+        device,
+        paintStandingSign("TABLE 2", "· SCUM ·", GROOVE.magenta),
+        "scum-label",
+      ),
+      { emissive: 1.15, cutout: true },
+    );
+    const scumLabel = addPrim(
+      app.root,
+      "plane",
+      scumLabelMat,
+      [SCUM_TABLE.x, 2.1, SCUM_TABLE.z],
+      [1.35, 1, 0.85],
+      [90, 45, 0],
+      "scum-label",
+    );
+
+    // ---- battleship table ---------------------------------------------
+    const shipRoot = new pc.Entity("table-3");
+    shipRoot.setPosition(SHIP_TABLE.x, 0, SHIP_TABLE.z);
+    app.root.addChild(shipRoot);
+    addPrim(shipRoot, "cylinder", woodDark, [0, 0.08, 0], [0.9, 0.16, 0.9]);
+    addPrim(shipRoot, "cylinder", woodDark, [0, 0.4, 0], [0.18, 0.72, 0.18]);
+    addPrim(shipRoot, "cylinder", goldMat, [0, 0.72, 0], [0.22, 0.04, 0.22]);
+    const shipTop = addPrim(
+      shipRoot,
+      "cylinder",
+      wood,
+      [0, TABLE_TOP_Y - 0.035, 0],
+      [2.28, 0.08, 2.28],
+    );
+    shipTop.render!.receiveShadows = true;
+    addPrim(shipRoot, "cylinder", goldMat, [0, TABLE_TOP_Y + 0.008, 0], [2.34, 0.015, 2.34]);
+    const navyMat = litMaterial("#1c3a5c", { gloss: 26 });
+    addPrim(shipRoot, "cylinder", navyMat, [0, TABLE_TOP_Y + 0.02, 0], [1.7, 0.012, 1.7]);
+    addLoungeChair(shipRoot, beanbagMats.green, 0.08, -1.56, 0, 0.95);
+    addLoungeChair(shipRoot, beanbagMats.purple, -0.06, 1.56, 180, 0.95);
+    addLoungeChair(shipRoot, beanbagMats.orange, 1.5, 0.06, 90, 0.9);
+    addLoungeChair(shipRoot, beanbagMats.green, -1.48, -0.04, -90, 0.9);
+    const radarMat = litMaterial("#14324a", { gloss: 40 });
+    addPrim(shipRoot, "box", radarMat, [-0.38, TABLE_TOP_Y + 0.03, 0.08], [0.72, 0.02, 0.72]);
+    addPrim(shipRoot, "box", radarMat, [0.38, TABLE_TOP_Y + 0.03, -0.12], [0.72, 0.02, 0.72]);
+    const pegMat = glowMaterial(GROOVE.teal, 1.3);
+    addPrim(shipRoot, "cylinder", pegMat, [-0.5, TABLE_TOP_Y + 0.05, 0.18], [0.05, 0.04, 0.05]);
+    addPrim(shipRoot, "cylinder", glowMaterial(GROOVE.orange, 1.3), [0.5, TABLE_TOP_Y + 0.05, -0.22], [0.05, 0.04, 0.05]);
+    addPrim(shipRoot, "box", woodDark, [0.7, TABLE_TOP_Y + 0.05, 0.52], [0.34, 0.06, 0.16]);
+
+    const shipLabelMat = texturedMaterial(
+      textureFromCanvas(
+        device,
+        paintStandingSign("TABLE 3", "· BATTLESHIP ·", GROOVE.teal),
+        "ship-label",
+      ),
+      { emissive: 1.15, cutout: true },
+    );
+    const shipLabel = addPrim(
+      app.root,
+      "plane",
+      shipLabelMat,
+      [SHIP_TABLE.x, 2.1, SHIP_TABLE.z],
+      [1.45, 1, 0.85],
+      [90, 45, 0],
+      "ship-label",
     );
 
     // ---- checkers board ----------------------------------------------
@@ -1042,11 +1171,19 @@ export function LoungeCanvas({
       const to = cameraComponent.screenToWorld(sx, sy, cameraComponent.farClip);
       const dir = new pc.Vec3().sub2(to, from);
       const deskPoint = new pc.Vec3(DESK.x, 1.1, DESK.z);
-      const tablePoint = new pc.Vec3(TABLE.x, 0.85, TABLE.z);
+      const checkersPoint = new pc.Vec3(TABLE.x, 0.85, TABLE.z);
+      const scumPoint = new pc.Vec3(SCUM_TABLE.x, 0.85, SCUM_TABLE.z);
+      const shipPoint = new pc.Vec3(SHIP_TABLE.x, 0.85, SHIP_TABLE.z);
       const deskDist = rayPointDistance(from, dir, deskPoint);
-      const tableDist = rayPointDistance(from, dir, tablePoint);
-      if (tableDist < 1.45 && (tableDist <= deskDist || deskDist >= 1.55)) {
-        return "table" as const;
+      const tables: Array<{ id: LoungeTableId; dist: number }> = [
+        { id: "table-1", dist: rayPointDistance(from, dir, checkersPoint) },
+        { id: "table-2", dist: rayPointDistance(from, dir, scumPoint) },
+        { id: "table-3", dist: rayPointDistance(from, dir, shipPoint) },
+      ];
+      tables.sort((a, b) => a.dist - b.dist);
+      const nearestTable = tables[0]!;
+      if (nearestTable.dist < 1.45 && (nearestTable.dist <= deskDist || deskDist >= 1.55)) {
+        return nearestTable.id;
       }
       if (deskDist < 1.55) return "desk" as const;
       return null;
@@ -1057,6 +1194,7 @@ export function LoungeCanvas({
     let yawOrbit = 0;
     let pitchOrbit = 0;
     let lastView: LoungeView = "lounge";
+    let lastFocus: LoungeTableId = "table-1";
     let dragging = false;
     let downAt: { x: number; y: number } | null = null;
     let dragMoved = false;
@@ -1083,7 +1221,7 @@ export function LoungeCanvas({
         pitchOrbit = Math.max(-7, Math.min(8, pitchOrbit + dy * 0.03));
       }
       const yawDeg =
-        view === "game"
+        view === "game" && focusRef.current === "table-1"
           ? Number(facingSeatRef.current) === 2
             ? 180
             : 0
@@ -1105,7 +1243,7 @@ export function LoungeCanvas({
         canvas.style.cursor = "grabbing";
         return;
       }
-      if (viewRef.current === "game") {
+      if (viewRef.current === "game" && focusRef.current === "table-1") {
         const index = pickBoardSquare(event.clientX, event.clientY);
         const marks = highlightsRef.current;
         const active =
@@ -1141,13 +1279,17 @@ export function LoungeCanvas({
       if (moved) return;
 
       if (viewRef.current === "game") {
-        const index = pickBoardSquare(event.clientX, event.clientY);
-        if (index !== null) onSquareRef.current(index);
+        if (focusRef.current === "table-1") {
+          const index = pickBoardSquare(event.clientX, event.clientY);
+          if (index !== null) onSquareRef.current(index);
+        }
         return;
       }
       const hotspot = pickHotspot(event.clientX, event.clientY);
       if (hotspot === "desk") onDeskRef.current();
-      if (hotspot === "table") onTableRef.current();
+      if (hotspot === "table-1" || hotspot === "table-2" || hotspot === "table-3") {
+        onTableRef.current(hotspot);
+      }
     };
 
     canvas.addEventListener("pointerdown", onPointerDown);
@@ -1166,22 +1308,33 @@ export function LoungeCanvas({
     // ---- animation loop -----------------------------------------------
     app.on("update", (dt: number) => {
       const viewNow = viewRef.current;
-      if (viewNow !== lastView) {
+      const focusNow = focusRef.current;
+      if (viewNow !== lastView || focusNow !== lastFocus) {
         panX = 0;
         panZ = 0;
         yawOrbit = 0;
         pitchOrbit = 0;
         lastView = viewNow;
+        lastFocus = focusNow;
       }
       const rig = VIEW_RIGS[viewNow];
-      const facingYaw = Number(facingSeatRef.current) === 2 ? 180 : 0;
-      const targetYaw = viewNow === "game" ? facingYaw : rig.yaw + yawOrbit;
+      const focusPos =
+        focusNow === "table-2"
+          ? SCUM_TABLE
+          : focusNow === "table-3"
+            ? SHIP_TABLE
+            : TABLE;
+      const lookX = viewNow === "lounge" ? rig.look.x : focusPos.x;
+      const lookZ = viewNow === "lounge" ? rig.look.z : focusPos.z;
+      const checkersGame = viewNow === "game" && focusNow === "table-1";
+      const facingYaw = checkersGame && Number(facingSeatRef.current) === 2 ? 180 : 0;
+      const targetYaw = checkersGame ? facingYaw : rig.yaw + (viewNow === "lounge" ? yawOrbit : 0);
       const targetPitch = rig.pitch + (viewNow === "lounge" ? pitchOrbit : 0);
       const ease = Math.min(1, dt * 5);
       const lookEase = dragging ? 1 : ease;
-      camState.look.x += (rig.look.x + panX - camState.look.x) * lookEase;
+      camState.look.x += (lookX + panX - camState.look.x) * lookEase;
       camState.look.y += (rig.look.y - camState.look.y) * ease;
-      camState.look.z += (rig.look.z + panZ - camState.look.z) * lookEase;
+      camState.look.z += (lookZ + panZ - camState.look.z) * lookEase;
       camState.orthoHeight += (rig.orthoHeight - camState.orthoHeight) * ease;
       camState.pitch += (targetPitch - camState.pitch) * lookEase;
       if (viewNow === "game") {
@@ -1209,6 +1362,18 @@ export function LoungeCanvas({
       tableBlob.setLocalPosition(0, 0.18 + Math.sin(t * 0.8 + 1) * 0.1, 0);
       tableLabel.enabled = viewRef.current !== "game";
       tableLabel.setPosition(TABLE.x, 2.08 + Math.sin(t * 1.4) * 0.05, TABLE.z);
+      scumLabel.enabled = viewRef.current !== "game";
+      scumLabel.setPosition(
+        SCUM_TABLE.x,
+        2.08 + Math.sin(t * 1.4 + 0.8) * 0.05,
+        SCUM_TABLE.z,
+      );
+      shipLabel.enabled = viewRef.current !== "game";
+      shipLabel.setPosition(
+        SHIP_TABLE.x,
+        2.08 + Math.sin(t * 1.4 + 1.4) * 0.05,
+        SHIP_TABLE.z,
+      );
 
       trophy.enabled = showTrophyRef.current;
       if (trophy.enabled) {

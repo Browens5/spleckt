@@ -6637,6 +6637,291 @@ textarea {
   box-shadow: 0 0 22px rgba(231, 181, 60, 0.3);
 }
 
+.games-status--scum {
+  bottom: 12.2rem;
+}
+
+.games-winner__ranks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 700;
+  color: var(--gm-cream);
+}
+
+.scum-table {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 6;
+  width: min(94vw, 44rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.8rem 4.6rem 17.5rem;
+  pointer-events: none;
+}
+
+.scum-trick {
+  pointer-events: none;
+  text-align: center;
+  padding: 0.45rem 1rem 0.55rem;
+  background: var(--gm-panel);
+  border: 1.5px solid rgba(232, 67, 147, 0.45);
+  border-radius: 1rem;
+  min-width: min(80vw, 16rem);
+}
+
+.scum-trick__kicker,
+.scum-trick__pass {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gm-magenta, #e84393);
+}
+
+.scum-trick__cards {
+  margin: 0.2rem 0 0;
+  font-family: var(--gm-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  color: var(--gm-gold);
+}
+
+.scum-trick__pass {
+  margin-top: 0.25rem;
+  color: rgba(243, 227, 194, 0.7);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 0.82rem;
+}
+
+.scum-hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.28rem;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+.scum-card {
+  width: 3.05rem;
+  height: 4.25rem;
+  border-radius: 0.4rem;
+  border: 2px solid #2c1810;
+  background: linear-gradient(180deg, #fff6e4, #f0d9b0);
+  color: #1a1024;
+  font-family: var(--gm-sans);
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #3f2716;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.scum-card.is-red {
+  color: #c0392b;
+}
+
+.scum-card.is-on {
+  transform: translateY(-0.7rem);
+  border-color: var(--gm-gold);
+}
+
+.scum-card:disabled {
+  cursor: default;
+  opacity: 0.92;
+}
+
+.scum-actions {
+  display: flex;
+  gap: 0.5rem;
+  pointer-events: auto;
+}
+
+.scum-watch {
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  background: var(--gm-panel);
+  border-radius: 999px;
+  color: rgba(243, 227, 194, 0.8);
+}
+
+.games-scoreboard--wide {
+  width: min(92vw, 19rem);
+  max-height: 46vh;
+  overflow: auto;
+}
+
+.games-scoreboard--wide li b {
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.games-status--bs {
+  z-index: 7;
+  bottom: auto;
+  top: 4.55rem;
+  white-space: normal;
+  max-width: min(90vw, 28rem);
+  text-align: center;
+}
+
+.bs-table {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 6;
+  width: min(96vw, 54rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.8rem 4.4rem 17.5rem;
+  pointer-events: none;
+}
+
+.bs-boards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  pointer-events: auto;
+}
+
+.bs-board {
+  background: var(--gm-panel);
+  border: 1.5px solid rgba(90, 196, 210, 0.42);
+  border-radius: 0.9rem;
+  padding: 0.4rem 0.45rem 0.5rem;
+}
+
+.bs-board__title {
+  margin: 0 0 0.28rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6fd3de;
+  text-align: center;
+}
+
+.bs-grid {
+  display: grid;
+  grid-template-columns: 1.05rem repeat(10, minmax(1.05rem, 1.28rem));
+  grid-auto-rows: minmax(1.05rem, 1.28rem);
+  gap: 1px;
+}
+
+.bs-grid__corner,
+.bs-grid__head {
+  display: grid;
+  place-items: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(243, 227, 194, 0.62);
+}
+
+.bs-cell {
+  border: 0;
+  border-radius: 2px;
+  padding: 0;
+  background: #1b3f5c;
+  box-shadow: inset 0 0 0 1px rgba(8, 22, 36, 0.55);
+  cursor: pointer;
+}
+
+.bs-cell.is-radar {
+  background: #123044;
+}
+
+.bs-cell.is-ship {
+  background: linear-gradient(180deg, #8aa7b8, #5d7c90);
+}
+
+.bs-cell.is-hit {
+  background: radial-gradient(circle at 50% 45%, #ff8a6a, #c0392b 70%);
+}
+
+.bs-cell.is-miss {
+  background: radial-gradient(circle at 50% 45%, #fff6e4, #c9b48a 72%);
+}
+
+.bs-cell.is-last {
+  box-shadow: inset 0 0 0 2px var(--gm-gold);
+}
+
+.bs-cell:disabled {
+  cursor: default;
+}
+
+.bs-cell:not(:disabled):hover {
+  outline: 2px solid var(--gm-gold);
+  outline-offset: -1px;
+}
+
+.bs-dock {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.bs-ships {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.28rem;
+}
+
+.bs-ship {
+  border: 1.5px solid rgba(111, 211, 222, 0.4);
+  background: var(--gm-panel);
+  color: var(--gm-cream);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bs-ship.is-on {
+  border-color: var(--gm-gold);
+  color: var(--gm-gold);
+}
+
+.bs-ship.is-done {
+  opacity: 0.55;
+}
+
+.bs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.bs-wait {
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  background: var(--gm-panel);
+  border-radius: 999px;
+  color: rgba(243, 227, 194, 0.8);
+}
+
 .games-winner {
   position: absolute;
   inset: 0;
@@ -6698,6 +6983,39 @@ textarea {
   .games-status {
     bottom: 1rem;
     font-size: 0.88rem;
+  }
+
+  .games-status--scum {
+    bottom: 13.4rem;
+    white-space: normal;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .games-status--bs {
+    top: 4.4rem;
+    bottom: auto;
+  }
+
+  .bs-table {
+    padding: 0 0.5rem 12.2rem;
+    width: 100%;
+  }
+
+  .bs-grid {
+    grid-template-columns: 0.9rem repeat(10, minmax(0.92rem, 1.05rem));
+    grid-auto-rows: minmax(0.92rem, 1.05rem);
+  }
+
+  .scum-card {
+    width: 2.55rem;
+    height: 3.6rem;
+    font-size: 0.78rem;
+  }
+
+  .scum-table {
+    padding: 0 0.6rem 11.5rem;
+    width: 100%;
   }
 
   .games-hint {
