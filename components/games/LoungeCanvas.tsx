@@ -297,13 +297,24 @@ export function LoungeCanvas({
     const placeCamera = () => {
       const pitchRad = (camState.pitch * Math.PI) / 180;
       const yawRad = (camState.yaw * Math.PI) / 180;
-      const horiz = Math.cos(pitchRad) * CAMERA_DIST;
-      camera.setPosition(
-        camState.look.x + Math.sin(yawRad) * horiz,
-        camState.look.y + Math.sin(pitchRad) * CAMERA_DIST,
-        camState.look.z + Math.cos(yawRad) * horiz,
-      );
-      camera.lookAt(camState.look);
+      if (camState.pitch >= 70) {
+        // lookAt() is unstable when the view is nearly vertical — set the
+        // camera pose directly so the board stays square to the screen.
+        camera.setPosition(
+          camState.look.x,
+          camState.look.y + CAMERA_DIST,
+          camState.look.z,
+        );
+        camera.setEulerAngles(-90, camState.yaw, 0);
+      } else {
+        const horiz = Math.cos(pitchRad) * CAMERA_DIST;
+        camera.setPosition(
+          camState.look.x + Math.sin(yawRad) * horiz,
+          camState.look.y + Math.sin(pitchRad) * CAMERA_DIST,
+          camState.look.z + Math.cos(yawRad) * horiz,
+        );
+        camera.lookAt(camState.look);
+      }
       const aspect = Math.max(0.3, canvas.clientWidth / Math.max(1, canvas.clientHeight));
       const rig = VIEW_RIGS[viewRef.current];
       cameraComponent.orthoHeight = Math.max(
@@ -929,13 +940,17 @@ export function LoungeCanvas({
     app.on("update", (dt: number) => {
       const viewNow = viewRef.current;
       const rig = VIEW_RIGS[viewNow];
-      const targetYaw =
-        viewNow === "game" && facingSeatRef.current === 2 ? 180 : rig.yaw;
+      const facingYaw = Number(facingSeatRef.current) === 2 ? 180 : 0;
+      const targetYaw = viewNow === "game" ? facingYaw : rig.yaw;
       const ease = Math.min(1, dt * 5);
       camState.look.lerp(camState.look, rig.look, ease);
       camState.orthoHeight += (rig.orthoHeight - camState.orthoHeight) * ease;
       camState.pitch += (rig.pitch - camState.pitch) * ease;
-      camState.yaw = lerpDegrees(camState.yaw, targetYaw, ease);
+      if (viewNow === "game") {
+        camState.yaw = targetYaw;
+      } else {
+        camState.yaw = lerpDegrees(camState.yaw, targetYaw, ease);
+      }
       placeCamera();
 
       const t = performance.now() * 0.001;

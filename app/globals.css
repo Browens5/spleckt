@@ -6537,14 +6537,6 @@ textarea {
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--gm-orange);
-  display: flex;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-
-.games-scoreboard__title span {
-  letter-spacing: 0.16em;
-  color: rgba(243, 227, 194, 0.55);
 }
 
 .games-scoreboard ul {

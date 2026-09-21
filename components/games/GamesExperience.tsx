@@ -571,7 +571,6 @@ export function GamesExperience() {
           <aside className="games-scoreboard">
             <p className="games-scoreboard__title">
               Table {TABLE.number} · {TABLE.gameName}
-              <span>captures</span>
             </p>
             <ul>
               <li
@@ -586,7 +585,7 @@ export function GamesExperience() {
                   {seat1 ? seat1.handle : "…"}
                   {mySeat === 1 ? <em>you</em> : null}
                 </span>
-                <b>{score1}</b>
+                <b title="captures">{score1}</b>
               </li>
               <li
                 className={
@@ -600,7 +599,7 @@ export function GamesExperience() {
                   {seat2 ? seat2.handle : "waiting for opponent…"}
                   {mySeat === 2 ? <em>you</em> : null}
                 </span>
-                <b>{score2}</b>
+                <b title="captures">{score2}</b>
               </li>
             </ul>
             {state.viewers.length > 0 ? (
