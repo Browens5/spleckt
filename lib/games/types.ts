@@ -28,7 +28,7 @@ export const LOUNGE_TABLES: TableInfo[] = [
     game: "scum",
     gameName: "Scum",
     tagline:
-      "Presidents: 3–6 players. Lead singles or sets, first one out is President, last holding cards is the Scum.",
+      "Presidents: 3–6 players, Ace high / 2 low. Hands keep going at the table — President gets Scum's best cards.",
   },
   {
     id: "table-3",
@@ -86,6 +86,8 @@ export type SessionSnapshot = {
   status: GameStatus;
   version: number;
   state: GameState;
+  /** Epoch ms of the last persisted write — used to delay computer turns. */
+  updatedAt?: number;
 };
 
 export type PlayerRole =

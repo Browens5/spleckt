@@ -12,8 +12,9 @@
  *   player leads again.
  * - First player out of cards is President; last with cards is Scum.
  *
- * Card ranking uses the usual Presidents order: 3 is lowest, 2 is highest.
- * Suits never matter.
+ * Card ranking is Ace-high, 2-low (2 3 4 5 6 7 8 9 10 J Q K A). Suits never
+ * matter. Hands keep going while anyone is seated: after a round, titles
+ * stick and cards are taxed (President gets Scum's best, etc.).
  */
 
 export const MIN_PLAYERS = 3;
@@ -21,6 +22,7 @@ export const MAX_PLAYERS = 6;
 export const DECK_SIZE = 52;
 
 export const RANK_LABELS = [
+  "2",
   "3",
   "4",
   "5",
@@ -33,7 +35,6 @@ export const RANK_LABELS = [
   "Q",
   "K",
   "A",
-  "2",
 ] as const;
 
 export const SUIT_LABELS = ["♣", "♦", "♥", "♠"] as const;
@@ -62,6 +63,10 @@ export type ScumState = {
   passedSincePlay: number[];
   /** Seats in the order they went out. Last remaining is appended at the end. */
   finishOrder: number[];
+  /** Titles from the previous hand (President … Scum) until this one ends. */
+  lastFinishOrder: number[];
+  /** 1-based hand number. Stays on the table across rounds. */
+  round: number;
   moveCount: number;
 };
 
@@ -308,6 +313,81 @@ export function applyScumAction(
   return { ok: true, finished: false };
 }
 
+function sortHand(cards: number[]) {
+  return cards
+    .slice()
+    .sort((a, b) => cardRank(a) - cardRank(b) || cardSuit(a) - cardSuit(b));
+}
+
+function takeHighest(hand: number[], count: number) {
+  const ranked = hand
+    .slice()
+    .sort((a, b) => cardRank(b) - cardRank(a) || cardSuit(b) - cardSuit(a));
+  const taken = ranked.slice(0, count);
+  const skip = new Set(taken);
+  return {
+    taken,
+    kept: hand.filter((card) => !skip.has(card)),
+  };
+}
+
+function takeLowest(hand: number[], count: number) {
+  const ranked = sortHand(hand);
+  const taken = ranked.slice(0, count);
+  const skip = new Set(taken);
+  return {
+    taken,
+    kept: hand.filter((card) => !skip.has(card)),
+  };
+}
+
+/**
+ * Scum/Vice Scum give their highest cards; President/VP give the same number
+ * of lowest cards back after receiving them.
+ */
+export function taxSwap(state: ScumState, fromSeat: number, toSeat: number, count: number) {
+  if (count < 1) return;
+  const fromHand = state.hands[fromSeat] ?? [];
+  const toHand = state.hands[toSeat] ?? [];
+  const give = Math.min(count, fromHand.length, toHand.length);
+  if (give < 1) return;
+  const high = takeHighest(fromHand, give);
+  const received = toHand.concat(high.taken);
+  const low = takeLowest(received, give);
+  state.hands[fromSeat] = sortHand(high.kept.concat(low.taken));
+  state.hands[toSeat] = sortHand(low.kept);
+}
+
+export function applyTaxes(state: ScumState, finishOrder: number[]) {
+  const total = finishOrder.length;
+  if (total < 3) return;
+  const president = finishOrder[0]!;
+  const scum = finishOrder[total - 1]!;
+  if (total === 3) {
+    taxSwap(state, scum, president, 1);
+    return;
+  }
+  taxSwap(state, scum, president, 2);
+  const vicePresident = finishOrder[1]!;
+  const viceScum = finishOrder[total - 2]!;
+  taxSwap(state, viceScum, vicePresident, 1);
+}
+
+/** Deal the next hand: Scum deals, titles stick, then tax the new cards. */
+export function beginNextRound(state: ScumState, rand: () => number = Math.random) {
+  const order =
+    state.finishOrder.length === state.players.length
+      ? state.finishOrder.slice()
+      : (state.lastFinishOrder ?? []).slice();
+  state.round = (state.round ?? 1) + 1;
+  if (order.length === state.players.length && order.length > 0) {
+    state.lastFinishOrder = order;
+    state.dealerSeat = order[order.length - 1]!;
+  }
+  dealScum(state, rand);
+  if (order.length === state.players.length) applyTaxes(state, order);
+}
+
 export function emptyScumState(): ScumState {
   return {
     game: "scum",
@@ -320,6 +400,8 @@ export function emptyScumState(): ScumState {
     consecutivePasses: 0,
     passedSincePlay: [],
     finishOrder: [],
+    lastFinishOrder: [],
+    round: 1,
     moveCount: 0,
   };
 }
@@ -332,7 +414,6 @@ export function dealScum(state: ScumState, rand: () => number = Math.random) {
   state.consecutivePasses = 0;
   state.passedSincePlay = [];
   state.finishOrder = [];
-  state.moveCount = 0;
   state.turnSeat = nextAliveSeat(
     { ...state, hands: state.hands },
     dealerSeat,

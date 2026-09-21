@@ -30,11 +30,10 @@ import {
 } from "@/lib/games/types";
 import { MIN_PLAYERS as SCUM_MIN, rankTitle } from "@/lib/games/scum";
 import { emptyFleet, remainingHull, specFor, type ShipPlacement } from "@/lib/games/battleship";
-import { maxBotsFor } from "@/lib/games/bots";
+import { maxBotsFor, needsBotTurn } from "@/lib/games/bots";
 import type { BoardHighlights, LoungeTableId, LoungeView } from "./LoungeCanvas";
 import { ScumPlay } from "./ScumPlay";
 import { BattleshipPlay } from "./BattleshipPlay";
-import { Connect4Play } from "./Connect4Play";
 import {
   bootJazzFromStorage,
   getJazzEnabled,
@@ -50,6 +49,7 @@ const LoungeCanvas = dynamic(
 
 const PLAYER_KEY = "spleckt-games-player";
 const POLL_MS = 1200;
+const BOT_POLL_MS = 400;
 const DEMO_BOARD = initialBoard();
 
 type PlayerIdentity = {
@@ -142,6 +142,9 @@ export function GamesExperience() {
 
   // ---- session polling -----------------------------------------------
   const activeCode = session?.code ?? null;
+  const waitingOnBot = Boolean(
+    session && session.status === "playing" && needsBotTurn(session.state),
+  );
   useEffect(() => {
     if (!activeCode) return;
     let cancelled = false;
@@ -164,12 +167,12 @@ export function GamesExperience() {
       }
     };
     void tick();
-    const interval = window.setInterval(tick, POLL_MS);
+    const interval = window.setInterval(tick, waitingOnBot ? BOT_POLL_MS : POLL_MS);
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [activeCode]);
+  }, [activeCode, waitingOnBot]);
 
   // ---- derived game state ---------------------------------------------
   const state = session?.state ?? null;
@@ -450,6 +453,14 @@ export function GamesExperience() {
     [checkers, myTurn, busy, effectiveSelected, availableMoves, sendMove],
   );
 
+  const onColumnClick = useCallback(
+    (col: number) => {
+      if (!connect4 || !myTurn || busy) return;
+      void sendConnect4(col);
+    },
+    [connect4, myTurn, busy, sendConnect4],
+  );
+
   const leaveTable = useCallback(() => {
     setSession(null);
     setSelected(null);
@@ -549,9 +560,11 @@ export function GamesExperience() {
           : null;
   const connect4Draw = Boolean(connect4 && session?.status === "finished" && connect4.winnerSeat === 0);
   const scumPresident =
-    scum && session?.status === "finished" && scum.finishOrder[0] != null
+    scum && scum.finishOrder[0] != null
       ? scum.players.find((entry) => entry.seat === scum.finishOrder[0]) ?? null
-      : null;
+      : scum && (scum.lastFinishOrder?.[0] != null)
+        ? scum.players.find((entry) => entry.seat === scum.lastFinishOrder[0]) ?? null
+        : null;
 
   let statusLine = "";
   if (session && state) {
@@ -560,8 +573,7 @@ export function GamesExperience() {
         ? `Share code ${session.code} — ${state.players.length}/${SCUM_MIN}+ to deal`
         : `Share code ${session.code} — waiting for an opponent…`;
     } else if (session.status === "finished") {
-      if (scumPresident) statusLine = `${scumPresident.handle} is President!`;
-      else if (connect4Draw) statusLine = "The well is full — draw.";
+      if (connect4Draw) statusLine = "The well is full — draw.";
       else if (winner) statusLine = `${winner.handle} wins the match!`;
       else statusLine = "Game over.";
     } else if (role.kind === "viewer" || role.kind === "none") {
@@ -572,7 +584,11 @@ export function GamesExperience() {
       else if (battleship?.phase === "placing") statusLine = "Place your fleet.";
       else if (battleship) statusLine = "Take a shot on the radar.";
       else if (connect4) statusLine = "Drop a disc.";
-      else if (scum && !scum.lastPlay) statusLine = "Lead any single or equal set.";
+      else if (scum && !scum.lastPlay) {
+        statusLine = scumPresident
+          ? `Round ${scum.round ?? 1} — ${scumPresident.handle} is President. Lead any set.`
+          : "Lead any single or equal set.";
+      }
       else statusLine = "Your play.";
     } else {
       if (battleship?.phase === "placing") {
@@ -607,6 +623,8 @@ export function GamesExperience() {
           highlights={highlights}
           facingSeat={checkers ? (mySeat === 2 ? 2 : 1) : null}
           showTrophy={Boolean(checkers) && session?.status === "finished"}
+          connect4Board={connect4 ? connect4.board : null}
+          connect4Last={connect4?.lastDrop?.index ?? null}
           onDeskClick={() => {
             setHandleInput(player?.handle ?? "");
             setOverlay("signin");
@@ -620,6 +638,7 @@ export function GamesExperience() {
             setOverlay("table");
           }}
           onSquareClick={onSquareClick}
+          onColumnClick={onColumnClick}
           onJukeboxClick={() => toggleJazz()}
         />
       </div>
@@ -754,14 +773,15 @@ export function GamesExperience() {
                   </div>
                 ) : pickedTable.game === "scum" ? (
                   <p className="games-modal__copy">
-                    Invite friends or seat computers. The organizer deals when three to six
-                    players are seated. First out of cards is President; last with cards
-                    is the Scum.
+                    Invite friends or seat computers. Hands keep going while you stay
+                    seated. Ace is high, 2 is low. After each round the President takes
+                    Scum&apos;s best cards. The organizer deals the first hand.
                   </p>
                 ) : pickedTable.game === "connect4" ? (
                   <p className="games-modal__copy">
-                    Two players drop discs down a 7×6 well. Four in a row wins. Seat a
-                    computer if you want a solo game.
+                    Two players drop discs down a 7×6 well. Four in a row wins. Play on
+                    the standing board — click a column to drop. Seat a computer for a
+                    solo game.
                   </p>
                 ) : (
                   <p className="games-modal__copy">
@@ -881,6 +901,7 @@ export function GamesExperience() {
           <aside className={scum || battleship || connect4 ? "games-scoreboard games-scoreboard--wide" : "games-scoreboard"}>
             <p className="games-scoreboard__title">
               Table {activeTable.number} · {activeTable.gameName}
+              {scum && (scum.round ?? 1) > 1 ? ` · Round ${scum.round}` : ""}
             </p>
             <ul>
               {state.players.map((entry, index) => {
@@ -892,10 +913,15 @@ export function GamesExperience() {
                 const finishedPlace = scum
                   ? scum.finishOrder.indexOf(entry.seat) + 1
                   : 0;
+                const lastPlace = scum
+                  ? (scum.lastFinishOrder ?? []).indexOf(entry.seat) + 1
+                  : 0;
                 const title = scum
                   ? finishedPlace > 0
                     ? rankTitle(finishedPlace, state.players.length)
-                    : `${cardsLeft} card${cardsLeft === 1 ? "" : "s"}`
+                    : lastPlace > 0
+                      ? `${rankTitle(lastPlace, state.players.length)} · ${cardsLeft}`
+                      : `${cardsLeft} card${cardsLeft === 1 ? "" : "s"}`
                   : battleship
                     ? battleship.phase === "placing"
                       ? battleship.fleets[entry.seat]?.ready
@@ -998,22 +1024,11 @@ export function GamesExperience() {
             />
           ) : null}
 
-          {connect4 && session.status === "playing" ? (
-            <Connect4Play
-              state={connect4}
-              mySeat={mySeat}
-              myTurn={myTurn}
-              busy={busy}
-              onDrop={(col) => void sendConnect4(col)}
-            />
-          ) : null}
-
           <p
             className={
               (myTurn ? "games-status games-status--active" : "games-status") +
               (scum && session.status === "playing" ? " games-status--scum" : "") +
-              (battleship && session.status === "playing" ? " games-status--bs" : "") +
-              (connect4 && session.status === "playing" ? " games-status--c4" : "")
+              (battleship && session.status === "playing" ? " games-status--bs" : "")
             }
             aria-live="polite"
           >
