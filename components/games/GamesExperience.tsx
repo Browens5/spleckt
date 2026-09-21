@@ -27,7 +27,7 @@ const LoungeCanvas = dynamic(
 );
 
 const PLAYER_KEY = "spleckt-games-player";
-const POLL_MS = 1500;
+const POLL_MS = 1200;
 const DEMO_BOARD = initialBoard();
 
 type PlayerIdentity = {
@@ -138,6 +138,7 @@ export function GamesExperience() {
         // transient network error — keep polling
       }
     };
+    void tick();
     const interval = window.setInterval(tick, POLL_MS);
     return () => {
       cancelled = true;
@@ -276,6 +277,15 @@ export function GamesExperience() {
 
   const onSquareClick = useCallback(
     (index: number) => {
+      // eslint-disable-next-line no-console
+      console.log("[games-debug] onSquareClick", {
+        index,
+        hasState: Boolean(state),
+        myTurn,
+        busy,
+        effectiveSelected,
+        movableFroms: availableMoves.map((m) => m.from),
+      });
       if (!state || !myTurn || busy) return;
       if (effectiveSelected !== null) {
         const move = availableMoves.find(

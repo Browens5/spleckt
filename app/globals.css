@@ -6134,14 +6134,14 @@ textarea {
    ============================================================ */
 
 .games {
-  --gm-cream: #f3e3c2;
-  --gm-gold: #e7b53c;
-  --gm-orange: #e8923a;
-  --gm-rust: #c96a2e;
+  --gm-cream: #f6e7c8;
+  --gm-gold: #ffc63a;
+  --gm-orange: #ff8c2f;
+  --gm-rust: #d96a1f;
   --gm-plum: #6d3d70;
-  --gm-magenta: #c74e79;
-  --gm-bg: #170b06;
-  --gm-panel: rgba(30, 15, 7, 0.92);
+  --gm-magenta: #e84393;
+  --gm-bg: #150a20;
+  --gm-panel: rgba(30, 15, 46, 0.93);
   --gm-display: var(--games-display), "Righteous", "Trebuchet MS", sans-serif;
   --gm-sans: var(--games-sans), Quicksand, system-ui, sans-serif;
   min-height: 100vh;
@@ -6254,7 +6254,7 @@ textarea {
   z-index: 10;
   display: grid;
   place-items: center;
-  background: rgba(12, 5, 2, 0.55);
+  background: rgba(10, 4, 18, 0.55);
   backdrop-filter: blur(3px);
 }
 
@@ -6300,7 +6300,7 @@ textarea {
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--gm-cream);
-  background: rgba(12, 5, 2, 0.7);
+  background: rgba(10, 4, 18, 0.7);
   border: 1.5px solid rgba(231, 181, 60, 0.45);
   border-radius: 0.8rem;
   padding: 0.65rem 0.9rem;
@@ -6576,7 +6576,7 @@ textarea {
   place-items: center;
   place-content: center;
   gap: 1rem;
-  background: rgba(12, 5, 2, 0.45);
+  background: rgba(10, 4, 18, 0.45);
   backdrop-filter: blur(2px);
   text-align: center;
 }

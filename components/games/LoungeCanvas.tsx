@@ -5,9 +5,10 @@ import * as pc from "playcanvas";
 import { BOARD_SIZE, colOf, rowOf, type Board } from "@/lib/games/checkers";
 import {
   GROOVE,
+  paintArcadeScreen,
   paintBoardTrim,
   paintFloor,
-  paintMarquee,
+  paintNeonSign,
   paintPoster,
   paintRug,
   paintStandingSign,
@@ -61,7 +62,7 @@ type ViewRig = {
 };
 
 const VIEW_RIGS: Record<LoungeView, ViewRig> = {
-  lounge: { look: new pc.Vec3(0.1, 0.72, -0.25), orthoHeight: 4.35, pitch: 33 },
+  lounge: { look: new pc.Vec3(0.1, 1.05, -0.3), orthoHeight: 4.75, pitch: 32 },
   table: { look: new pc.Vec3(TABLE.x, 0.85, TABLE.z), orthoHeight: 2.5, pitch: 39 },
   game: { look: new pc.Vec3(TABLE.x, 0.82, TABLE.z), orthoHeight: 1.32, pitch: 55 },
 };
@@ -220,12 +221,19 @@ export function LoungeCanvas({
     });
     app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
     app.setCanvasResolution(pc.RESOLUTION_AUTO);
+    const coarsePointer =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches;
     const applyResolution = () => {
-      app.graphicsDevice.maxPixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+      // keep the framebuffer small: big win for mobile GPU memory
+      app.graphicsDevice.maxPixelRatio = Math.min(
+        window.devicePixelRatio || 1,
+        coarsePointer ? 1 : 1.25,
+      );
       app.resizeCanvas();
     };
     applyResolution();
-    app.scene.ambientLight = new pc.Color(0.34, 0.27, 0.22);
+    app.scene.ambientLight = new pc.Color(0.3, 0.22, 0.32);
 
     const device = app.graphicsDevice;
 
@@ -234,7 +242,7 @@ export function LoungeCanvas({
     camera.addComponent("camera", {
       projection: pc.PROJECTION_ORTHOGRAPHIC,
       orthoHeight: VIEW_RIGS.lounge.orthoHeight,
-      clearColor: new pc.Color(0.09, 0.05, 0.04),
+      clearColor: new pc.Color(0.07, 0.03, 0.1),
       nearClip: 0.1,
       farClip: 60,
       toneMapping: pc.TONEMAP_ACES,
@@ -268,13 +276,13 @@ export function LoungeCanvas({
     const key = new pc.Entity("key-light");
     key.addComponent("light", {
       type: "directional",
-      color: new pc.Color(1, 0.88, 0.7),
-      intensity: 1.15,
+      color: new pc.Color(1, 0.85, 0.72),
+      intensity: 1.05,
       castShadows: true,
       shadowBias: 0.2,
       normalOffsetBias: 0.05,
       shadowDistance: 30,
-      shadowResolution: 2048,
+      shadowResolution: 1024,
     });
     key.setEulerAngles(52, -28, 0);
     app.root.addChild(key);
@@ -283,7 +291,7 @@ export function LoungeCanvas({
     warm.addComponent("light", {
       type: "point",
       color: colorFromHex(GROOVE.orange),
-      intensity: 0.85,
+      intensity: 0.9,
       range: 9,
     });
     warm.setPosition(DESK.x, 2.4, DESK.z);
@@ -321,17 +329,17 @@ export function LoungeCanvas({
       lit: true,
       cutout: true,
     });
-    const rug = addPrim(app.root, "plane", rugMat, [0.4, 0.012, 0.7], [7.4, 1, 7.4]);
+    const rug = addPrim(app.root, "plane", rugMat, [0.4, 0.012, 0.7], [6.6, 1, 6.6]);
     rug.render!.receiveShadows = true;
 
     const backWallMat = texturedMaterial(
-      textureFromCanvas(device, paintWall(1024, 384, true), "wall-back"),
+      textureFromCanvas(device, paintWall(512, 256, 11), "wall-back"),
       { emissive: 0.85 },
     );
     addPrim(app.root, "plane", backWallMat, [0.5, 2.1, -5.6], [15, 1, 4.2], [90, 0, 0]);
 
     const leftWallMat = texturedMaterial(
-      textureFromCanvas(device, paintWall(1024, 384, false), "wall-left"),
+      textureFromCanvas(device, paintWall(512, 256, 23), "wall-left"),
       { emissive: 0.85 },
     );
     addPrim(
@@ -343,31 +351,82 @@ export function LoungeCanvas({
       [90, 90, 0],
     );
 
-    // marquee sign on the back wall
-    const marqueeMat = texturedMaterial(
-      textureFromCanvas(
-        device,
-        paintMarquee(["SPLECKT GAMES", "· board game lounge ·"]),
-        "marquee",
-      ),
-      { emissive: 1.15, cutout: true },
-    );
-    addPrim(app.root, "plane", marqueeMat, [0.6, 3.15, -5.55], [4.6, 1, 1.45], [90, 0, 0]);
+    // neon signs
+    const neon = (
+      text: string,
+      color: string,
+      pos: [number, number, number],
+      rot: [number, number, number],
+      scale: number,
+      big = false,
+    ) => {
+      const material = texturedMaterial(
+        textureFromCanvas(device, paintNeonSign(text, color, big), `neon-${text}`),
+        { emissive: 1.6, cutout: true },
+      );
+      return addPrim(
+        app.root,
+        "plane",
+        material,
+        pos,
+        [scale, 1, scale * (big ? 0.375 : 0.25)],
+        rot,
+        `neon-${text}`,
+      );
+    };
+    neon("SPLECKT GAMES", GROOVE.orange, [0.5, 2.8, -5.55], [90, 0, 0], 4.4, true);
+    neon("GAME ON", GROOVE.magenta, [-2.6, 2.42, -5.55], [90, 0, 0], 2.2);
+    neon("LOUNGE", GROOVE.blue, [4.3, 2.6, -5.55], [90, 0, 0], 2.2);
+    neon("ROLL PLAY", GROOVE.green, [-6.85, 2.3, 1.7], [90, 90, 0], 2.2);
 
     // posters
     const posterSpots: Array<{ pos: [number, number, number]; rot: [number, number, number] }> = [
-      { pos: [-3.4, 2.2, -5.55], rot: [90, 0, 0] },
-      { pos: [4.4, 2.3, -5.55], rot: [90, 0, 0] },
-      { pos: [-6.85, 2.25, -3.1], rot: [90, 90, 0] },
-      { pos: [-6.85, 2.15, 2.2], rot: [90, 90, 0] },
+      { pos: [-1.1, 1.85, -5.55], rot: [90, 0, 0] },
+      { pos: [2.6, 2.0, -5.55], rot: [90, 0, 0] },
+      { pos: [-6.85, 2.0, -2.6], rot: [90, 90, 0] },
+      { pos: [-6.85, 1.9, 3.3], rot: [90, 90, 0] },
     ];
     posterSpots.forEach((spot, index) => {
       const posterMat = texturedMaterial(
         textureFromCanvas(device, paintPoster(index), `poster-${index}`),
         { emissive: 0.9 },
       );
-      addPrim(app.root, "plane", posterMat, spot.pos, [1.15, 1, 1.45], spot.rot);
+      addPrim(app.root, "plane", posterMat, spot.pos, [1.1, 1, 1.38], spot.rot);
     });
+
+    // string lights draped along the walls
+    const bulbMats = [
+      glowMaterial(GROOVE.magenta, 1.7),
+      glowMaterial(GROOVE.gold, 1.7),
+      glowMaterial(GROOVE.green, 1.7),
+      glowMaterial(GROOVE.blue, 1.7),
+    ];
+    const stringLight = (
+      from: pc.Vec3,
+      to: pc.Vec3,
+      sag: number,
+      count: number,
+      offset: number,
+    ) => {
+      for (let i = 0; i < count; i += 1) {
+        const t = i / (count - 1);
+        const bulb = new pc.Entity("bulb");
+        bulb.addComponent("render", {
+          type: "sphere",
+          material: bulbMats[(i + offset) % bulbMats.length],
+        });
+        bulb.setLocalScale(0.07, 0.09, 0.07);
+        bulb.setPosition(
+          from.x + (to.x - from.x) * t,
+          from.y + (to.y - from.y) * t - Math.sin(t * Math.PI) * sag,
+          from.z + (to.z - from.z) * t,
+        );
+        app.root.addChild(bulb);
+      }
+    };
+    stringLight(new pc.Vec3(-6.6, 3.5, -5.5), new pc.Vec3(0.4, 3.6, -5.5), 0.45, 12, 0);
+    stringLight(new pc.Vec3(0.4, 3.6, -5.5), new pc.Vec3(7.2, 3.45, -5.5), 0.4, 12, 2);
+    stringLight(new pc.Vec3(-6.8, 3.5, -5.2), new pc.Vec3(-6.8, 3.35, 3.6), 0.45, 12, 1);
 
     // ---- front desk ---------------------------------------------------
     const deskRoot = new pc.Entity("front-desk");
@@ -382,8 +441,8 @@ export function LoungeCanvas({
 
     addPrim(deskRoot, "box", wood, [0, 0.5, 0], [2.5, 1.0, 0.9]);
     addPrim(deskRoot, "box", creamMat, [0, 1.03, 0], [2.7, 0.07, 1.05]);
-    // groovy stripe on the desk face
-    addPrim(deskRoot, "box", litMaterial(GROOVE.rust), [0, 0.62, 0.46], [2.5, 0.18, 0.02]);
+    // groovy stripes on the desk face
+    addPrim(deskRoot, "box", litMaterial(GROOVE.magenta), [0, 0.62, 0.46], [2.5, 0.18, 0.02]);
     addPrim(deskRoot, "box", litMaterial(GROOVE.gold), [0, 0.44, 0.46], [2.5, 0.12, 0.02]);
 
     const deskSignMat = texturedMaterial(
@@ -417,10 +476,14 @@ export function LoungeCanvas({
     addPrim(lampRoot, "cone", goldMat, [0, 0.68, 0], [0.09, 0.08, 0.09]);
 
     // ---- decor --------------------------------------------------------
+    const discoMat = litMaterial("#cfd6de", { gloss: 92, metal: true });
+    discoMat.emissive = new pc.Color(0.5, 0.55, 0.65);
+    discoMat.emissiveIntensity = 0.35;
+    discoMat.update();
     const disco = addPrim(
       app.root,
       "sphere",
-      litMaterial("#cfd6de", { gloss: 92, metal: true }),
+      discoMat,
       [-1, 3.2, 0.6],
       [0.55, 0.55, 0.55],
       [0, 0, 0],
@@ -428,27 +491,54 @@ export function LoungeCanvas({
     );
     addPrim(app.root, "cylinder", woodDark, [-1, 3.85, 0.6], [0.02, 0.8, 0.02]);
 
+    // arcade cabinets against the back wall, screens facing the room
+    const cabinetSides = [litMaterial("#5a2a7d", { gloss: 40 }), litMaterial("#7d2a4e", { gloss: 40 })];
+    [-5.5, -4.3].forEach((x, index) => {
+      const cab = new pc.Entity("arcade");
+      cab.setPosition(x, 0, -5.0);
+      app.root.addChild(cab);
+      const body = cabinetSides[index];
+      addPrim(cab, "box", body, [0, 0.85, 0], [0.75, 1.7, 0.7]);
+      addPrim(cab, "box", body, [0, 1.82, -0.12], [0.75, 0.28, 0.45]);
+      const screenMat = texturedMaterial(
+        textureFromCanvas(device, paintArcadeScreen(index), `arcade-${index}`),
+        { emissive: 1.2 },
+      );
+      addPrim(cab, "plane", screenMat, [0, 1.32, 0.36], [0.58, 1, 0.5], [72, 0, 0]);
+      addPrim(cab, "box", glowMaterial(index === 0 ? GROOVE.magenta : GROOVE.gold, 1.3), [0, 1.98, 0.1], [0.75, 0.14, 0.05]);
+      addPrim(cab, "box", litMaterial(GROOVE.orange), [0, 0.95, 0.37], [0.62, 0.1, 0.06]);
+    });
+
     // floor lamp
     const lampBase = new pc.Entity("floor-lamp");
-    lampBase.setPosition(-5.4, 0, -3.9);
+    lampBase.setPosition(5.6, 0, -3.9);
     app.root.addChild(lampBase);
     addPrim(lampBase, "cylinder", woodDark, [0, 0.05, 0], [0.4, 0.1, 0.4]);
     addPrim(lampBase, "cylinder", goldMat, [0, 0.9, 0], [0.05, 1.8, 0.05]);
     addPrim(lampBase, "cone", glowMaterial(GROOVE.orange, 1.2), [0, 1.9, 0], [0.5, 0.4, 0.5]);
 
-    // potted plant
-    const plant = new pc.Entity("plant");
-    plant.setPosition(4.9, 0, 3.4);
-    app.root.addChild(plant);
-    addPrim(plant, "cylinder", litMaterial(GROOVE.rust), [0, 0.25, 0], [0.5, 0.5, 0.5]);
+    // potted plants
     const leafMat = litMaterial("#3c6b31");
-    addPrim(plant, "cone", leafMat, [0, 0.85, 0], [0.55, 0.8, 0.55]);
-    addPrim(plant, "cone", leafMat, [0.18, 0.7, 0.1], [0.4, 0.6, 0.4], [0, 0, -18]);
-    addPrim(plant, "cone", leafMat, [-0.16, 0.72, -0.08], [0.42, 0.65, 0.42], [0, 0, 16]);
+    const potMat = litMaterial(GROOVE.rust);
+    for (const [px, pz] of [[4.9, 3.4], [-5.9, 2.9]]) {
+      const plant = new pc.Entity("plant");
+      plant.setPosition(px, 0, pz);
+      app.root.addChild(plant);
+      addPrim(plant, "cylinder", potMat, [0, 0.25, 0], [0.5, 0.5, 0.5]);
+      addPrim(plant, "cone", leafMat, [0, 0.85, 0], [0.55, 0.8, 0.55]);
+      addPrim(plant, "cone", leafMat, [0.18, 0.7, 0.1], [0.4, 0.6, 0.4], [0, 0, -18]);
+      addPrim(plant, "cone", leafMat, [-0.16, 0.72, -0.08], [0.42, 0.65, 0.42], [0, 0, 16]);
+    }
 
-    // beanbags
-    addPrim(app.root, "sphere", litMaterial(GROOVE.plum), [-4.6, 0.25, -1.6], [0.9, 0.5, 0.9]);
-    addPrim(app.root, "sphere", litMaterial(GROOVE.teal), [-3.6, 0.22, -2.4], [0.8, 0.45, 0.8]);
+    // scattered beanbags
+    const beanbagMats = {
+      orange: litMaterial(GROOVE.rust, { gloss: 18 }),
+      purple: litMaterial("#4c2470", { gloss: 18 }),
+      green: litMaterial("#4e8a2e", { gloss: 18 }),
+    };
+    addPrim(app.root, "sphere", beanbagMats.purple, [-4.4, 0.25, -1.6], [0.9, 0.5, 0.9]);
+    addPrim(app.root, "sphere", beanbagMats.green, [-3.4, 0.22, -2.5], [0.8, 0.45, 0.8]);
+    addPrim(app.root, "sphere", beanbagMats.orange, [4.3, 0.24, 1.4], [0.85, 0.48, 0.85]);
 
     // ---- game table ---------------------------------------------------
     const tableRoot = new pc.Entity("table-1");
@@ -460,19 +550,29 @@ export function LoungeCanvas({
     const tableTop = addPrim(tableRoot, "cylinder", wood, [0, TABLE_TOP_Y - 0.035, 0], [2.35, 0.07, 2.35]);
     tableTop.render!.receiveShadows = true;
 
-    // chairs on the two playing sides
-    const chairMat = litMaterial(GROOVE.rust, { gloss: 24 });
-    for (const dz of [-1.55, 1.55]) {
-      const chair = new pc.Entity("chair");
-      chair.setLocalPosition(0, 0, dz);
-      chair.setLocalEulerAngles(0, dz > 0 ? 0 : 180, 0);
-      tableRoot.addChild(chair);
-      addPrim(chair, "box", chairMat, [0, 0.42, 0], [0.62, 0.09, 0.62]);
-      addPrim(chair, "box", chairMat, [0, 0.75, 0.3], [0.62, 0.62, 0.09]);
-      for (const [lx, lz] of [[-0.25, -0.25], [0.25, -0.25], [-0.25, 0.25], [0.25, 0.25]]) {
-        addPrim(chair, "cylinder", woodDark, [lx, 0.19, lz], [0.06, 0.38, 0.06]);
-      }
-    }
+    // beanbag seats on the two playing sides
+    addPrim(tableRoot, "sphere", beanbagMats.orange, [0.15, 0.26, -1.65], [0.95, 0.52, 0.95]);
+    addPrim(tableRoot, "sphere", beanbagMats.purple, [-0.1, 0.26, 1.65], [0.95, 0.52, 0.95]);
+
+    // lava lamp on the far edge of the game table
+    const tableLamp2 = new pc.Entity("table-lava");
+    tableLamp2.setLocalPosition(-0.82, TABLE_TOP_Y, -0.78);
+    tableRoot.addChild(tableLamp2);
+    addPrim(tableLamp2, "cone", goldMat, [0, 0.07, 0], [0.16, 0.14, 0.16]);
+    const tableLavaGlass = new pc.StandardMaterial();
+    tableLavaGlass.diffuse = colorFromHex(GROOVE.teal);
+    tableLavaGlass.opacity = 0.4;
+    tableLavaGlass.blendType = pc.BLEND_NORMAL;
+    tableLavaGlass.update();
+    addPrim(tableLamp2, "cone", tableLavaGlass, [0, 0.3, 0], [0.14, 0.38, 0.14], [180, 0, 0]);
+    const tableBlob = addPrim(
+      tableLamp2,
+      "sphere",
+      glowMaterial(GROOVE.green, 1.5),
+      [0, 0.22, 0],
+      [0.075, 0.09, 0.075],
+    );
+    addPrim(tableLamp2, "cone", goldMat, [0, 0.52, 0], [0.07, 0.07, 0.07]);
 
     // floating table label (billboarded toward the iso camera)
     const labelMat = texturedMaterial(
@@ -507,7 +607,7 @@ export function LoungeCanvas({
     );
     boardBase.render!.receiveShadows = true;
 
-    const lightSquareMat = litMaterial(GROOVE.sand, { gloss: 40 });
+    const lightSquareMat = litMaterial("#e8cf9e", { gloss: 40 });
     const darkSquareMat = litMaterial("#4a2c17", { gloss: 40 });
     const squareCenterVec = new pc.Vec3();
     for (let index = 0; index < BOARD_SIZE * BOARD_SIZE; index += 1) {
@@ -525,7 +625,7 @@ export function LoungeCanvas({
 
     // highlight overlays, one per square
     const selectedMat = glowMaterial(GROOVE.gold, 1.5, 0.85);
-    const targetMat = glowMaterial("#7fe07a", 1.35, 0.75);
+    const targetMat = glowMaterial("#7fe07a", 1.6, 0.9);
     const movableMat = glowMaterial(GROOVE.orange, 1.0, 0.4);
     const lastMoveMat = glowMaterial(GROOVE.magenta, 0.9, 0.35);
     const overlays: pc.Entity[] = [];
@@ -561,16 +661,58 @@ export function LoungeCanvas({
         }
       }
     };
-    refreshHighlightsRef.current = refreshHighlights;
 
     // ---- pieces -------------------------------------------------------
     const piecesRoot = new pc.Entity("pieces");
     app.root.addChild(piecesRoot);
-    const seatMats: Record<number, pc.StandardMaterial> = {
-      1: litMaterial("#c0392b", { gloss: 58 }),
-      2: litMaterial("#26201c", { gloss: 58 }),
+
+    const pieceMaterial = (hex: string, emissiveHex?: string, intensity = 0) => {
+      const material = new pc.StandardMaterial();
+      material.diffuse = colorFromHex(hex);
+      material.shininess = 58;
+      if (emissiveHex) {
+        material.emissive = colorFromHex(emissiveHex);
+        material.emissiveIntensity = intensity;
+      }
+      material.update();
+      return material;
+    };
+    const seatMats: Record<number, {
+      base: pc.StandardMaterial;
+      movable: pc.StandardMaterial;
+      selected: pc.StandardMaterial;
+    }> = {
+      1: {
+        base: pieceMaterial("#c0392b"),
+        movable: pieceMaterial("#c0392b", GROOVE.orange, 0.55),
+        selected: pieceMaterial("#c0392b", GROOVE.gold, 1.0),
+      },
+      2: {
+        base: pieceMaterial("#26201c"),
+        movable: pieceMaterial("#26201c", GROOVE.orange, 0.5),
+        selected: pieceMaterial("#26201c", GROOVE.gold, 0.9),
+      },
     };
     const crownMat = glowMaterial(GROOVE.gold, 1.2);
+    const pieceBodies = new Map<number, { parts: pc.Entity[]; seat: number }>();
+
+    const applyPieceHighlights = () => {
+      const marks = highlightsRef.current;
+      for (const [index, body] of pieceBodies) {
+        const mats = seatMats[body.seat];
+        const material =
+          marks.selected === index
+            ? mats.selected
+            : marks.movable.includes(index)
+              ? mats.movable
+              : mats.base;
+        for (const part of body.parts) {
+          part.render?.meshInstances.forEach((mesh) => {
+            mesh.material = material;
+          });
+        }
+      }
+    };
 
     let tween: {
       entity: pc.Entity;
@@ -582,6 +724,7 @@ export function LoungeCanvas({
 
     const refreshBoard = () => {
       tween = null;
+      pieceBodies.clear();
       const cells = boardRef.current;
       const children = piecesRoot.children.slice();
       for (const child of children) child.destroy();
@@ -595,13 +738,18 @@ export function LoungeCanvas({
         const root = new pc.Entity(`piece-${index}`);
         root.setPosition(pos.x, BOARD_TOP_Y + 0.024, pos.z);
         piecesRoot.addChild(root);
-        const mat = seatMats[piece.seat];
-        addPrim(root, "cylinder", mat, [0, 0, 0], [0.128, 0.048, 0.128]);
-        addPrim(root, "cylinder", mat, [0, 0.02, 0], [0.1, 0.02, 0.1]);
+        const mat = seatMats[piece.seat].base;
+        const parts = [
+          addPrim(root, "cylinder", mat, [0, 0, 0], [0.128, 0.048, 0.128]),
+          addPrim(root, "cylinder", mat, [0, 0.02, 0], [0.1, 0.02, 0.1]),
+        ];
         if (piece.king) {
-          addPrim(root, "cylinder", mat, [0, 0.048, 0], [0.115, 0.04, 0.115]);
+          parts.push(
+            addPrim(root, "cylinder", mat, [0, 0.048, 0], [0.115, 0.04, 0.115]),
+          );
           addPrim(root, "cylinder", crownMat, [0, 0.075, 0], [0.055, 0.018, 0.055]);
         }
+        pieceBodies.set(index, { parts, seat: piece.seat });
 
         // slide the most recently moved piece in from its source square
         if (
@@ -624,10 +772,16 @@ export function LoungeCanvas({
           }
         }
       });
+      applyPieceHighlights();
     };
     refreshBoardRef.current = refreshBoard;
+    const refreshAllHighlights = () => {
+      refreshHighlights();
+      applyPieceHighlights();
+    };
+    refreshHighlightsRef.current = refreshAllHighlights;
     refreshBoard();
-    refreshHighlights();
+    refreshAllHighlights();
 
     // ---- picking ------------------------------------------------------
     const pickBoardSquare = (clientX: number, clientY: number) => {
@@ -697,6 +851,14 @@ export function LoungeCanvas({
 
       if (viewRef.current === "game") {
         const index = pickBoardSquare(event.clientX, event.clientY);
+        // eslint-disable-next-line no-console
+        console.log("[games-debug] pointerup in game view", {
+          clientX: event.clientX,
+          clientY: event.clientY,
+          picked: index,
+          row: index !== null ? Math.floor(index / 8) : null,
+          col: index !== null ? index % 8 : null,
+        });
         if (index !== null) onSquareRef.current(index);
         return;
       }
@@ -708,6 +870,52 @@ export function LoungeCanvas({
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
+
+    // TEMP debug hook for automated click testing — remove before merge.
+    (window as unknown as Record<string, unknown>).__gamesDebug = {
+      squareToScreen: (index: number) => {
+        const world = squareCenter(index, new pc.Vec3());
+        const screen = cameraComponent.worldToScreen(world);
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+          x: rect.left + screen.x / scaleX,
+          y: rect.top + screen.y / scaleY,
+          raw: { x: screen.x, y: screen.y },
+        };
+      },
+      view: () => viewRef.current,
+      probe: (index: number) => {
+        const world = squareCenter(index, new pc.Vec3());
+        const screen = cameraComponent.worldToScreen(world);
+        const from = cameraComponent.screenToWorld(
+          screen.x,
+          screen.y,
+          cameraComponent.nearClip,
+        );
+        const to = cameraComponent.screenToWorld(
+          screen.x,
+          screen.y,
+          cameraComponent.farClip,
+        );
+        const t = (BOARD_TOP_Y - from.y) / (to.y - from.y);
+        const hitX = from.x + (to.x - from.x) * t;
+        const hitZ = from.z + (to.z - from.z) * t;
+        return {
+          world: { x: world.x, z: world.z },
+          screen: { x: screen.x, y: screen.y },
+          hit: { x: hitX, z: hitZ },
+          errX: hitX - world.x,
+          errZ: hitZ - world.z,
+          clientRect: {
+            w: app.graphicsDevice.clientRect.width,
+            h: app.graphicsDevice.clientRect.height,
+          },
+          rect: canvas.getBoundingClientRect().toJSON(),
+        };
+      },
+    };
 
     const onResize = () => applyResolution();
     window.addEventListener("resize", onResize);
@@ -741,6 +949,8 @@ export function LoungeCanvas({
       );
       blobA.setLocalPosition(0, 0.24 + Math.sin(t * 0.9) * 0.14, 0);
       blobB.setLocalPosition(0.02, 0.42 + Math.sin(t * 0.7 + 2) * 0.16, 0);
+      tableBlob.setLocalPosition(0, 0.18 + Math.sin(t * 0.8 + 1) * 0.1, 0);
+      tableLabel.enabled = viewRef.current !== "game";
       tableLabel.setPosition(TABLE.x, 2.08 + Math.sin(t * 1.4) * 0.05, TABLE.z);
 
       if (tween) {
