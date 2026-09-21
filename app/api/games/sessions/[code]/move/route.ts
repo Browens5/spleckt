@@ -5,7 +5,12 @@ import { z } from "zod";
 import { ensureSchema } from "@/lib/db/ensure-schema";
 import { applyMove, findMove, legalMoves } from "@/lib/games/checkers";
 import { applyScumAction } from "@/lib/games/scum";
+import { applyBattleshipAction, CELL_COUNT, FLEET_SPEC } from "@/lib/games/battleship";
 import { getSessionByCode, saveSession } from "@/lib/games/session";
+
+const shipIdSchema = z.enum(
+  FLEET_SPEC.map((spec) => spec.id) as [string, ...string[]],
+);
 
 const moveSchema = z.union([
   z.object({
@@ -21,6 +26,24 @@ const moveSchema = z.union([
   z.object({
     playerId: z.string().min(8).max(64),
     action: z.literal("pass"),
+  }),
+  z.object({
+    playerId: z.string().min(8).max(64),
+    action: z.literal("place"),
+    ships: z
+      .array(
+        z.object({
+          id: shipIdSchema,
+          origin: z.number().int().min(0).max(CELL_COUNT - 1),
+          horizontal: z.boolean(),
+        }),
+      )
+      .length(5),
+  }),
+  z.object({
+    playerId: z.string().min(8).max(64),
+    action: z.literal("fire"),
+    index: z.number().int().min(0).max(CELL_COUNT - 1),
   }),
 ]);
 
@@ -53,7 +76,12 @@ export async function POST(
   if (!player) {
     return NextResponse.json({ error: "Viewers cannot move" }, { status: 403 });
   }
-  if (player.seat !== state.turnSeat) {
+
+  const placing =
+    state.game === "battleship" &&
+    "action" in parsed.data &&
+    parsed.data.action === "place";
+  if (!placing && player.seat !== state.turnSeat) {
     return NextResponse.json({ error: "Not your turn" }, { status: 409 });
   }
 
@@ -74,8 +102,8 @@ export async function POST(
     state.moveCount += 1;
     state.lastMove = move;
     if (result.winner) snapshot.status = "finished";
-  } else {
-    if (!("action" in parsed.data)) {
+  } else if (state.game === "scum") {
+    if (!("action" in parsed.data) || (parsed.data.action !== "play" && parsed.data.action !== "pass")) {
       return NextResponse.json({ error: "Illegal play" }, { status: 422 });
     }
     const action =
@@ -83,6 +111,26 @@ export async function POST(
         ? { type: "pass" as const }
         : { type: "play" as const, cards: parsed.data.cards };
     const result = applyScumAction(state, player.seat, action);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 422 });
+    }
+    if (result.finished) snapshot.status = "finished";
+  } else {
+    if (!("action" in parsed.data) || (parsed.data.action !== "place" && parsed.data.action !== "fire")) {
+      return NextResponse.json({ error: "Illegal shot" }, { status: 422 });
+    }
+    const action =
+      parsed.data.action === "place"
+        ? {
+            type: "place" as const,
+            ships: parsed.data.ships.map((ship) => ({
+              id: ship.id as (typeof FLEET_SPEC)[number]["id"],
+              origin: ship.origin,
+              horizontal: ship.horizontal,
+            })),
+          }
+        : { type: "fire" as const, index: parsed.data.index };
+    const result = applyBattleshipAction(state, player.seat, action);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 422 });
     }

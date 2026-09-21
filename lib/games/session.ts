@@ -4,6 +4,7 @@ import { db, getDbClient } from "@/lib/db";
 import { gameSessions } from "@/lib/db/schema";
 import { createId } from "@/lib/ids";
 import { initialBoard, type Seat } from "./checkers";
+import { emptyBattleshipState } from "./battleship";
 import { dealScum, emptyScumState, MAX_PLAYERS as SCUM_MAX, MIN_PLAYERS as SCUM_MIN } from "./scum";
 import type {
   CheckersState,
@@ -65,11 +66,15 @@ export async function createSession(
   const state =
     game === "scum"
       ? emptyScumState()
-      : freshCheckers();
+      : game === "battleship"
+        ? emptyBattleshipState()
+        : freshCheckers();
   if (state.game === "scum") {
     state.players.push({ id: hostId, handle: hostHandle, seat: 1 });
     state.dealerSeat = 1;
     state.turnSeat = 1;
+  } else if (state.game === "battleship") {
+    state.players.push({ id: hostId, handle: hostHandle, seat: 1 });
   } else {
     state.players.push({ id: hostId, handle: hostHandle, seat: hostSeat });
   }

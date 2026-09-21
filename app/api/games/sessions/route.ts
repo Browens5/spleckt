@@ -8,7 +8,7 @@ import { createSession, normalizeHandle } from "@/lib/games/session";
 const createSchema = z.object({
   playerId: z.string().min(8).max(64),
   handle: z.string().min(2).max(24),
-  game: z.enum(["checkers", "scum"]),
+  game: z.enum(["checkers", "scum", "battleship"]),
   seat: z.union([z.literal(1), z.literal(2)]).optional(),
 });
 

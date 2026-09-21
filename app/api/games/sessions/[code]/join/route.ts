@@ -62,7 +62,10 @@ export async function POST(
         handle,
         seat: nextSeat(state.players.map((entry) => entry.seat)),
       });
-      if (state.game === "checkers" && state.players.length >= 2) {
+      if (
+        (state.game === "checkers" || state.game === "battleship") &&
+        state.players.length >= 2
+      ) {
         snapshot.status = "playing";
       }
     } else {

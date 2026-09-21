@@ -1,10 +1,11 @@
 import type { Board, Move, Seat } from "./checkers";
 import type { ScumState } from "./scum";
+import type { BattleshipState } from "./battleship";
 
-export type GameId = "checkers" | "scum";
+export type GameId = "checkers" | "scum" | "battleship";
 
 export type TableInfo = {
-  id: "table-1" | "table-2";
+  id: "table-1" | "table-2" | "table-3";
   number: number;
   game: GameId;
   gameName: string;
@@ -27,6 +28,14 @@ export const LOUNGE_TABLES: TableInfo[] = [
     gameName: "Scum",
     tagline:
       "Presidents: 3–6 players. Lead singles or sets, first one out is President, last holding cards is the Scum.",
+  },
+  {
+    id: "table-3",
+    number: 3,
+    game: "battleship",
+    gameName: "Battleship",
+    tagline:
+      "Two captains, 10×10 grids. Place the fleet, then take turns firing — sink every ship to win.",
   },
 ];
 
@@ -60,7 +69,7 @@ export type CheckersState = {
   lastMove: Move | null;
 };
 
-export type GameState = CheckersState | ScumState;
+export type GameState = CheckersState | ScumState | BattleshipState;
 
 export type SessionSnapshot = {
   code: string;
@@ -80,6 +89,10 @@ export function isCheckersState(state: GameState): state is CheckersState {
 
 export function isScumState(state: GameState): state is ScumState {
   return state.game === "scum";
+}
+
+export function isBattleshipState(state: GameState): state is BattleshipState {
+  return state.game === "battleship";
 }
 
 export function roleFor(state: GameState, playerId: string): PlayerRole {
