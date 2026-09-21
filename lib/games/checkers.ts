@@ -115,9 +115,10 @@ function movesForPiece(board: Board, index: number, jumpsOnly: boolean): Move[] 
 }
 
 /**
- * All legal moves for a seat. Captures are mandatory: if any jump exists,
- * only jumps are returned. When `continueFrom` is set (mid multi-jump),
- * only further jumps by that piece are legal.
+ * All legal moves for a seat. Jumps are optional — a player may slide a
+ * different piece instead of capturing. When `continueFrom` is set (the
+ * mover already started a multi-jump), only further jumps by that piece
+ * are legal.
  */
 export function legalMoves(
   board: Board,
@@ -130,16 +131,13 @@ export function legalMoves(
     return movesForPiece(board, continueFrom, true);
   }
 
-  const steps: Move[] = [];
-  const jumps: Move[] = [];
+  const moves: Move[] = [];
   for (let index = 0; index < CELL_COUNT; index += 1) {
     const piece = board[index];
     if (!piece || piece.seat !== seat) continue;
-    for (const move of movesForPiece(board, index, false)) {
-      (move.captured !== null ? jumps : steps).push(move);
-    }
+    moves.push(...movesForPiece(board, index, false));
   }
-  return jumps.length > 0 ? jumps : steps;
+  return moves;
 }
 
 export type MoveResult = {
@@ -183,9 +181,17 @@ export function findMove(moves: Move[], from: number, to: number) {
   return moves.find((move) => move.from === from && move.to === to) ?? null;
 }
 
+export const STARTING_PIECES = 12;
+
 export function pieceCount(board: Board, seat: Seat) {
   return board.reduce(
     (count, piece) => (piece && piece.seat === seat ? count + 1 : count),
     0,
   );
+}
+
+/** Captures scored by `seat` so far (opponent pieces removed). */
+export function capturedCount(board: Board, seat: Seat) {
+  const opponent: Seat = seat === 1 ? 2 : 1;
+  return STARTING_PIECES - pieceCount(board, opponent);
 }

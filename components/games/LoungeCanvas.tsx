@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as pc from "playcanvas";
-import { BOARD_SIZE, colOf, rowOf, type Board } from "@/lib/games/checkers";
+import { BOARD_SIZE, colOf, rowOf, type Board, type Seat } from "@/lib/games/checkers";
 import {
   GROOVE,
   paintArcadeScreen,
@@ -33,6 +33,9 @@ type LoungeCanvasProps = {
   view: LoungeView;
   board: Board | null;
   highlights: BoardHighlights;
+  /** Seat whose home row should sit at the bottom of the screen. */
+  facingSeat?: Seat | null;
+  showTrophy?: boolean;
   onDeskClick: () => void;
   onTableClick: () => void;
   onSquareClick: (index: number) => void;
@@ -59,18 +62,41 @@ type ViewRig = {
   look: pc.Vec3;
   orthoHeight: number;
   pitch: number;
+  yaw: number;
   /** Minimum visible world half-width, so narrow screens zoom out to fit. */
   minHalfWidth: number;
 };
 
 const VIEW_RIGS: Record<LoungeView, ViewRig> = {
-  lounge: { look: new pc.Vec3(0.1, 1.05, -0.3), orthoHeight: 4.75, pitch: 32, minHalfWidth: 5.2 },
-  table: { look: new pc.Vec3(TABLE.x, 0.85, TABLE.z), orthoHeight: 2.5, pitch: 39, minHalfWidth: 2.4 },
-  game: { look: new pc.Vec3(TABLE.x, 0.82, TABLE.z), orthoHeight: 1.32, pitch: 55, minHalfWidth: 1.35 },
+  lounge: {
+    look: new pc.Vec3(0.1, 1.05, -0.3),
+    orthoHeight: 4.75,
+    pitch: 32,
+    yaw: 45,
+    minHalfWidth: 5.2,
+  },
+  table: {
+    look: new pc.Vec3(TABLE.x, 0.82, TABLE.z),
+    orthoHeight: 1.45,
+    pitch: 86,
+    yaw: 0,
+    minHalfWidth: 1.5,
+  },
+  game: {
+    look: new pc.Vec3(TABLE.x, 0.82, TABLE.z),
+    orthoHeight: 1.18,
+    pitch: 88,
+    yaw: 0,
+    minHalfWidth: 1.2,
+  },
 };
 
-const CAMERA_YAW = (45 * Math.PI) / 180;
 const CAMERA_DIST = 20;
+
+function lerpDegrees(current: number, target: number, t: number) {
+  const delta = ((target - current + 540) % 360) - 180;
+  return current + delta * t;
+}
 
 function colorFromHex(hex: string) {
   const value = parseInt(hex.slice(1), 16);
@@ -179,6 +205,8 @@ export function LoungeCanvas({
   view,
   board,
   highlights,
+  facingSeat = null,
+  showTrophy = false,
   onDeskClick,
   onTableClick,
   onSquareClick,
@@ -187,6 +215,8 @@ export function LoungeCanvas({
   const viewRef = useRef(view);
   const boardRef = useRef(board);
   const highlightsRef = useRef(highlights);
+  const facingSeatRef = useRef(facingSeat);
+  const showTrophyRef = useRef(showTrophy);
   const onDeskRef = useRef(onDeskClick);
   const onTableRef = useRef(onTableClick);
   const onSquareRef = useRef(onSquareClick);
@@ -197,6 +227,8 @@ export function LoungeCanvas({
     viewRef.current = view;
     boardRef.current = board;
     highlightsRef.current = highlights;
+    facingSeatRef.current = facingSeat;
+    showTrophyRef.current = showTrophy;
     onDeskRef.current = onDeskClick;
     onTableRef.current = onTableClick;
     onSquareRef.current = onSquareClick;
@@ -260,16 +292,29 @@ export function LoungeCanvas({
       look: VIEW_RIGS.lounge.look.clone(),
       orthoHeight: VIEW_RIGS.lounge.orthoHeight,
       pitch: VIEW_RIGS.lounge.pitch,
+      yaw: VIEW_RIGS.lounge.yaw,
     };
     const placeCamera = () => {
       const pitchRad = (camState.pitch * Math.PI) / 180;
-      const horiz = Math.cos(pitchRad) * CAMERA_DIST;
-      camera.setPosition(
-        camState.look.x + Math.sin(CAMERA_YAW) * horiz,
-        camState.look.y + Math.sin(pitchRad) * CAMERA_DIST,
-        camState.look.z + Math.cos(CAMERA_YAW) * horiz,
-      );
-      camera.lookAt(camState.look);
+      const yawRad = (camState.yaw * Math.PI) / 180;
+      if (camState.pitch >= 70) {
+        // lookAt() is unstable when the view is nearly vertical — set the
+        // camera pose directly so the board stays square to the screen.
+        camera.setPosition(
+          camState.look.x,
+          camState.look.y + CAMERA_DIST,
+          camState.look.z,
+        );
+        camera.setEulerAngles(-90, camState.yaw, 0);
+      } else {
+        const horiz = Math.cos(pitchRad) * CAMERA_DIST;
+        camera.setPosition(
+          camState.look.x + Math.sin(yawRad) * horiz,
+          camState.look.y + Math.sin(pitchRad) * CAMERA_DIST,
+          camState.look.z + Math.cos(yawRad) * horiz,
+        );
+        camera.lookAt(camState.look);
+      }
       const aspect = Math.max(0.3, canvas.clientWidth / Math.max(1, canvas.clientHeight));
       const rig = VIEW_RIGS[viewRef.current];
       cameraComponent.orthoHeight = Math.max(
@@ -790,6 +835,19 @@ export function LoungeCanvas({
     refreshBoard();
     refreshAllHighlights();
 
+    // ---- winner trophy -----------------------------------------------
+    const trophy = new pc.Entity("trophy");
+    trophy.setPosition(TABLE.x, BOARD_TOP_Y + 0.18, TABLE.z);
+    trophy.enabled = false;
+    app.root.addChild(trophy);
+    addPrim(trophy, "cylinder", goldMat, [0, 0.03, 0], [0.16, 0.05, 0.16]);
+    addPrim(trophy, "cylinder", goldMat, [0, 0.1, 0], [0.09, 0.05, 0.09]);
+    addPrim(trophy, "cylinder", goldMat, [0, 0.22, 0], [0.035, 0.22, 0.035]);
+    addPrim(trophy, "cone", goldMat, [0, 0.42, 0], [0.16, 0.18, 0.16], [180, 0, 0]);
+    addPrim(trophy, "sphere", goldMat, [0, 0.56, 0], [0.055, 0.055, 0.055]);
+    addPrim(trophy, "cylinder", goldMat, [0.11, 0.4, 0], [0.03, 0.12, 0.03], [0, 0, 55]);
+    addPrim(trophy, "cylinder", goldMat, [-0.11, 0.4, 0], [0.03, 0.12, 0.03], [0, 0, -55]);
+
     // ---- picking ------------------------------------------------------
     const pickBoardSquare = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
@@ -880,11 +938,19 @@ export function LoungeCanvas({
 
     // ---- animation loop -----------------------------------------------
     app.on("update", (dt: number) => {
-      const rig = VIEW_RIGS[viewRef.current];
+      const viewNow = viewRef.current;
+      const rig = VIEW_RIGS[viewNow];
+      const facingYaw = Number(facingSeatRef.current) === 2 ? 180 : 0;
+      const targetYaw = viewNow === "game" ? facingYaw : rig.yaw;
       const ease = Math.min(1, dt * 5);
       camState.look.lerp(camState.look, rig.look, ease);
       camState.orthoHeight += (rig.orthoHeight - camState.orthoHeight) * ease;
       camState.pitch += (rig.pitch - camState.pitch) * ease;
+      if (viewNow === "game") {
+        camState.yaw = targetYaw;
+      } else {
+        camState.yaw = lerpDegrees(camState.yaw, targetYaw, ease);
+      }
       placeCamera();
 
       const t = performance.now() * 0.001;
@@ -905,6 +971,16 @@ export function LoungeCanvas({
       tableBlob.setLocalPosition(0, 0.18 + Math.sin(t * 0.8 + 1) * 0.1, 0);
       tableLabel.enabled = viewRef.current !== "game";
       tableLabel.setPosition(TABLE.x, 2.08 + Math.sin(t * 1.4) * 0.05, TABLE.z);
+
+      trophy.enabled = showTrophyRef.current;
+      if (trophy.enabled) {
+        trophy.setPosition(
+          TABLE.x,
+          BOARD_TOP_Y + 0.22 + Math.sin(t * 2.2) * 0.05,
+          TABLE.z,
+        );
+        trophy.setEulerAngles(0, t * 42, 0);
+      }
 
       if (tween) {
         tween.t = Math.min(1, tween.t + dt * 1.8);
