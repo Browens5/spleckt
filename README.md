@@ -54,7 +54,7 @@ A rotatable deck of project cards with about / skills / contact overlays. Editor
 
 ### Games
 
-A groovy 70s board game lounge rendered in isometric PlayCanvas. Sign in at the front desk with a player handle, pick a table to see its game, and start or join a match. Starting a game mints a 5-character code to share with friends; the first two players at a table play, everyone after that watches. Drag the lounge (or the board during a match) to nudge the camera. Table 1 hosts checkers: the organizer picks red or black, the camera looks straight down at the board (rotated so your color is nearest), jumps are optional, and the scoreboard tracks captures through a trophy for the winner.
+A groovy 70s board game lounge rendered in isometric PlayCanvas. Sign in at the front desk with a player handle, pick a table to see its game, and start or join a match. Starting a game mints a 5-character code to share with friends. Drag the lounge (or the board during a match) to nudge the camera. Table 1 hosts checkers: the organizer picks red or black, the first two players play and later joiners watch, the camera looks straight down at the board (rotated so your color is nearest), jumps are optional, and the scoreboard tracks captures through a trophy for the winner. Table 2 hosts Scum (Bicycle Cards' Presidents): 3–6 players, lead any single or equal set, beat with a higher set of the same length, passing is always allowed, first out of cards is President and last with cards is the Scum.
 
 ## Stack
 

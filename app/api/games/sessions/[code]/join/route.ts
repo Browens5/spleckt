@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ensureSchema } from "@/lib/db/ensure-schema";
 import {
   getSessionByCode,
+  maxPlayersFor,
   normalizeHandle,
   saveSession,
 } from "@/lib/games/session";
@@ -13,6 +14,13 @@ const joinSchema = z.object({
   playerId: z.string().min(8).max(64),
   handle: z.string().min(2).max(24),
 });
+
+function nextSeat(taken: number[]) {
+  const used = new Set(taken);
+  let seat = 1;
+  while (used.has(seat)) seat += 1;
+  return seat;
+}
 
 export async function POST(
   request: NextRequest,
@@ -32,7 +40,6 @@ export async function POST(
     return NextResponse.json({ error: "Handle too short" }, { status: 400 });
   }
 
-  // Retry a few times: concurrent joins race on the version check.
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const snapshot = await getSessionByCode(code);
     if (!snapshot) {
@@ -41,7 +48,6 @@ export async function POST(
 
     const { state } = snapshot;
 
-    // Already at the table (page refresh, reconnect) — nothing to change.
     if (
       state.players.some((entry) => entry.id === playerId) ||
       state.viewers.some((entry) => entry.id === playerId)
@@ -49,14 +55,16 @@ export async function POST(
       return NextResponse.json({ session: snapshot });
     }
 
-    if (state.players.length < 2) {
-      const taken = state.players[0]?.seat;
+    const cap = maxPlayersFor(state.game);
+    if (state.players.length < cap && snapshot.status === "waiting") {
       state.players.push({
         id: playerId,
         handle,
-        seat: taken === 1 ? 2 : 1,
+        seat: nextSeat(state.players.map((entry) => entry.seat)),
       });
-      snapshot.status = "playing";
+      if (state.game === "checkers" && state.players.length >= 2) {
+        snapshot.status = "playing";
+      }
     } else {
       state.viewers.push({ id: playerId, handle });
     }

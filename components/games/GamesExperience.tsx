@@ -18,10 +18,16 @@ import {
 } from "@/lib/games/checkers";
 import {
   LOUNGE_TABLES,
+  isCheckersState,
+  isScumState,
   roleFor,
+  tableForGame,
   type SessionSnapshot,
+  type TableInfo,
 } from "@/lib/games/types";
-import type { BoardHighlights, LoungeView } from "./LoungeCanvas";
+import { MIN_PLAYERS as SCUM_MIN, rankTitle } from "@/lib/games/scum";
+import type { BoardHighlights, LoungeTableId, LoungeView } from "./LoungeCanvas";
+import { ScumPlay } from "./ScumPlay";
 
 const LoungeCanvas = dynamic(
   () => import("./LoungeCanvas").then((mod) => mod.LoungeCanvas),
@@ -75,8 +81,6 @@ function writePlayer(identity: PlayerIdentity) {
 
 type Overlay = "none" | "signin" | "table";
 
-const TABLE = LOUNGE_TABLES[0];
-
 export function GamesExperience() {
   const searchParams = useSearchParams();
   const sharedCode = searchParams.get("code");
@@ -99,6 +103,7 @@ export function GamesExperience() {
   const [selected, setSelected] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [hostSeat, setHostSeat] = useState<Seat>(1);
+  const [pickedTable, setPickedTable] = useState<TableInfo>(LOUNGE_TABLES[0]!);
 
   const savePlayer = useCallback(
     (handle: string) => {
@@ -151,6 +156,9 @@ export function GamesExperience() {
 
   // ---- derived game state ---------------------------------------------
   const state = session?.state ?? null;
+  const checkers = state && isCheckersState(state) ? state : null;
+  const scum = state && isScumState(state) ? state : null;
+  const activeTable = state ? tableForGame(state.game) : pickedTable;
   const role = state && player ? roleFor(state, player.id) : { kind: "none" as const };
   const mySeat = role.kind === "player" ? role.seat : null;
   const myTurn =
@@ -158,15 +166,15 @@ export function GamesExperience() {
     session?.status === "playing" &&
     mySeat !== null &&
     state!.turnSeat === mySeat;
+  const isHost = Boolean(player && state?.players[0]?.id === player.id);
 
   const availableMoves = useMemo<Move[]>(() => {
-    if (!state || !myTurn || mySeat === null) return [];
-    return legalMoves(state.board, mySeat, state.continueFrom);
-  }, [state, myTurn, mySeat]);
+    if (!checkers || !myTurn || mySeat === null) return [];
+    return legalMoves(checkers.board, mySeat === 2 ? 2 : 1, checkers.continueFrom);
+  }, [checkers, myTurn, mySeat]);
 
-  // Mid multi-jump the mover has no choice of piece — force the selection.
   const effectiveSelected =
-    myTurn && state?.continueFrom != null ? state.continueFrom : selected;
+    myTurn && checkers?.continueFrom != null ? checkers.continueFrom : selected;
 
   const highlights = useMemo<BoardHighlights>(() => {
     const movable = Array.from(new Set(availableMoves.map((move) => move.from)));
@@ -180,12 +188,17 @@ export function GamesExperience() {
       movable,
       selected: effectiveSelected,
       targets,
-      lastFrom: state?.lastMove?.from ?? null,
-      lastTo: state?.lastMove?.to ?? null,
+      lastFrom: checkers?.lastMove?.from ?? null,
+      lastTo: checkers?.lastMove?.to ?? null,
     };
-  }, [availableMoves, effectiveSelected, state?.lastMove]);
+  }, [availableMoves, effectiveSelected, checkers?.lastMove]);
 
   const view: LoungeView = session ? "game" : overlay === "table" ? "table" : "lounge";
+  const focusTable: LoungeTableId = session
+    ? activeTable.id
+    : overlay === "table"
+      ? pickedTable.id
+      : "table-1";
 
   // ---- actions ----------------------------------------------------------
   const startGame = useCallback(
@@ -199,7 +212,7 @@ export function GamesExperience() {
           body: JSON.stringify({
             playerId: identity.id,
             handle: identity.handle,
-            game: TABLE.game,
+            game: pickedTable.game,
             seat,
           }),
         });
@@ -214,7 +227,7 @@ export function GamesExperience() {
         setBusy(false);
       }
     },
-    [],
+    [pickedTable.game],
   );
 
   const joinGame = useCallback(
@@ -279,9 +292,61 @@ export function GamesExperience() {
     [activeCode, player],
   );
 
+  const sendScum = useCallback(
+    async (body: { action: "play"; cards: number[] } | { action: "pass" }) => {
+      if (!activeCode || !player) return;
+      setBusy(true);
+      try {
+        const res = await fetch(
+          `/api/games/sessions/${encodeURIComponent(activeCode)}/move`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ playerId: player.id, ...body }),
+          },
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error ?? "Play rejected");
+          return;
+        }
+        setError(null);
+        setSession(data.session as SessionSnapshot);
+      } catch {
+        setError("Network hiccup — try that play again.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [activeCode, player],
+  );
+
+  const dealScumTable = useCallback(async () => {
+    if (!activeCode || !player) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/games/sessions/${encodeURIComponent(activeCode)}/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playerId: player.id }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not deal");
+      setSession(data.session as SessionSnapshot);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not deal");
+    } finally {
+      setBusy(false);
+    }
+  }, [activeCode, player]);
+
   const onSquareClick = useCallback(
     (index: number) => {
-      if (!state || !myTurn || busy) return;
+      if (!checkers || !myTurn || busy) return;
       if (effectiveSelected !== null) {
         const move = availableMoves.find(
           (entry) => entry.from === effectiveSelected && entry.to === index,
@@ -291,14 +356,14 @@ export function GamesExperience() {
           return;
         }
       }
-      if (state.continueFrom != null) return; // must finish the jump
+      if (checkers.continueFrom != null) return;
       if (availableMoves.some((move) => move.from === index)) {
         setSelected(index);
         return;
       }
       setSelected(null);
     },
-    [state, myTurn, busy, effectiveSelected, availableMoves, sendMove],
+    [checkers, myTurn, busy, effectiveSelected, availableMoves, sendMove],
   );
 
   const leaveTable = useCallback(() => {
@@ -317,14 +382,14 @@ export function GamesExperience() {
     shareUrl.searchParams.set("code", session.code);
     try {
       await navigator.clipboard.writeText(
-        `Join my checkers game at Spleckt Games! Code ${session.code} — ${shareUrl.toString()}`,
+        `Join my ${activeTable.gameName} game at Spleckt Games! Code ${session.code} — ${shareUrl.toString()}`,
       );
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
       // clipboard unavailable — code stays visible in the HUD
     }
-  }, [session]);
+  }, [session, activeTable.gameName]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -337,29 +402,56 @@ export function GamesExperience() {
     return () => window.removeEventListener("keydown", onKey);
   }, [overlay]);
 
+  useEffect(() => {
+    if (!sharedCode) return;
+    let cancelled = false;
+    void fetch(`/api/games/sessions/${encodeURIComponent(sharedCode)}`, {
+      cache: "no-store",
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { session?: SessionSnapshot } | null) => {
+        if (cancelled || !data?.session) return;
+        setPickedTable(tableForGame(data.session.state.game));
+      })
+      .catch(() => {
+        // unknown code — table overlay still lets them type it
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sharedCode]);
+
   // ---- HUD content -----------------------------------------------------
-  const seat1 = state?.players.find((entry) => entry.seat === 1) ?? null;
-  const seat2 = state?.players.find((entry) => entry.seat === 2) ?? null;
-  const score1 = state ? capturedCount(state.board, 1) : 0;
-  const score2 = state ? capturedCount(state.board, 2) : 0;
+  const seat1 = checkers?.players.find((entry) => entry.seat === 1) ?? null;
+  const seat2 = checkers?.players.find((entry) => entry.seat === 2) ?? null;
+  const score1 = checkers ? capturedCount(checkers.board, 1) : 0;
+  const score2 = checkers ? capturedCount(checkers.board, 2) : 0;
   const winner =
-    state?.winnerSeat != null
-      ? state.players.find((entry) => entry.seat === state.winnerSeat) ?? null
+    checkers?.winnerSeat != null
+      ? checkers.players.find((entry) => entry.seat === checkers.winnerSeat) ?? null
+      : null;
+  const scumPresident =
+    scum && session?.status === "finished" && scum.finishOrder[0] != null
+      ? scum.players.find((entry) => entry.seat === scum.finishOrder[0]) ?? null
       : null;
 
   let statusLine = "";
   if (session && state) {
     if (session.status === "waiting") {
-      statusLine = `Share code ${session.code} — waiting for an opponent…`;
+      statusLine = scum
+        ? `Share code ${session.code} — ${state.players.length}/${SCUM_MIN}+ to deal`
+        : `Share code ${session.code} — waiting for an opponent…`;
     } else if (session.status === "finished") {
-      statusLine = winner
-        ? `${winner.handle} wins the match!`
-        : "Game over.";
+      if (scumPresident) statusLine = `${scumPresident.handle} is President!`;
+      else if (winner) statusLine = `${winner.handle} wins the match!`;
+      else statusLine = "Game over.";
     } else if (role.kind === "viewer" || role.kind === "none") {
       const mover = state.players.find((entry) => entry.seat === state.turnSeat);
-      statusLine = `You're watching · ${mover?.handle ?? "?"} to move`;
+      statusLine = `You're watching · ${mover?.handle ?? "?"} to play`;
     } else if (myTurn) {
-      statusLine = state.continueFrom != null ? "Jump again!" : "Your move.";
+      if (checkers?.continueFrom != null) statusLine = "Jump again!";
+      else if (scum && !scum.lastPlay) statusLine = "Lead any single or equal set.";
+      else statusLine = "Your play.";
     } else {
       const mover = state.players.find((entry) => entry.seat === state.turnSeat);
       statusLine = `${mover?.handle ?? "Opponent"} is thinking…`;
@@ -371,15 +463,20 @@ export function GamesExperience() {
       <div className="games-stage" aria-hidden={overlay !== "none"}>
         <LoungeCanvas
           view={view}
-          board={state ? state.board : DEMO_BOARD}
+          focusTable={focusTable}
+          board={checkers ? checkers.board : DEMO_BOARD}
           highlights={highlights}
-          facingSeat={mySeat}
-          showTrophy={session?.status === "finished"}
+          facingSeat={checkers ? (mySeat === 2 ? 2 : 1) : null}
+          showTrophy={Boolean(checkers) && session?.status === "finished"}
           onDeskClick={() => {
             setHandleInput(player?.handle ?? "");
             setOverlay("signin");
           }}
-          onTableClick={() => setOverlay("table")}
+          onTableClick={(tableId) => {
+            const table = LOUNGE_TABLES.find((entry) => entry.id === tableId);
+            if (table) setPickedTable(table);
+            setOverlay("table");
+          }}
           onSquareClick={onSquareClick}
         />
       </div>
@@ -469,45 +566,62 @@ export function GamesExperience() {
       {overlay === "table" && !session ? (
         <div className="games-modal-backdrop" onClick={() => setOverlay("none")}>
           <div className="games-modal" onClick={(event) => event.stopPropagation()}>
-            <p className="games-modal__kicker">TABLE {TABLE.number}</p>
-            <h2>{TABLE.gameName}</h2>
-            <p className="games-modal__copy">{TABLE.tagline}</p>
+            <p className="games-modal__kicker">TABLE {pickedTable.number}</p>
+            <h2>{pickedTable.gameName}</h2>
+            <p className="games-modal__copy">{pickedTable.tagline}</p>
             {player ? (
               <>
-                <div className="games-color-pick">
-                  <p>I&apos;ll play as</p>
-                  <div>
-                    <button
-                      type="button"
-                      className={
-                        hostSeat === 1
-                          ? "games-color games-color--red is-on"
-                          : "games-color games-color--red"
-                      }
-                      onClick={() => setHostSeat(1)}
-                    >
-                      Red
-                    </button>
-                    <button
-                      type="button"
-                      className={
-                        hostSeat === 2
-                          ? "games-color games-color--black is-on"
-                          : "games-color games-color--black"
-                      }
-                      onClick={() => setHostSeat(2)}
-                    >
-                      Black
-                    </button>
+                {pickedTable.game === "checkers" ? (
+                  <div className="games-color-pick">
+                    <p>I&apos;ll play as</p>
+                    <div>
+                      <button
+                        type="button"
+                        className={
+                          hostSeat === 1
+                            ? "games-color games-color--red is-on"
+                            : "games-color games-color--red"
+                        }
+                        onClick={() => setHostSeat(1)}
+                      >
+                        Red
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          hostSeat === 2
+                            ? "games-color games-color--black is-on"
+                            : "games-color games-color--black"
+                        }
+                        onClick={() => setHostSeat(2)}
+                      >
+                        Black
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <p className="games-modal__copy">
+                    Invite at least two friends. The organizer deals when three to six
+                    players are seated. First out of cards is President; last with cards
+                    is the Scum.
+                  </p>
+                )}
                 <button
                   type="button"
                   className="games-btn games-btn--wide"
                   disabled={busy}
-                  onClick={() => void startGame(player, hostSeat)}
+                  onClick={() =>
+                    void startGame(
+                      player,
+                      pickedTable.game === "checkers" ? hostSeat : 1,
+                    )
+                  }
                 >
-                  {busy ? "Setting the board…" : "Start a new game"}
+                  {busy
+                    ? "Opening the table…"
+                    : pickedTable.game === "scum"
+                      ? "Open the table"
+                      : "Start a new game"}
                 </button>
                 <div className="games-join">
                   <input
@@ -568,40 +682,64 @@ export function GamesExperience() {
             </button>
           </div>
 
-          <aside className="games-scoreboard">
+          <aside className={scum ? "games-scoreboard games-scoreboard--wide" : "games-scoreboard"}>
             <p className="games-scoreboard__title">
-              Table {TABLE.number} · {TABLE.gameName}
+              Table {activeTable.number} · {activeTable.gameName}
             </p>
             <ul>
-              <li
-                className={
-                  state.turnSeat === 1 && session.status === "playing"
-                    ? "is-turn seat-1"
-                    : "seat-1"
-                }
-              >
-                <i />
-                <span>
-                  {seat1 ? seat1.handle : "…"}
-                  {mySeat === 1 ? <em>you</em> : null}
-                </span>
-                <b title="captures">{score1}</b>
-              </li>
-              <li
-                className={
-                  state.turnSeat === 2 && session.status === "playing"
-                    ? "is-turn seat-2"
-                    : "seat-2"
-                }
-              >
-                <i />
-                <span>
-                  {seat2 ? seat2.handle : "waiting for opponent…"}
-                  {mySeat === 2 ? <em>you</em> : null}
-                </span>
-                <b title="captures">{score2}</b>
-              </li>
+              {state.players.map((entry, index) => {
+                const cardsLeft = scum
+                  ? (scum.hands[entry.seat] ?? []).length
+                  : entry.seat === 1
+                    ? score1
+                    : score2;
+                const finishedPlace = scum
+                  ? scum.finishOrder.indexOf(entry.seat) + 1
+                  : 0;
+                const title =
+                  scum && finishedPlace > 0
+                    ? rankTitle(finishedPlace, state.players.length)
+                    : scum
+                      ? `${cardsLeft} card${cardsLeft === 1 ? "" : "s"}`
+                      : String(cardsLeft);
+                return (
+                  <li
+                    key={entry.id}
+                    className={
+                      (entry.seat === state.turnSeat && session.status === "playing"
+                        ? "is-turn "
+                        : "") + `seat-${(index % 2) + 1}`
+                    }
+                  >
+                    <i />
+                    <span>
+                      {entry.handle}
+                      {mySeat === entry.seat ? <em>you</em> : null}
+                    </span>
+                    <b title={scum ? "cards left / rank" : "captures"}>{title}</b>
+                  </li>
+                );
+              })}
+              {checkers && state.players.length < 2 ? (
+                <li className="seat-2">
+                  <i />
+                  <span>waiting for opponent…</span>
+                  <b>0</b>
+                </li>
+              ) : null}
             </ul>
+            {scum && session.status === "waiting" && isHost ? (
+              <button
+                type="button"
+                className="games-btn games-btn--small"
+                disabled={busy || state.players.length < SCUM_MIN}
+                onClick={() => void dealScumTable()}
+              >
+                {state.players.length < SCUM_MIN
+                  ? `Need ${SCUM_MIN - state.players.length} more`
+                  : "Deal the cards"}
+              </button>
+            ) : null}
             {state.viewers.length > 0 ? (
               <p className="games-scoreboard__viewers">
                 👀 {state.viewers.map((entry) => entry.handle).join(", ")}
@@ -616,9 +754,21 @@ export function GamesExperience() {
             </button>
           </aside>
 
+          {scum && session.status === "playing" ? (
+            <ScumPlay
+              state={scum}
+              mySeat={mySeat}
+              myTurn={myTurn}
+              busy={busy}
+              onPlay={(cards) => void sendScum({ action: "play", cards })}
+              onPass={() => void sendScum({ action: "pass" })}
+            />
+          ) : null}
+
           <p
             className={
-              myTurn ? "games-status games-status--active" : "games-status"
+              (myTurn ? "games-status games-status--active" : "games-status") +
+              (scum && session.status === "playing" ? " games-status--scum" : "")
             }
             aria-live="polite"
           >
@@ -631,10 +781,29 @@ export function GamesExperience() {
               <div className="games-trophy" aria-hidden>
                 <span className="games-trophy__cup">🏆</span>
               </div>
-              <h2>{winner ? `${winner.handle} wins!` : "Game over"}</h2>
-              <p className="games-winner__score">
-                {seat1?.handle ?? "Red"} {score1} – {score2} {seat2?.handle ?? "Black"}
-              </p>
+              <h2>
+                {scumPresident
+                  ? `${scumPresident.handle} is President!`
+                  : winner
+                    ? `${winner.handle} wins!`
+                    : "Game over"}
+              </h2>
+              {scum ? (
+                <ol className="games-winner__ranks">
+                  {scum.finishOrder.map((seat, index) => {
+                    const who = scum.players.find((entry) => entry.seat === seat);
+                    return (
+                      <li key={seat}>
+                        {rankTitle(index + 1, scum.players.length)} — {who?.handle ?? "?"}
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <p className="games-winner__score">
+                  {seat1?.handle ?? "Red"} {score1} – {score2} {seat2?.handle ?? "Black"}
+                </p>
+              )}
               <button type="button" className="games-btn" onClick={leaveTable}>
                 Back to the lounge
               </button>

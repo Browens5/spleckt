@@ -4,7 +4,13 @@ import { db, getDbClient } from "@/lib/db";
 import { gameSessions } from "@/lib/db/schema";
 import { createId } from "@/lib/ids";
 import { initialBoard, type Seat } from "./checkers";
-import type { CheckersState, GameStatus, SessionSnapshot } from "./types";
+import { dealScum, emptyScumState, MAX_PLAYERS as SCUM_MAX, MIN_PLAYERS as SCUM_MIN } from "./scum";
+import type {
+  CheckersState,
+  GameId,
+  GameStatus,
+  SessionSnapshot,
+} from "./types";
 
 /** 5-character join codes from an unambiguous alphabet (no 0/O/1/I). */
 const createJoinCode = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 5);
@@ -17,7 +23,7 @@ export function normalizeHandle(raw: string) {
   return raw.trim().replace(/\s+/g, " ").slice(0, 16);
 }
 
-function freshState(): CheckersState {
+function freshCheckers(): CheckersState {
   return {
     game: "checkers",
     players: [],
@@ -31,6 +37,14 @@ function freshState(): CheckersState {
   };
 }
 
+export function maxPlayersFor(game: GameId) {
+  return game === "scum" ? SCUM_MAX : 2;
+}
+
+export function minPlayersFor(game: GameId) {
+  return game === "scum" ? SCUM_MIN : 2;
+}
+
 type SessionRow = typeof gameSessions.$inferSelect;
 
 function snapshotFromRow(row: SessionRow): SessionSnapshot {
@@ -38,19 +52,28 @@ function snapshotFromRow(row: SessionRow): SessionSnapshot {
     code: row.code,
     status: row.status as GameStatus,
     version: row.version,
-    state: JSON.parse(row.stateJson) as CheckersState,
+    state: JSON.parse(row.stateJson) as SessionSnapshot["state"],
   };
 }
 
 export async function createSession(
   hostId: string,
   hostHandle: string,
+  game: GameId = "checkers",
   hostSeat: Seat = 1,
 ) {
-  const state = freshState();
-  state.players.push({ id: hostId, handle: hostHandle, seat: hostSeat });
+  const state =
+    game === "scum"
+      ? emptyScumState()
+      : freshCheckers();
+  if (state.game === "scum") {
+    state.players.push({ id: hostId, handle: hostHandle, seat: 1 });
+    state.dealerSeat = 1;
+    state.turnSeat = 1;
+  } else {
+    state.players.push({ id: hostId, handle: hostHandle, seat: hostSeat });
+  }
 
-  // Retry on the (unlikely) code collision.
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const code = createJoinCode();
     try {
@@ -59,7 +82,7 @@ export async function createSession(
         .values({
           id: createId(),
           code,
-          game: "checkers",
+          game,
           status: "waiting",
           stateJson: JSON.stringify(state),
           version: 1,
@@ -106,4 +129,22 @@ export async function saveSession(
   });
   if (result.rowsAffected === 0) return null;
   return { ...snapshot, version: expectedVersion + 1 };
+}
+
+export function dealWaitingScum(snapshot: SessionSnapshot) {
+  if (snapshot.state.game !== "scum") {
+    return { ok: false as const, error: "Not a Scum table" };
+  }
+  if (snapshot.status !== "waiting") {
+    return { ok: false as const, error: "Cards are already out" };
+  }
+  if (snapshot.state.players.length < SCUM_MIN) {
+    return {
+      ok: false as const,
+      error: `Scum needs at least ${SCUM_MIN} players`,
+    };
+  }
+  dealScum(snapshot.state);
+  snapshot.status = "playing";
+  return { ok: true as const };
 }
