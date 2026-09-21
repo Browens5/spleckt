@@ -1,11 +1,12 @@
 import type { Board, Move, Seat } from "./checkers";
 import type { ScumState } from "./scum";
 import type { BattleshipState } from "./battleship";
+import type { Connect4State } from "./connect4";
 
-export type GameId = "checkers" | "scum" | "battleship";
+export type GameId = "checkers" | "scum" | "battleship" | "connect4";
 
 export type TableInfo = {
-  id: "table-1" | "table-2" | "table-3";
+  id: "table-1" | "table-2" | "table-3" | "table-4";
   number: number;
   game: GameId;
   gameName: string;
@@ -37,6 +38,14 @@ export const LOUNGE_TABLES: TableInfo[] = [
     tagline:
       "Two captains, 10×10 grids. Place the fleet, then take turns firing — sink every ship to win.",
   },
+  {
+    id: "table-4",
+    number: 4,
+    game: "connect4",
+    gameName: "Connect 4",
+    tagline:
+      "Drop discs in a 7×6 well. Four in a row — across, down, or diagonal — wins.",
+  },
 ];
 
 export function tableForGame(game: GameId) {
@@ -47,6 +56,7 @@ export type GamePlayer = {
   id: string;
   handle: string;
   seat: number;
+  bot?: boolean;
 };
 
 export type GameViewer = {
@@ -69,7 +79,7 @@ export type CheckersState = {
   lastMove: Move | null;
 };
 
-export type GameState = CheckersState | ScumState | BattleshipState;
+export type GameState = CheckersState | ScumState | BattleshipState | Connect4State;
 
 export type SessionSnapshot = {
   code: string;
@@ -93,6 +103,10 @@ export function isScumState(state: GameState): state is ScumState {
 
 export function isBattleshipState(state: GameState): state is BattleshipState {
   return state.game === "battleship";
+}
+
+export function isConnect4State(state: GameState): state is Connect4State {
+  return state.game === "connect4";
 }
 
 export function roleFor(state: GameState, playerId: string): PlayerRole {

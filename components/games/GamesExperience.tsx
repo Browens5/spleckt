@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -20,6 +21,7 @@ import {
   LOUNGE_TABLES,
   isBattleshipState,
   isCheckersState,
+  isConnect4State,
   isScumState,
   roleFor,
   tableForGame,
@@ -28,9 +30,18 @@ import {
 } from "@/lib/games/types";
 import { MIN_PLAYERS as SCUM_MIN, rankTitle } from "@/lib/games/scum";
 import { emptyFleet, remainingHull, specFor, type ShipPlacement } from "@/lib/games/battleship";
+import { maxBotsFor } from "@/lib/games/bots";
 import type { BoardHighlights, LoungeTableId, LoungeView } from "./LoungeCanvas";
 import { ScumPlay } from "./ScumPlay";
 import { BattleshipPlay } from "./BattleshipPlay";
+import { Connect4Play } from "./Connect4Play";
+import {
+  bootJazzFromStorage,
+  getJazzEnabled,
+  playSfx,
+  subscribeJazz,
+  toggleJazz,
+} from "./loungeAudio";
 
 const LoungeCanvas = dynamic(
   () => import("./LoungeCanvas").then((mod) => mod.LoungeCanvas),
@@ -106,6 +117,9 @@ export function GamesExperience() {
   const [selected, setSelected] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [hostSeat, setHostSeat] = useState<Seat>(1);
+  const [hostBots, setHostBots] = useState(0);
+  const sessionSfxRef = useRef<SessionSnapshot | null>(null);
+  const jazzOn = useSyncExternalStore(subscribeJazz, getJazzEnabled, () => false);
   const [pickedTable, setPickedTable] = useState<TableInfo>(LOUNGE_TABLES[0]!);
 
   const savePlayer = useCallback(
@@ -162,6 +176,7 @@ export function GamesExperience() {
   const checkers = state && isCheckersState(state) ? state : null;
   const scum = state && isScumState(state) ? state : null;
   const battleship = state && isBattleshipState(state) ? state : null;
+  const connect4 = state && isConnect4State(state) ? state : null;
   const activeTable = state ? tableForGame(state.game) : pickedTable;
   const role = state && player ? roleFor(state, player.id) : { kind: "none" as const };
   const mySeat = role.kind === "player" ? role.seat : null;
@@ -220,6 +235,7 @@ export function GamesExperience() {
             handle: identity.handle,
             game: pickedTable.game,
             seat,
+            bots: hostBots,
           }),
         });
         const data = await res.json();
@@ -233,7 +249,7 @@ export function GamesExperience() {
         setBusy(false);
       }
     },
-    [pickedTable.game],
+    [pickedTable.game, hostBots],
   );
 
   const joinGame = useCallback(
@@ -360,6 +376,35 @@ export function GamesExperience() {
     [activeCode, player],
   );
 
+  const sendConnect4 = useCallback(
+    async (col: number) => {
+      if (!activeCode || !player) return;
+      setBusy(true);
+      try {
+        const res = await fetch(
+          `/api/games/sessions/${encodeURIComponent(activeCode)}/move`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ playerId: player.id, action: "drop", col }),
+          },
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error ?? "Drop rejected");
+          return;
+        }
+        setError(null);
+        setSession(data.session as SessionSnapshot);
+      } catch {
+        setError("Network hiccup — try that drop again.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [activeCode, player],
+  );
+
   const dealScumTable = useCallback(async () => {
     if (!activeCode || !player) return;
     setBusy(true);
@@ -442,6 +487,35 @@ export function GamesExperience() {
   }, [overlay]);
 
   useEffect(() => {
+    bootJazzFromStorage();
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    const prev = sessionSfxRef.current;
+    sessionSfxRef.current = session;
+    if (!prev || prev.code !== session.code) return;
+    if (session.status === "finished" && prev.status !== "finished") {
+      playSfx("win");
+      return;
+    }
+    if (session.state.moveCount <= prev.state.moveCount) return;
+    if (session.state.game === "connect4" || session.state.game === "checkers") {
+      playSfx("drop");
+    } else if (session.state.game === "scum") {
+      playSfx("card");
+    } else if (session.state.game === "battleship") {
+      const shot = session.state.lastShot;
+      const last = prev.state.game === "battleship" ? prev.state.lastShot : null;
+      if (shot && shot !== last) {
+        playSfx(shot.hit ? "hit" : "miss");
+      } else {
+        playSfx("place");
+      }
+    }
+  }, [session]);
+
+  useEffect(() => {
     if (!sharedCode) return;
     let cancelled = false;
     void fetch(`/api/games/sessions/${encodeURIComponent(sharedCode)}`, {
@@ -470,7 +544,10 @@ export function GamesExperience() {
       ? checkers.players.find((entry) => entry.seat === checkers.winnerSeat) ?? null
       : battleship?.winnerSeat != null
         ? battleship.players.find((entry) => entry.seat === battleship.winnerSeat) ?? null
-        : null;
+        : connect4?.winnerSeat
+          ? connect4.players.find((entry) => entry.seat === connect4.winnerSeat) ?? null
+          : null;
+  const connect4Draw = Boolean(connect4 && session?.status === "finished" && connect4.winnerSeat === 0);
   const scumPresident =
     scum && session?.status === "finished" && scum.finishOrder[0] != null
       ? scum.players.find((entry) => entry.seat === scum.finishOrder[0]) ?? null
@@ -484,6 +561,7 @@ export function GamesExperience() {
         : `Share code ${session.code} — waiting for an opponent…`;
     } else if (session.status === "finished") {
       if (scumPresident) statusLine = `${scumPresident.handle} is President!`;
+      else if (connect4Draw) statusLine = "The well is full — draw.";
       else if (winner) statusLine = `${winner.handle} wins the match!`;
       else statusLine = "Game over.";
     } else if (role.kind === "viewer" || role.kind === "none") {
@@ -493,6 +571,7 @@ export function GamesExperience() {
       if (checkers?.continueFrom != null) statusLine = "Jump again!";
       else if (battleship?.phase === "placing") statusLine = "Place your fleet.";
       else if (battleship) statusLine = "Take a shot on the radar.";
+      else if (connect4) statusLine = "Drop a disc.";
       else if (scum && !scum.lastPlay) statusLine = "Lead any single or equal set.";
       else statusLine = "Your play.";
     } else {
@@ -534,10 +613,14 @@ export function GamesExperience() {
           }}
           onTableClick={(tableId) => {
             const table = LOUNGE_TABLES.find((entry) => entry.id === tableId);
-            if (table) setPickedTable(table);
+            if (table) {
+              setPickedTable(table);
+              setHostBots(0);
+            }
             setOverlay("table");
           }}
           onSquareClick={onSquareClick}
+          onJukeboxClick={() => toggleJazz()}
         />
       </div>
 
@@ -546,33 +629,43 @@ export function GamesExperience() {
           <h1>SPLECKT GAMES</h1>
           <p>groovy multiplayer board game lounge</p>
         </div>
-        {player ? (
+        <div className="games-chrome__tools">
           <button
             type="button"
-            className="games-badge"
-            onClick={() => {
-              setHandleInput(player.handle);
-              setOverlay("signin");
-            }}
-            title="Change your handle at the front desk"
+            className={jazzOn ? "games-badge is-on" : "games-badge games-badge--muted"}
+            onClick={() => toggleJazz()}
+            title="Toggle lounge jazz (or click the jukebox)"
           >
-            ★ {player.handle}
+            {jazzOn ? "♪ Jazz on" : "♪ Jazz off"}
           </button>
-        ) : (
-          <button
-            type="button"
-            className="games-badge games-badge--muted"
-            onClick={() => setOverlay("signin")}
-          >
-            Sign in at the front desk
-          </button>
-        )}
+          {player ? (
+            <button
+              type="button"
+              className="games-badge"
+              onClick={() => {
+                setHandleInput(player.handle);
+                setOverlay("signin");
+              }}
+              title="Change your handle at the front desk"
+            >
+              ★ {player.handle}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="games-badge games-badge--muted"
+              onClick={() => setOverlay("signin")}
+            >
+              Sign in at the front desk
+            </button>
+          )}
+        </div>
       </header>
 
       {!session && overlay === "none" ? (
         <p className="games-hint">
           {player
-            ? "Pick a table to start or join a game. Drag to look around."
+            ? "Pick a table to start or join a game. Drag to look around. Click the jukebox for jazz."
             : "Click the front desk to sign in, then pick a table. Drag to look around."}
         </p>
       ) : null}
@@ -661,9 +754,14 @@ export function GamesExperience() {
                   </div>
                 ) : pickedTable.game === "scum" ? (
                   <p className="games-modal__copy">
-                    Invite at least two friends. The organizer deals when three to six
+                    Invite friends or seat computers. The organizer deals when three to six
                     players are seated. First out of cards is President; last with cards
                     is the Scum.
+                  </p>
+                ) : pickedTable.game === "connect4" ? (
+                  <p className="games-modal__copy">
+                    Two players drop discs down a 7×6 well. Four in a row wins. Seat a
+                    computer if you want a solo game.
                   </p>
                 ) : (
                   <p className="games-modal__copy">
@@ -671,6 +769,37 @@ export function GamesExperience() {
                     Destroyer, then take turns firing one shot. Sink the whole fleet to win.
                   </p>
                 )}
+                <div className="games-bots">
+                  <p>Computers</p>
+                  <div>
+                    <button
+                      type="button"
+                      className="games-btn games-btn--ghost games-btn--small"
+                      disabled={hostBots <= 0}
+                      onClick={() => setHostBots((value) => Math.max(0, value - 1))}
+                    >
+                      –
+                    </button>
+                    <strong>{hostBots}</strong>
+                    <button
+                      type="button"
+                      className="games-btn games-btn--ghost games-btn--small"
+                      disabled={hostBots >= maxBotsFor(pickedTable.game)}
+                      onClick={() =>
+                        setHostBots((value) =>
+                          Math.min(maxBotsFor(pickedTable.game), value + 1),
+                        )
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                  <span>
+                    {pickedTable.game === "scum"
+                      ? "Up to five. Deal as soon as three seats are filled."
+                      : "0 or 1. One computer starts the match immediately."}
+                  </span>
+                </div>
                 <button
                   type="button"
                   className="games-btn games-btn--wide"
@@ -684,9 +813,11 @@ export function GamesExperience() {
                 >
                   {busy
                     ? "Opening the table…"
-                    : pickedTable.game === "checkers"
-                      ? "Start a new game"
-                      : "Open the table"}
+                    : hostBots > 0
+                      ? "Play with computers"
+                      : pickedTable.game === "checkers"
+                        ? "Start a new game"
+                        : "Open the table"}
                 </button>
                 <div className="games-join">
                   <input
@@ -747,7 +878,7 @@ export function GamesExperience() {
             </button>
           </div>
 
-          <aside className={scum || battleship ? "games-scoreboard games-scoreboard--wide" : "games-scoreboard"}>
+          <aside className={scum || battleship || connect4 ? "games-scoreboard games-scoreboard--wide" : "games-scoreboard"}>
             <p className="games-scoreboard__title">
               Table {activeTable.number} · {activeTable.gameName}
             </p>
@@ -771,7 +902,9 @@ export function GamesExperience() {
                         ? "ready"
                         : "placing"
                       : `${remainingHull(battleship.fleets[entry.seat] ?? emptyFleet())} hull`
-                    : String(cardsLeft);
+                    : connect4
+                      ? `${connect4.board.filter((cell) => cell === entry.seat).length} discs`
+                      : String(cardsLeft);
                 const isTurn =
                   session.status === "playing" &&
                   (battleship?.phase === "placing"
@@ -785,6 +918,7 @@ export function GamesExperience() {
                     <i />
                     <span>
                       {entry.handle}
+                      {"bot" in entry && entry.bot ? <em>cpu</em> : null}
                       {mySeat === entry.seat ? <em>you</em> : null}
                     </span>
                     <b
@@ -808,7 +942,7 @@ export function GamesExperience() {
                   <b>0</b>
                 </li>
               ) : null}
-              {battleship && state.players.length < 2 ? (
+              {connect4 && state.players.length < 2 ? (
                 <li className="seat-2">
                   <i />
                   <span>waiting for opponent…</span>
@@ -864,11 +998,22 @@ export function GamesExperience() {
             />
           ) : null}
 
+          {connect4 && session.status === "playing" ? (
+            <Connect4Play
+              state={connect4}
+              mySeat={mySeat}
+              myTurn={myTurn}
+              busy={busy}
+              onDrop={(col) => void sendConnect4(col)}
+            />
+          ) : null}
+
           <p
             className={
               (myTurn ? "games-status games-status--active" : "games-status") +
               (scum && session.status === "playing" ? " games-status--scum" : "") +
-              (battleship && session.status === "playing" ? " games-status--bs" : "")
+              (battleship && session.status === "playing" ? " games-status--bs" : "") +
+              (connect4 && session.status === "playing" ? " games-status--c4" : "")
             }
             aria-live="polite"
           >
@@ -884,9 +1029,11 @@ export function GamesExperience() {
               <h2>
                 {scumPresident
                   ? `${scumPresident.handle} is President!`
-                  : winner
-                    ? `${winner.handle} wins!`
-                    : "Game over"}
+                  : connect4Draw
+                    ? "It's a draw!"
+                    : winner
+                      ? `${winner.handle} wins!`
+                      : "Game over"}
               </h2>
               {scum ? (
                 <ol className="games-winner__ranks">
@@ -901,6 +1048,10 @@ export function GamesExperience() {
                 </ol>
               ) : battleship ? (
                 <p className="games-winner__score">Fleet destroyed.</p>
+              ) : connect4 ? (
+                <p className="games-winner__score">
+                  {connect4Draw ? "The well is packed." : "Four in a row."}
+                </p>
               ) : (
                 <p className="games-winner__score">
                   {seat1?.handle ?? "Red"} {score1} – {score2} {seat2?.handle ?? "Black"}

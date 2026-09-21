@@ -49,7 +49,7 @@ export type ScumPlay = {
 
 export type ScumState = {
   game: "scum";
-  players: Array<{ id: string; handle: string; seat: number }>;
+  players: Array<{ id: string; handle: string; seat: number; bot?: boolean }>;
   viewers: Array<{ id: string; handle: string }>;
   dealerSeat: number;
   turnSeat: number;
@@ -193,6 +193,34 @@ export function cardsInHand(hand: number[], cards: number[]) {
     available.set(card, left - 1);
   }
   return true;
+}
+
+export function legalScumActions(state: ScumState, seat: number): ScumAction[] {
+  const hand = state.hands[seat] ?? [];
+  const groups = new Map<number, number[]>();
+  for (const card of hand) {
+    const rank = cardRank(card);
+    const group = groups.get(rank) ?? [];
+    group.push(card);
+    groups.set(rank, group);
+  }
+  const actions: ScumAction[] = [];
+  const need = state.lastPlay?.cards.length ?? 0;
+  for (const group of groups.values()) {
+    const max = Math.min(4, group.length);
+    const start = need > 0 ? need : 1;
+    const end = need > 0 ? need : max;
+    if (start > max) continue;
+    for (let len = start; len <= end; len += 1) {
+      const cards = group.slice(0, len);
+      const action: ScumAction = { type: "play", cards };
+      if (isLegalAction(state, seat, action)) actions.push(action);
+    }
+  }
+  if (isLegalAction(state, seat, { type: "pass" })) {
+    actions.push({ type: "pass" });
+  }
+  return actions;
 }
 
 export function isLegalAction(state: ScumState, seat: number, action: ScumAction) {

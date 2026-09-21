@@ -6,6 +6,8 @@ import { ensureSchema } from "@/lib/db/ensure-schema";
 import { applyMove, findMove, legalMoves } from "@/lib/games/checkers";
 import { applyScumAction } from "@/lib/games/scum";
 import { applyBattleshipAction, CELL_COUNT, FLEET_SPEC } from "@/lib/games/battleship";
+import { applyConnect4Action } from "@/lib/games/connect4";
+import { advanceBots } from "@/lib/games/bots";
 import { getSessionByCode, saveSession } from "@/lib/games/session";
 
 const shipIdSchema = z.enum(
@@ -44,6 +46,11 @@ const moveSchema = z.union([
     playerId: z.string().min(8).max(64),
     action: z.literal("fire"),
     index: z.number().int().min(0).max(CELL_COUNT - 1),
+  }),
+  z.object({
+    playerId: z.string().min(8).max(64),
+    action: z.literal("drop"),
+    col: z.number().int().min(0).max(6),
   }),
 ]);
 
@@ -115,6 +122,18 @@ export async function POST(
       return NextResponse.json({ error: result.error }, { status: 422 });
     }
     if (result.finished) snapshot.status = "finished";
+  } else if (state.game === "connect4") {
+    if (!("action" in parsed.data) || parsed.data.action !== "drop") {
+      return NextResponse.json({ error: "Illegal drop" }, { status: 422 });
+    }
+    const result = applyConnect4Action(state, player.seat, {
+      type: "drop",
+      col: parsed.data.col,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 422 });
+    }
+    if (result.finished) snapshot.status = "finished";
   } else {
     if (!("action" in parsed.data) || (parsed.data.action !== "place" && parsed.data.action !== "fire")) {
       return NextResponse.json({ error: "Illegal shot" }, { status: 422 });
@@ -136,6 +155,8 @@ export async function POST(
     }
     if (result.finished) snapshot.status = "finished";
   }
+
+  if (snapshot.status === "playing") advanceBots(snapshot);
 
   const saved = await saveSession(snapshot, snapshot.version);
   if (!saved) {
