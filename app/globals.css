@@ -6663,7 +6663,7 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 0 0.8rem 4.6rem;
+  padding: 0 0.8rem 4.6rem 17.5rem;
   pointer-events: none;
 }
 
@@ -6842,6 +6842,11 @@ textarea {
     width: 2.55rem;
     height: 3.6rem;
     font-size: 0.78rem;
+  }
+
+  .scum-table {
+    padding: 0 0.6rem 11.5rem;
+    width: 100%;
   }
 
   .games-hint {
