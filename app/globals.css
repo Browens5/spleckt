@@ -6769,7 +6769,9 @@ textarea {
 }
 
 .games-status--bs {
-  bottom: 15.4rem;
+  z-index: 7;
+  bottom: auto;
+  top: 4.55rem;
   white-space: normal;
   max-width: min(90vw, 28rem);
   text-align: center;
@@ -6991,7 +6993,8 @@ textarea {
   }
 
   .games-status--bs {
-    bottom: 16.2rem;
+    top: 4.4rem;
+    bottom: auto;
   }
 
   .bs-table {
