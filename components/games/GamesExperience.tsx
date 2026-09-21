@@ -415,8 +415,8 @@ export function GamesExperience() {
       {!session && overlay === "none" ? (
         <p className="games-hint">
           {player
-            ? "Pick a table to start or join a game."
-            : "Click the front desk to sign in, then pick a table."}
+            ? "Pick a table to start or join a game. Drag to look around."
+            : "Click the front desk to sign in, then pick a table. Drag to look around."}
         </p>
       ) : null}
 

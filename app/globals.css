@@ -6171,6 +6171,8 @@ textarea {
   display: block;
   background: var(--gm-bg);
   touch-action: none;
+  user-select: none;
+  cursor: grab;
 }
 
 .games-chrome {
