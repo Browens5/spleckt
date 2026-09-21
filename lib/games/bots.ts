@@ -12,6 +12,7 @@ import {
 import { applyConnect4Action, pickConnect4Column, type Connect4State } from "./connect4";
 import {
   applyScumAction,
+  beginNextRound,
   cardRank,
   legalScumActions,
   type ScumState,
@@ -20,6 +21,8 @@ import type { CheckersState, GamePlayer, GameState, SessionSnapshot } from "./ty
 
 export const BOT_PREFIX = "bot-";
 export const BOT_HANDLES = ["Chip", "Dixie", "Sonny", "Mabel", "Rex", "Pearl"] as const;
+/** Pause after a human action (or the previous computer action) before a bot moves. */
+export const BOT_THINK_MS = 500;
 
 export function isBotPlayer(player: Pick<GamePlayer, "id" | "bot">) {
   return player.bot === true || player.id.startsWith(BOT_PREFIX);
@@ -93,7 +96,8 @@ function playScum(state: ScumState) {
     chosen = plays[0]!;
   }
   const result = applyScumAction(state, state.turnSeat, chosen);
-  return result.ok && result.finished;
+  if (result.ok && result.finished) beginNextRound(state);
+  return false;
 }
 
 function playConnect4(state: Connect4State) {
@@ -163,6 +167,14 @@ function botShouldAct(state: GameState) {
 
 export function needsBotTurn(state: GameState) {
   return botShouldAct(state);
+}
+
+export function shouldAdvanceBot(snapshot: SessionSnapshot, now = Date.now()) {
+  return (
+    snapshot.status === "playing" &&
+    botShouldAct(snapshot.state) &&
+    now - (snapshot.updatedAt ?? 0) >= BOT_THINK_MS
+  );
 }
 
 function playOne(state: GameState) {

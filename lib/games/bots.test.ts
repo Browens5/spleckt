@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { emptyConnect4State } from "./connect4";
 import { emptyScumState } from "./scum";
-import { advanceBots, isBotPlayer, seatBots } from "./bots";
+import { advanceBots, isBotPlayer, seatBots, shouldAdvanceBot } from "./bots";
 import type { SessionSnapshot } from "./types";
 
 const four = emptyConnect4State();
@@ -15,8 +15,11 @@ const snap: SessionSnapshot = {
   status: "playing",
   version: 1,
   state: four,
+  updatedAt: Date.now(),
 };
 four.turnSeat = 2;
+assert.equal(shouldAdvanceBot(snap, snap.updatedAt! + 200), false);
+assert.equal(shouldAdvanceBot(snap, snap.updatedAt! + 500), true);
 advanceBots(snap);
 assert.equal(four.moveCount, 1);
 assert.equal(four.turnSeat, 1);

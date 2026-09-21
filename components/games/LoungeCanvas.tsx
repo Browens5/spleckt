@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as pc from "playcanvas";
 import { BOARD_SIZE, colOf, rowOf, type Board, type Seat } from "@/lib/games/checkers";
+import { COLS as C4_COLS, ROWS as C4_ROWS, cellIndex as c4Index } from "@/lib/games/connect4";
 import {
   GROOVE,
   paintArcadeScreen,
@@ -44,6 +45,9 @@ type LoungeCanvasProps = {
   onDeskClick: () => void;
   onTableClick: (tableId: LoungeTableId) => void;
   onSquareClick: (index: number) => void;
+  onColumnClick?: (col: number) => void;
+  connect4Board?: number[] | null;
+  connect4Last?: number | null;
   onJukeboxClick?: () => void;
 };
 
@@ -56,6 +60,14 @@ const JUKE = new pc.Vec3(6.15, 0, 0.35);
 const TABLE_TOP_Y = 0.78;
 const BOARD_TOP_Y = TABLE_TOP_Y + 0.05;
 const SQUARE = 0.172;
+const C4_COL_W = 0.155;
+const C4_ROW_H = 0.148;
+const C4_DISC_Z = 0.08;
+const C4_BASE_Y = TABLE_TOP_Y + 0.22;
+const C4_LOOK_Y = C4_BASE_Y + 2.5 * C4_ROW_H;
+const C4_GAME_PITCH = 16;
+const C4_GAME_ORTHO = 1.42;
+const C4_GAME_MIN_HALF = 1.5;
 
 function squareCenter(index: number, out: pc.Vec3) {
   const row = rowOf(index);
@@ -221,6 +233,9 @@ export function LoungeCanvas({
   onDeskClick,
   onTableClick,
   onSquareClick,
+  onColumnClick,
+  connect4Board = null,
+  connect4Last = null,
   onJukeboxClick,
 }: LoungeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -233,9 +248,13 @@ export function LoungeCanvas({
   const onDeskRef = useRef(onDeskClick);
   const onTableRef = useRef(onTableClick);
   const onSquareRef = useRef(onSquareClick);
+  const onColumnRef = useRef(onColumnClick);
   const onJukeRef = useRef(onJukeboxClick);
+  const connect4BoardRef = useRef(connect4Board);
+  const connect4LastRef = useRef(connect4Last);
   const refreshBoardRef = useRef<(() => void) | null>(null);
   const refreshHighlightsRef = useRef<(() => void) | null>(null);
+  const refreshFourRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     viewRef.current = view;
@@ -247,7 +266,10 @@ export function LoungeCanvas({
     onDeskRef.current = onDeskClick;
     onTableRef.current = onTableClick;
     onSquareRef.current = onSquareClick;
+    onColumnRef.current = onColumnClick;
     onJukeRef.current = onJukeboxClick;
+    connect4BoardRef.current = connect4Board;
+    connect4LastRef.current = connect4Last;
   });
 
   useEffect(() => {
@@ -257,6 +279,10 @@ export function LoungeCanvas({
   useEffect(() => {
     refreshHighlightsRef.current?.();
   }, [highlights]);
+
+  useEffect(() => {
+    refreshFourRef.current?.();
+  }, [connect4Board, connect4Last]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -332,10 +358,12 @@ export function LoungeCanvas({
         camera.lookAt(camState.look);
       }
       const aspect = Math.max(0.3, canvas.clientWidth / Math.max(1, canvas.clientHeight));
+      const connect4Game = viewRef.current === "game" && focusRef.current === "table-4";
       const rig = VIEW_RIGS[viewRef.current];
+      const minHalf = connect4Game ? C4_GAME_MIN_HALF : rig.minHalfWidth;
       cameraComponent.orthoHeight = Math.max(
         camState.orthoHeight,
-        rig.minHalfWidth / aspect,
+        minHalf / aspect,
       );
     };
     placeCamera();
@@ -974,26 +1002,76 @@ export function LoungeCanvas({
     fourTop.render!.receiveShadows = true;
     addPrim(fourRoot, "cylinder", goldMat, [0, TABLE_TOP_Y + 0.008, 0], [2.1, 0.015, 2.1]);
     const fourFelt = litMaterial("#1e4d8c", { gloss: 28 });
-    addPrim(fourRoot, "box", fourFelt, [0, TABLE_TOP_Y + 0.04, 0], [1.05, 0.7, 0.16]);
+    const fourFrameH = C4_ROWS * C4_ROW_H + 0.28;
+    const fourFrameY = C4_BASE_Y + ((C4_ROWS - 1) * C4_ROW_H) / 2;
+    addPrim(
+      fourRoot,
+      "box",
+      fourFelt,
+      [0, fourFrameY, 0],
+      [C4_COLS * C4_COL_W + 0.2, fourFrameH, 0.14],
+    );
+    addPrim(
+      fourRoot,
+      "box",
+      goldMat,
+      [0, C4_BASE_Y - 0.12, 0],
+      [C4_COLS * C4_COL_W + 0.28, 0.06, 0.2],
+    );
     const discRed = litMaterial("#c0392b", { gloss: 55 });
     const discYellow = litMaterial("#f1c40f", { gloss: 55 });
+    const discRedLast = glowMaterial("#ff7a6a", 1.15);
+    const discYellowLast = glowMaterial("#ffe08a", 1.15);
     const holeMat = litMaterial("#0d2a52", { gloss: 40 });
-    for (let col = 0; col < 7; col += 1) {
-      for (let row = 0; row < 6; row += 1) {
-        const x = (col - 3) * 0.13;
-        const y = TABLE_TOP_Y + 0.08 + row * 0.11;
-        const filled =
-          (row === 0 && col < 3) || (row === 1 && col === 1) || (row === 2 && col === 3);
-        const mat = filled
-          ? col % 2 === 0
-            ? discRed
-            : discYellow
-          : holeMat;
-        addPrim(fourRoot, "cylinder", mat, [x, y, 0.02], [0.09, 0.03, 0.09], [90, 0, 0]);
+    const fourDiscs: pc.Entity[] = [];
+    for (let col = 0; col < C4_COLS; col += 1) {
+      for (let row = 0; row < C4_ROWS; row += 1) {
+        const x = (col - 3) * C4_COL_W;
+        const y = C4_BASE_Y + row * C4_ROW_H;
+        const disc = addPrim(
+          fourRoot,
+          "cylinder",
+          holeMat,
+          [x, y, C4_DISC_Z],
+          [0.11, 0.035, 0.11],
+          [90, 0, 0],
+        );
+        fourDiscs[c4Index(row, col)] = disc;
       }
     }
-    addLoungeChair(fourRoot, beanbagMats.orange, 0.1, -1.42, 0, 0.9);
-    addLoungeChair(fourRoot, beanbagMats.green, -0.08, 1.42, 180, 0.9);
+    const refreshFour = () => {
+      const grid = connect4BoardRef.current;
+      const last = connect4LastRef.current;
+      for (let col = 0; col < C4_COLS; col += 1) {
+        for (let row = 0; row < C4_ROWS; row += 1) {
+          const index = c4Index(row, col);
+          const entity = fourDiscs[index];
+          if (!entity?.render) continue;
+          const decorative =
+            grid == null &&
+            ((row === 0 && col < 3) || (row === 1 && col === 1) || (row === 2 && col === 3));
+          const seat = grid ? (grid[index] ?? 0) : decorative ? (col % 2 === 0 ? 1 : 2) : 0;
+          const isLast = grid != null && last === index;
+          const material =
+            seat === 1
+              ? isLast
+                ? discRedLast
+                : discRed
+              : seat === 2
+                ? isLast
+                  ? discYellowLast
+                  : discYellow
+                : holeMat;
+          entity.render.meshInstances.forEach((mesh) => {
+            mesh.material = material;
+          });
+        }
+      }
+    };
+    refreshFour();
+    refreshFourRef.current = refreshFour;
+    addLoungeChair(fourRoot, beanbagMats.orange, 1.48, 0.08, 90, 0.9);
+    addLoungeChair(fourRoot, beanbagMats.green, -1.46, -0.06, -90, 0.9);
 
     const fourLabelMat = texturedMaterial(
       textureFromCanvas(
@@ -1235,6 +1313,27 @@ export function LoungeCanvas({
       return row * BOARD_SIZE + col;
     };
 
+    const pickConnect4Column = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      const sx = clientX - rect.left;
+      const sy = clientY - rect.top;
+      const from = cameraComponent.screenToWorld(sx, sy, cameraComponent.nearClip);
+      const to = cameraComponent.screenToWorld(sx, sy, cameraComponent.farClip);
+      const planeZ = FOUR_TABLE.z + C4_DISC_Z + 0.02;
+      const dz = to.z - from.z;
+      if (Math.abs(dz) < 1e-6) return null;
+      const t = (planeZ - from.z) / dz;
+      if (t < 0) return null;
+      const x = from.x + (to.x - from.x) * t;
+      const y = from.y + (to.y - from.y) * t;
+      const col = Math.round((x - FOUR_TABLE.x) / C4_COL_W + 3);
+      if (col < 0 || col >= C4_COLS) return null;
+      const minY = C4_BASE_Y - 0.2;
+      const maxY = C4_BASE_Y + C4_ROWS * C4_ROW_H + 0.25;
+      if (y < minY || y > maxY) return null;
+      return col;
+    };
+
     const pickHotspot = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
       const sx = clientX - rect.left;
@@ -1301,7 +1400,9 @@ export function LoungeCanvas({
           ? Number(facingSeatRef.current) === 2
             ? 180
             : 0
-          : VIEW_RIGS[view].yaw + yawOrbit;
+          : view === "game" && focusRef.current === "table-4"
+            ? 0
+            : VIEW_RIGS[view].yaw + yawOrbit;
       const yawRad = (yawDeg * Math.PI) / 180;
       const rx = Math.cos(yawRad);
       const rz = -Math.sin(yawRad);
@@ -1328,6 +1429,12 @@ export function LoungeCanvas({
             marks.targets.includes(index) ||
             marks.selected === index);
         canvas.style.cursor = active ? "pointer" : "grab";
+        return;
+      }
+      if (viewRef.current === "game" && focusRef.current === "table-4") {
+        canvas.style.cursor = pickConnect4Column(event.clientX, event.clientY) != null
+          ? "pointer"
+          : "grab";
         return;
       }
       canvas.style.cursor = pickHotspot(event.clientX, event.clientY)
@@ -1358,6 +1465,9 @@ export function LoungeCanvas({
         if (focusRef.current === "table-1") {
           const index = pickBoardSquare(event.clientX, event.clientY);
           if (index !== null) onSquareRef.current(index);
+        } else if (focusRef.current === "table-4") {
+          const col = pickConnect4Column(event.clientX, event.clientY);
+          if (col !== null) onColumnRef.current?.(col);
         }
         return;
       }
@@ -1411,15 +1521,24 @@ export function LoungeCanvas({
       const lookX = viewNow === "lounge" ? rig.look.x : focusPos.x;
       const lookZ = viewNow === "lounge" ? rig.look.z : focusPos.z;
       const checkersGame = viewNow === "game" && focusNow === "table-1";
+      const connect4Game = viewNow === "game" && focusNow === "table-4";
       const facingYaw = checkersGame && Number(facingSeatRef.current) === 2 ? 180 : 0;
-      const targetYaw = checkersGame ? facingYaw : rig.yaw + (viewNow === "lounge" ? yawOrbit : 0);
-      const targetPitch = rig.pitch + (viewNow === "lounge" ? pitchOrbit : 0);
+      const targetYaw = checkersGame
+        ? facingYaw
+        : connect4Game
+          ? 0
+          : rig.yaw + (viewNow === "lounge" ? yawOrbit : 0);
+      const targetPitch = connect4Game
+        ? C4_GAME_PITCH
+        : rig.pitch + (viewNow === "lounge" ? pitchOrbit : 0);
+      const lookY = connect4Game ? C4_LOOK_Y : rig.look.y;
+      const targetOrtho = connect4Game ? C4_GAME_ORTHO : rig.orthoHeight;
       const ease = Math.min(1, dt * 5);
       const lookEase = dragging ? 1 : ease;
       camState.look.x += (lookX + panX - camState.look.x) * lookEase;
-      camState.look.y += (rig.look.y - camState.look.y) * ease;
+      camState.look.y += (lookY - camState.look.y) * ease;
       camState.look.z += (lookZ + panZ - camState.look.z) * lookEase;
-      camState.orthoHeight += (rig.orthoHeight - camState.orthoHeight) * ease;
+      camState.orthoHeight += (targetOrtho - camState.orthoHeight) * ease;
       camState.pitch += (targetPitch - camState.pitch) * lookEase;
       if (viewNow === "game") {
         camState.yaw = targetYaw;
@@ -1495,6 +1614,7 @@ export function LoungeCanvas({
     return () => {
       refreshBoardRef.current = null;
       refreshHighlightsRef.current = null;
+      refreshFourRef.current = null;
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("pointerdown", onPointerDown);

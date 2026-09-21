@@ -4,10 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ensureSchema } from "@/lib/db/ensure-schema";
 import { applyMove, findMove, legalMoves } from "@/lib/games/checkers";
-import { applyScumAction } from "@/lib/games/scum";
+import { applyScumAction, beginNextRound } from "@/lib/games/scum";
 import { applyBattleshipAction, CELL_COUNT, FLEET_SPEC } from "@/lib/games/battleship";
 import { applyConnect4Action } from "@/lib/games/connect4";
-import { advanceBots } from "@/lib/games/bots";
 import { getSessionByCode, saveSession } from "@/lib/games/session";
 
 const shipIdSchema = z.enum(
@@ -121,7 +120,7 @@ export async function POST(
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 422 });
     }
-    if (result.finished) snapshot.status = "finished";
+    if (result.finished) beginNextRound(state);
   } else if (state.game === "connect4") {
     if (!("action" in parsed.data) || parsed.data.action !== "drop") {
       return NextResponse.json({ error: "Illegal drop" }, { status: 422 });
@@ -155,8 +154,6 @@ export async function POST(
     }
     if (result.finished) snapshot.status = "finished";
   }
-
-  if (snapshot.status === "playing") advanceBots(snapshot);
 
   const saved = await saveSession(snapshot, snapshot.version);
   if (!saved) {

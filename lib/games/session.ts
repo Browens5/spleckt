@@ -7,7 +7,7 @@ import { initialBoard, type Seat } from "./checkers";
 import { emptyBattleshipState } from "./battleship";
 import { emptyConnect4State } from "./connect4";
 import { dealScum, emptyScumState, MAX_PLAYERS as SCUM_MAX, MIN_PLAYERS as SCUM_MIN } from "./scum";
-import { advanceBots, maxBotsFor, seatBots } from "./bots";
+import { maxBotsFor, seatBots } from "./bots";
 import type {
   CheckersState,
   GameId,
@@ -50,12 +50,19 @@ export function minPlayersFor(game: GameId) {
 
 type SessionRow = typeof gameSessions.$inferSelect;
 
+function timestampMs(value: Date | number | null | undefined) {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return Date.now();
+}
+
 function snapshotFromRow(row: SessionRow): SessionSnapshot {
   return {
     code: row.code,
     status: row.status as GameStatus,
     version: row.version,
     state: JSON.parse(row.stateJson) as SessionSnapshot["state"],
+    updatedAt: timestampMs(row.updatedAt),
   };
 }
 
@@ -107,7 +114,6 @@ export async function createSession(
         version: 1,
         state,
       };
-      if (status === "playing") advanceBots(snapshot);
       const [row] = await db
         .insert(gameSessions)
         .values({
@@ -159,7 +165,7 @@ export async function saveSession(
     ],
   });
   if (result.rowsAffected === 0) return null;
-  return { ...snapshot, version: expectedVersion + 1 };
+  return { ...snapshot, version: expectedVersion + 1, updatedAt: Date.now() };
 }
 
 export function dealWaitingScum(snapshot: SessionSnapshot) {
@@ -177,6 +183,5 @@ export function dealWaitingScum(snapshot: SessionSnapshot) {
   }
   dealScum(snapshot.state);
   snapshot.status = "playing";
-  advanceBots(snapshot);
   return { ok: true as const };
 }

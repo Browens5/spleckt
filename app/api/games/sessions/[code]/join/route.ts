@@ -9,7 +9,6 @@ import {
   normalizeHandle,
   saveSession,
 } from "@/lib/games/session";
-import { advanceBots } from "@/lib/games/bots";
 
 const joinSchema = z.object({
   playerId: z.string().min(8).max(64),
@@ -74,8 +73,6 @@ export async function POST(
     } else {
       state.viewers.push({ id: playerId, handle });
     }
-
-    if (snapshot.status === "playing") advanceBots(snapshot);
 
     const saved = await saveSession(snapshot, snapshot.version);
     if (saved) return NextResponse.json({ session: saved });
