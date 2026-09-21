@@ -12,6 +12,7 @@ import {
   paintPoster,
   paintRug,
   paintStandingSign,
+  paintVinyl,
   paintWall,
 } from "./loungeTextures";
 
@@ -510,6 +511,10 @@ export function LoungeCanvas({
     // service bell
     addPrim(deskRoot, "cylinder", goldMat, [0.7, 1.09, 0.2], [0.16, 0.04, 0.16]);
     addPrim(deskRoot, "sphere", goldMat, [0.7, 1.14, 0.2], [0.14, 0.1, 0.14]);
+    // guestbook + pen
+    addPrim(deskRoot, "box", creamMat, [0.18, 1.08, 0.18], [0.38, 0.025, 0.26]);
+    addPrim(deskRoot, "box", litMaterial(GROOVE.orange), [0.18, 1.1, 0.18], [0.32, 0.02, 0.22]);
+    addPrim(deskRoot, "cylinder", goldMat, [0.4, 1.12, 0.18], [0.015, 0.1, 0.015], [0, 0, 62]);
 
     // lava lamp on the desk
     const lampRoot = new pc.Entity("lava-lamp");
@@ -588,23 +593,185 @@ export function LoungeCanvas({
       purple: litMaterial("#4c2470", { gloss: 18 }),
       green: litMaterial("#4e8a2e", { gloss: 18 }),
     };
-    addPrim(app.root, "sphere", beanbagMats.purple, [-4.4, 0.25, -1.6], [0.9, 0.5, 0.9]);
-    addPrim(app.root, "sphere", beanbagMats.green, [-3.4, 0.22, -2.5], [0.8, 0.45, 0.8]);
-    addPrim(app.root, "sphere", beanbagMats.orange, [4.3, 0.24, 1.4], [0.85, 0.48, 0.85]);
+    const addBeanbag = (
+      parent: pc.Entity | pc.GraphNode,
+      mat: pc.StandardMaterial,
+      x: number,
+      z: number,
+      yaw = 0,
+      size = 1,
+    ) => {
+      const bag = new pc.Entity("beanbag");
+      bag.setLocalPosition(x, 0, z);
+      bag.setLocalEulerAngles(0, yaw, 0);
+      parent.addChild(bag);
+      addPrim(bag, "sphere", mat, [0, 0.22 * size, 0.02], [0.98 * size, 0.42 * size, 0.98 * size]);
+      addPrim(bag, "sphere", mat, [0, 0.34 * size, -0.22 * size], [0.7 * size, 0.36 * size, 0.52 * size]);
+      addPrim(bag, "sphere", goldMat, [0, 0.4 * size, 0.06 * size], [0.08 * size, 0.05 * size, 0.08 * size]);
+      return bag;
+    };
+    addBeanbag(app.root, beanbagMats.purple, -4.4, -1.6, 40);
+    addBeanbag(app.root, beanbagMats.green, -3.4, -2.5, -20, 0.9);
+    addBeanbag(app.root, beanbagMats.orange, 4.3, 1.4, 110);
+    addBeanbag(app.root, beanbagMats.purple, 3.6, 2.5, 200, 0.85);
+    addBeanbag(app.root, beanbagMats.green, 5.1, -1.6, -80, 0.88);
+
+    const addLoungeChair = (
+      parent: pc.Entity | pc.GraphNode,
+      cushion: pc.StandardMaterial,
+      x: number,
+      z: number,
+      yaw: number,
+      size = 1,
+    ) => {
+      const chair = new pc.Entity("chair");
+      chair.setLocalPosition(x, 0, z);
+      chair.setLocalEulerAngles(0, yaw, 0);
+      parent.addChild(chair);
+      const leg = 0.26 * size;
+      for (const [lx, lz] of [
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+      ] as const) {
+        addPrim(
+          chair,
+          "cylinder",
+          woodDark,
+          [lx * leg, 0.18 * size, lz * leg],
+          [0.07 * size, 0.36 * size, 0.07 * size],
+        );
+      }
+      addPrim(chair, "cylinder", wood, [0, 0.34 * size, 0], [0.84 * size, 0.05 * size, 0.84 * size]);
+      addPrim(chair, "cylinder", cushion, [0, 0.42 * size, 0.04 * size], [0.78 * size, 0.1 * size, 0.78 * size]);
+      addPrim(chair, "box", wood, [0, 0.74 * size, -0.34 * size], [0.74 * size, 0.58 * size, 0.08 * size]);
+      addPrim(chair, "box", cushion, [0, 0.74 * size, -0.27 * size], [0.66 * size, 0.5 * size, 0.1 * size]);
+      addPrim(chair, "sphere", goldMat, [0, 0.46 * size, 0.06 * size], [0.07 * size, 0.04 * size, 0.07 * size]);
+      return chair;
+    };
+
+    // record cabinet + vinyls (back-right wall, like the reference)
+    const vinylMat = texturedMaterial(
+      textureFromCanvas(device, paintVinyl(), "vinyl"),
+      { emissive: 0.7, cutout: true },
+    );
+    const shelf = new pc.Entity("record-shelf");
+    shelf.setPosition(5.35, 0, -4.55);
+    app.root.addChild(shelf);
+    addPrim(shelf, "box", woodDark, [0, 0.55, 0], [1.35, 1.1, 0.42]);
+    addPrim(shelf, "box", wood, [0, 1.12, 0], [1.4, 0.06, 0.48]);
+    addPrim(shelf, "box", wood, [0, 0.58, 0], [1.4, 0.05, 0.48]);
+    for (let i = 0; i < 8; i += 1) {
+      addPrim(
+        shelf,
+        "box",
+        litMaterial(i % 2 === 0 ? GROOVE.orange : GROOVE.plum),
+        [-0.5 + i * 0.14, 0.28, 0.12],
+        [0.11, 0.38, 0.32],
+      );
+    }
+    addPrim(shelf, "plane", vinylMat, [0.18, 1.2, 0.05], [0.42, 1, 0.42], [90, 0, 18]);
+    addPrim(shelf, "plane", vinylMat, [-0.05, 1.2, 0.08], [0.38, 1, 0.38], [90, 0, -12]);
+    addPrim(shelf, "box", woodDark, [-0.38, 1.22, 0.02], [0.32, 0.05, 0.26]);
+    addPrim(shelf, "cylinder", goldMat, [-0.38, 1.27, 0.02], [0.1, 0.03, 0.1]);
+
+    // pink orb lamp
+    const orb = new pc.Entity("orb-lamp");
+    orb.setPosition(6.0, 0, -3.15);
+    app.root.addChild(orb);
+    addPrim(orb, "cylinder", woodDark, [0, 0.28, 0], [0.18, 0.56, 0.18]);
+    addPrim(orb, "sphere", glowMaterial(GROOVE.magenta, 1.4), [0, 0.72, 0], [0.28, 0.28, 0.28]);
+
+    // extra lava lamp by the arcade
+    const cornerLava = new pc.Entity("corner-lava");
+    cornerLava.setPosition(-3.55, 0, -4.55);
+    app.root.addChild(cornerLava);
+    addPrim(cornerLava, "box", woodDark, [0, 0.28, 0], [0.42, 0.56, 0.42]);
+    addPrim(cornerLava, "cone", goldMat, [0, 0.62, 0], [0.16, 0.12, 0.16]);
+    const cornerGlass = new pc.StandardMaterial();
+    cornerGlass.diffuse = colorFromHex(GROOVE.orange);
+    cornerGlass.opacity = 0.4;
+    cornerGlass.blendType = pc.BLEND_NORMAL;
+    cornerGlass.update();
+    addPrim(cornerLava, "cone", cornerGlass, [0, 0.88, 0], [0.13, 0.4, 0.13], [180, 0, 0]);
+    addPrim(cornerLava, "sphere", glowMaterial(GROOVE.orange, 1.5), [0, 0.78, 0], [0.07, 0.09, 0.07]);
+    addPrim(cornerLava, "cone", goldMat, [0, 1.08, 0], [0.06, 0.07, 0.06]);
+
+    // little deco table with dice / cards
+    const deco = new pc.Entity("deco-table");
+    deco.setPosition(-1.6, 0, 1.8);
+    app.root.addChild(deco);
+    addPrim(deco, "cylinder", wood, [0, 0.42, 0], [1.15, 0.06, 1.15]);
+    addPrim(deco, "cylinder", woodDark, [0, 0.2, 0], [0.12, 0.4, 0.12]);
+    addPrim(deco, "box", creamMat, [-0.12, 0.47, 0.08], [0.22, 0.02, 0.3]);
+    addPrim(deco, "box", litMaterial(GROOVE.magenta), [0.18, 0.48, -0.1], [0.08, 0.08, 0.08]);
+    addPrim(deco, "box", litMaterial(GROOVE.gold), [0.28, 0.48, 0.12], [0.08, 0.08, 0.08]);
+    addBeanbag(app.root, beanbagMats.orange, -2.4, 2.35, 30, 0.82);
+    addBeanbag(app.root, beanbagMats.purple, -0.7, 2.55, 200, 0.8);
+
+    // extra plant on a shelf
+    addPrim(app.root, "box", wood, [-6.55, 2.55, -4.4], [0.35, 0.06, 0.7], [0, 90, 0]);
+    addPrim(app.root, "cylinder", potMat, [-6.5, 2.68, -4.4], [0.18, 0.2, 0.18]);
+    addPrim(app.root, "cone", leafMat, [-6.5, 2.92, -4.4], [0.22, 0.32, 0.22]);
+
+    // jukebox along the right wall
+    const juke = new pc.Entity("jukebox");
+    juke.setPosition(6.15, 0, 0.35);
+    juke.setEulerAngles(0, -90, 0);
+    app.root.addChild(juke);
+    addPrim(juke, "box", litMaterial("#2a1224", { gloss: 40 }), [0, 0.85, 0], [0.72, 1.7, 0.48]);
+    addPrim(juke, "box", glowMaterial(GROOVE.magenta, 1.2), [0, 1.55, 0.25], [0.58, 0.08, 0.04]);
+    addPrim(juke, "box", glowMaterial(GROOVE.gold, 1.2), [0, 1.42, 0.25], [0.58, 0.08, 0.04]);
+    addPrim(juke, "box", glowMaterial(GROOVE.teal, 1.2), [0, 1.29, 0.25], [0.58, 0.08, 0.04]);
+    addPrim(juke, "box", woodDark, [0, 0.55, 0.26], [0.5, 0.55, 0.04]);
+    addPrim(juke, "cylinder", goldMat, [0, 0.95, 0.26], [0.16, 0.04, 0.16], [90, 0, 0]);
+
+    // wall clock
+    addPrim(app.root, "cylinder", creamMat, [3.9, 2.55, -5.52], [0.55, 0.04, 0.55], [90, 0, 0]);
+    addPrim(app.root, "cylinder", goldMat, [3.9, 2.55, -5.5], [0.08, 0.03, 0.08], [90, 0, 0]);
+    addPrim(app.root, "box", woodDark, [3.9, 2.68, -5.5], [0.03, 0.18, 0.02]);
+    addPrim(app.root, "box", woodDark, [4.02, 2.55, -5.5], [0.12, 0.03, 0.02]);
 
     // ---- game table ---------------------------------------------------
     const tableRoot = new pc.Entity("table-1");
     tableRoot.setPosition(TABLE.x, 0, TABLE.z);
     app.root.addChild(tableRoot);
 
-    addPrim(tableRoot, "cylinder", woodDark, [0, 0.06, 0], [0.85, 0.12, 0.85]);
-    addPrim(tableRoot, "cylinder", woodDark, [0, 0.4, 0], [0.16, 0.7, 0.16]);
-    const tableTop = addPrim(tableRoot, "cylinder", wood, [0, TABLE_TOP_Y - 0.035, 0], [2.35, 0.07, 2.35]);
+    addPrim(tableRoot, "cylinder", woodDark, [0, 0.08, 0], [0.95, 0.16, 0.95]);
+    addPrim(tableRoot, "cylinder", woodDark, [0, 0.4, 0], [0.18, 0.72, 0.18]);
+    addPrim(tableRoot, "cylinder", goldMat, [0, 0.72, 0], [0.22, 0.04, 0.22]);
+    const tableTop = addPrim(
+      tableRoot,
+      "cylinder",
+      wood,
+      [0, TABLE_TOP_Y - 0.035, 0],
+      [2.42, 0.08, 2.42],
+    );
     tableTop.render!.receiveShadows = true;
+    addPrim(tableRoot, "cylinder", goldMat, [0, TABLE_TOP_Y + 0.008, 0], [2.48, 0.015, 2.48]);
 
-    // beanbag seats on the two playing sides
-    addPrim(tableRoot, "sphere", beanbagMats.orange, [0.15, 0.26, -1.65], [0.95, 0.52, 0.95]);
-    addPrim(tableRoot, "sphere", beanbagMats.purple, [-0.1, 0.26, 1.65], [0.95, 0.52, 0.95]);
+    addLoungeChair(tableRoot, beanbagMats.orange, 0.15, -1.68, 0, 1.05);
+    addLoungeChair(tableRoot, beanbagMats.purple, -0.12, 1.68, 180, 1.05);
+    addLoungeChair(tableRoot, beanbagMats.green, 1.62, 0.12, 90, 0.95);
+    addLoungeChair(tableRoot, beanbagMats.orange, -1.6, -0.08, -90, 0.95);
+
+    // drinks, snack bowl, spare pieces on the table rim
+    const mugMat = litMaterial(GROOVE.plum, { gloss: 50 });
+    addPrim(tableRoot, "cylinder", mugMat, [0.92, TABLE_TOP_Y + 0.06, 0.55], [0.12, 0.12, 0.12]);
+    addPrim(tableRoot, "cylinder", creamMat, [0.92, TABLE_TOP_Y + 0.13, 0.55], [0.1, 0.02, 0.1]);
+    addPrim(tableRoot, "box", mugMat, [1.02, TABLE_TOP_Y + 0.06, 0.55], [0.04, 0.06, 0.08]);
+    addPrim(tableRoot, "cylinder", creamMat, [-0.88, TABLE_TOP_Y + 0.02, 0.72], [0.16, 0.015, 0.16]);
+    const spareRed = litMaterial("#c0392b", { gloss: 58 });
+    const spareBlack = litMaterial("#26201c", { gloss: 58 });
+    addPrim(tableRoot, "cylinder", spareRed, [-0.9, TABLE_TOP_Y + 0.045, 0.7], [0.1, 0.04, 0.1]);
+    addPrim(tableRoot, "cylinder", spareBlack, [-0.78, TABLE_TOP_Y + 0.045, 0.8], [0.1, 0.04, 0.1]);
+    addPrim(tableRoot, "box", woodDark, [-0.98, TABLE_TOP_Y + 0.05, -0.28], [0.3, 0.1, 0.22]);
+    addPrim(tableRoot, "box", goldMat, [-0.98, TABLE_TOP_Y + 0.105, -0.28], [0.26, 0.012, 0.18]);
+    addPrim(tableRoot, "cylinder", goldMat, [0.72, TABLE_TOP_Y + 0.025, -0.68], [0.2, 0.03, 0.2]);
+    addPrim(tableRoot, "sphere", litMaterial(GROOVE.orange), [0.7, TABLE_TOP_Y + 0.055, -0.66], [0.045, 0.04, 0.045]);
+    addPrim(tableRoot, "sphere", litMaterial(GROOVE.gold), [0.76, TABLE_TOP_Y + 0.055, -0.7], [0.04, 0.035, 0.04]);
+    addPrim(tableRoot, "sphere", litMaterial(GROOVE.magenta), [0.68, TABLE_TOP_Y + 0.055, -0.72], [0.038, 0.035, 0.038]);
 
     // lava lamp on the far edge of the game table
     const tableLamp2 = new pc.Entity("table-lava");
@@ -885,7 +1052,59 @@ export function LoungeCanvas({
       return null;
     };
 
+    let panX = 0;
+    let panZ = 0;
+    let yawOrbit = 0;
+    let pitchOrbit = 0;
+    let lastView: LoungeView = "lounge";
+    let dragging = false;
+    let downAt: { x: number; y: number } | null = null;
+    let dragMoved = false;
+    canvas.style.cursor = "grab";
+    const PAN_MAX: Record<LoungeView, number> = {
+      lounge: 2.3,
+      table: 0.7,
+      game: 0.5,
+    };
+    const clampPan = () => {
+      const max = PAN_MAX[viewRef.current];
+      const length = Math.hypot(panX, panZ);
+      if (length > max) {
+        panX *= max / length;
+        panZ *= max / length;
+      }
+    };
+    const applyDrag = (dx: number, dy: number) => {
+      if (Math.abs(dx) + Math.abs(dy) > 2) dragMoved = true;
+      const view = viewRef.current;
+      const scale = (camState.orthoHeight * 2) / Math.max(1, canvas.clientHeight);
+      if (view === "lounge") {
+        yawOrbit = Math.max(-22, Math.min(22, yawOrbit - dx * 0.055));
+        pitchOrbit = Math.max(-7, Math.min(8, pitchOrbit + dy * 0.03));
+      }
+      const yawDeg =
+        view === "game"
+          ? Number(facingSeatRef.current) === 2
+            ? 180
+            : 0
+          : VIEW_RIGS[view].yaw + yawOrbit;
+      const yawRad = (yawDeg * Math.PI) / 180;
+      const rx = Math.cos(yawRad);
+      const rz = -Math.sin(yawRad);
+      const ux = Math.sin(yawRad);
+      const uz = Math.cos(yawRad);
+      panX += (-dx * rx + dy * ux) * scale;
+      panZ += (-dx * rz + dy * uz) * scale;
+      clampPan();
+    };
+
     const onPointerMove = (event: PointerEvent) => {
+      if (dragging && downAt) {
+        applyDrag(event.clientX - downAt.x, event.clientY - downAt.y);
+        downAt = { x: event.clientX, y: event.clientY };
+        canvas.style.cursor = "grabbing";
+        return;
+      }
       if (viewRef.current === "game") {
         const index = pickBoardSquare(event.clientX, event.clientY);
         const marks = highlightsRef.current;
@@ -894,24 +1113,31 @@ export function LoungeCanvas({
           (marks.movable.includes(index) ||
             marks.targets.includes(index) ||
             marks.selected === index);
-        canvas.style.cursor = active ? "pointer" : "default";
+        canvas.style.cursor = active ? "pointer" : "grab";
         return;
       }
       canvas.style.cursor = pickHotspot(event.clientX, event.clientY)
         ? "pointer"
-        : "default";
+        : "grab";
     };
 
-    let downAt: { x: number; y: number } | null = null;
     const onPointerDown = (event: PointerEvent) => {
+      event.preventDefault();
       downAt = { x: event.clientX, y: event.clientY };
+      dragMoved = false;
+      dragging = true;
+      canvas.setPointerCapture(event.pointerId);
+      canvas.style.cursor = "grabbing";
     };
     const onPointerUp = (event: PointerEvent) => {
       if (!downAt) return;
       const moved =
+        dragMoved ||
         Math.abs(event.clientX - downAt.x) > 8 ||
         Math.abs(event.clientY - downAt.y) > 8;
       downAt = null;
+      dragging = false;
+      canvas.style.cursor = "grab";
       if (moved) return;
 
       if (viewRef.current === "game") {
@@ -927,6 +1153,7 @@ export function LoungeCanvas({
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
+    canvas.addEventListener("pointercancel", onPointerUp);
 
     const onResize = () => applyResolution();
     window.addEventListener("resize", onResize);
@@ -939,17 +1166,28 @@ export function LoungeCanvas({
     // ---- animation loop -----------------------------------------------
     app.on("update", (dt: number) => {
       const viewNow = viewRef.current;
+      if (viewNow !== lastView) {
+        panX = 0;
+        panZ = 0;
+        yawOrbit = 0;
+        pitchOrbit = 0;
+        lastView = viewNow;
+      }
       const rig = VIEW_RIGS[viewNow];
       const facingYaw = Number(facingSeatRef.current) === 2 ? 180 : 0;
-      const targetYaw = viewNow === "game" ? facingYaw : rig.yaw;
+      const targetYaw = viewNow === "game" ? facingYaw : rig.yaw + yawOrbit;
+      const targetPitch = rig.pitch + (viewNow === "lounge" ? pitchOrbit : 0);
       const ease = Math.min(1, dt * 5);
-      camState.look.lerp(camState.look, rig.look, ease);
+      const lookEase = dragging ? 1 : ease;
+      camState.look.x += (rig.look.x + panX - camState.look.x) * lookEase;
+      camState.look.y += (rig.look.y - camState.look.y) * ease;
+      camState.look.z += (rig.look.z + panZ - camState.look.z) * lookEase;
       camState.orthoHeight += (rig.orthoHeight - camState.orthoHeight) * ease;
-      camState.pitch += (rig.pitch - camState.pitch) * ease;
+      camState.pitch += (targetPitch - camState.pitch) * lookEase;
       if (viewNow === "game") {
         camState.yaw = targetYaw;
       } else {
-        camState.yaw = lerpDegrees(camState.yaw, targetYaw, ease);
+        camState.yaw = lerpDegrees(camState.yaw, targetYaw, lookEase);
       }
       placeCamera();
 
@@ -1007,6 +1245,7 @@ export function LoungeCanvas({
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerUp);
       app.destroy();
     };
   }, []);

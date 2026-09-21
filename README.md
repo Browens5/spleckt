@@ -54,7 +54,7 @@ A rotatable deck of project cards with about / skills / contact overlays. Editor
 
 ### Games
 
-A groovy 70s board game lounge rendered in isometric PlayCanvas. Sign in at the front desk with a player handle, pick a table to see its game, and start or join a match. Starting a game mints a 5-character code to share with friends; the first two players at a table play, everyone after that watches. Table 1 hosts checkers: the organizer picks red or black, the camera looks straight down at the board (rotated so your color is nearest), jumps are optional, and the scoreboard tracks captures through a trophy for the winner.
+A groovy 70s board game lounge rendered in isometric PlayCanvas. Sign in at the front desk with a player handle, pick a table to see its game, and start or join a match. Starting a game mints a 5-character code to share with friends; the first two players at a table play, everyone after that watches. Drag the lounge (or the board during a match) to nudge the camera. Table 1 hosts checkers: the organizer picks red or black, the camera looks straight down at the board (rotated so your color is nearest), jumps are optional, and the scoreboard tracks captures through a trophy for the winner.
 
 ## Stack
 

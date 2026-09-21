@@ -142,14 +142,14 @@ export function paintWall(width: number, height: number, seed: number) {
 /** Retro poster art in the psychedelic palette. */
 export function paintPoster(variant: number) {
   const { canvas, ctx } = makeCanvas(192, 240);
-  const bg = [GROOVE.plum, GROOVE.purpleDeep, GROOVE.rust][variant % 3];
+  const bg = [GROOVE.plum, GROOVE.purpleDeep, GROOVE.rust, "#1a1024"][variant % 4];
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, 192, 240);
   ctx.strokeStyle = GROOVE.cream;
   ctx.lineWidth = 8;
   ctx.strokeRect(4, 4, 184, 232);
 
-  if (variant % 3 === 0) {
+  if (variant % 4 === 0) {
     // smiling sunburst
     const cx = 96;
     const cy = 110;
@@ -176,7 +176,7 @@ export function paintPoster(variant: number) {
     ctx.lineWidth = 6;
     ctx.strokeStyle = GROOVE.espresso;
     ctx.stroke();
-  } else if (variant % 3 === 1) {
+  } else if (variant % 4 === 1) {
     // hypno spiral rings
     const colors = [GROOVE.magenta, GROOVE.gold, GROOVE.teal, GROOVE.orange];
     for (let i = 9; i >= 0; i -= 1) {
@@ -185,7 +185,7 @@ export function paintPoster(variant: number) {
       ctx.fillStyle = colors[i % colors.length];
       ctx.fill();
     }
-  } else {
+  } else if (variant % 4 === 2) {
     // rainbow arch
     const arcs = [GROOVE.magenta, GROOVE.orange, GROOVE.gold, GROOVE.green, GROOVE.blue];
     arcs.forEach((color, index) => {
@@ -195,6 +195,36 @@ export function paintPoster(variant: number) {
       ctx.strokeStyle = color;
       ctx.stroke();
     });
+  } else {
+    // black cat
+    ctx.fillStyle = "#161018";
+    ctx.beginPath();
+    ctx.ellipse(96, 150, 52, 58, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(50, 112);
+    ctx.lineTo(58, 58);
+    ctx.lineTo(82, 108);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(142, 112);
+    ctx.lineTo(134, 58);
+    ctx.lineTo(110, 108);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = GROOVE.gold;
+    ctx.beginPath();
+    ctx.arc(78, 138, 7, 0, Math.PI * 2);
+    ctx.arc(114, 138, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = GROOVE.magenta;
+    ctx.beginPath();
+    ctx.moveTo(96, 152);
+    ctx.lineTo(88, 164);
+    ctx.lineTo(104, 164);
+    ctx.closePath();
+    ctx.fill();
   }
   return canvas;
 }
@@ -304,5 +334,30 @@ export function paintArcadeScreen(variant: number) {
   ctx.fillRect(56, 108, 16, 8);
   ctx.fillStyle = palette[0];
   ctx.fillRect(10, 6, 40, 5);
+  return canvas;
+}
+
+/** Label for a vinyl record. */
+export function paintVinyl() {
+  const { canvas, ctx } = makeCanvas(128, 128);
+  ctx.fillStyle = "#1a1210";
+  ctx.beginPath();
+  ctx.arc(64, 64, 62, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 1;
+  for (let r = 18; r < 60; r += 5) {
+    ctx.beginPath();
+    ctx.arc(64, 64, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.fillStyle = GROOVE.orange;
+  ctx.beginPath();
+  ctx.arc(64, 64, 16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = GROOVE.espresso;
+  ctx.beginPath();
+  ctx.arc(64, 64, 4, 0, Math.PI * 2);
+  ctx.fill();
   return canvas;
 }
