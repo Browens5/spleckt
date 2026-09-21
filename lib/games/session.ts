@@ -5,7 +5,9 @@ import { gameSessions } from "@/lib/db/schema";
 import { createId } from "@/lib/ids";
 import { initialBoard, type Seat } from "./checkers";
 import { emptyBattleshipState } from "./battleship";
+import { emptyConnect4State } from "./connect4";
 import { dealScum, emptyScumState, MAX_PLAYERS as SCUM_MAX, MIN_PLAYERS as SCUM_MIN } from "./scum";
+import { advanceBots, maxBotsFor, seatBots } from "./bots";
 import type {
   CheckersState,
   GameId,
@@ -62,34 +64,58 @@ export async function createSession(
   hostHandle: string,
   game: GameId = "checkers",
   hostSeat: Seat = 1,
+  bots = 0,
 ) {
   const state =
     game === "scum"
       ? emptyScumState()
       : game === "battleship"
         ? emptyBattleshipState()
-        : freshCheckers();
+        : game === "connect4"
+          ? emptyConnect4State()
+          : freshCheckers();
   if (state.game === "scum") {
     state.players.push({ id: hostId, handle: hostHandle, seat: 1 });
     state.dealerSeat = 1;
     state.turnSeat = 1;
-  } else if (state.game === "battleship") {
+  } else if (state.game === "battleship" || state.game === "connect4") {
     state.players.push({ id: hostId, handle: hostHandle, seat: 1 });
   } else {
     state.players.push({ id: hostId, handle: hostHandle, seat: hostSeat });
+  }
+  seatBots(state, Math.min(Math.max(0, bots), maxBotsFor(game)));
+
+  let status: GameStatus = "waiting";
+  if (
+    (state.game === "checkers" ||
+      state.game === "battleship" ||
+      state.game === "connect4") &&
+    state.players.length >= 2
+  ) {
+    status = "playing";
+  } else if (state.game === "scum" && state.players.length >= SCUM_MIN && bots > 0) {
+    dealScum(state);
+    status = "playing";
   }
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const code = createJoinCode();
     try {
+      const snapshot: SessionSnapshot = {
+        code,
+        status,
+        version: 1,
+        state,
+      };
+      if (status === "playing") advanceBots(snapshot);
       const [row] = await db
         .insert(gameSessions)
         .values({
           id: createId(),
           code,
           game,
-          status: "waiting",
-          stateJson: JSON.stringify(state),
+          status: snapshot.status,
+          stateJson: JSON.stringify(snapshot.state),
           version: 1,
         })
         .returning();
@@ -151,5 +177,6 @@ export function dealWaitingScum(snapshot: SessionSnapshot) {
   }
   dealScum(snapshot.state);
   snapshot.status = "playing";
+  advanceBots(snapshot);
   return { ok: true as const };
 }

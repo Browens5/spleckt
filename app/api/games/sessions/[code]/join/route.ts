@@ -9,6 +9,7 @@ import {
   normalizeHandle,
   saveSession,
 } from "@/lib/games/session";
+import { advanceBots } from "@/lib/games/bots";
 
 const joinSchema = z.object({
   playerId: z.string().min(8).max(64),
@@ -63,7 +64,9 @@ export async function POST(
         seat: nextSeat(state.players.map((entry) => entry.seat)),
       });
       if (
-        (state.game === "checkers" || state.game === "battleship") &&
+        (state.game === "checkers" ||
+          state.game === "battleship" ||
+          state.game === "connect4") &&
         state.players.length >= 2
       ) {
         snapshot.status = "playing";
@@ -71,6 +74,8 @@ export async function POST(
     } else {
       state.viewers.push({ id: playerId, handle });
     }
+
+    if (snapshot.status === "playing") advanceBots(snapshot);
 
     const saved = await saveSession(snapshot, snapshot.version);
     if (saved) return NextResponse.json({ session: saved });

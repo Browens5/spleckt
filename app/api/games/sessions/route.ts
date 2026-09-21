@@ -8,8 +8,9 @@ import { createSession, normalizeHandle } from "@/lib/games/session";
 const createSchema = z.object({
   playerId: z.string().min(8).max(64),
   handle: z.string().min(2).max(24),
-  game: z.enum(["checkers", "scum", "battleship"]),
+  game: z.enum(["checkers", "scum", "battleship", "connect4"]),
   seat: z.union([z.literal(1), z.literal(2)]).optional(),
+  bots: z.number().int().min(0).max(5).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
     handle,
     parsed.data.game,
     parsed.data.seat ?? 1,
+    parsed.data.bots ?? 0,
   );
   return NextResponse.json({ session: snapshot });
 }

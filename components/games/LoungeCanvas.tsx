@@ -44,12 +44,15 @@ type LoungeCanvasProps = {
   onDeskClick: () => void;
   onTableClick: (tableId: LoungeTableId) => void;
   onSquareClick: (index: number) => void;
+  onJukeboxClick?: () => void;
 };
 
 const TABLE = new pc.Vec3(1.9, 0, -0.7);
 const SCUM_TABLE = new pc.Vec3(-2.15, 0, -2.05);
 const SHIP_TABLE = new pc.Vec3(0.35, 0, 2.65);
+const FOUR_TABLE = new pc.Vec3(3.25, 0, 1.55);
 const DESK = new pc.Vec3(-3.4, 0, 2.4);
+const JUKE = new pc.Vec3(6.15, 0, 0.35);
 const TABLE_TOP_Y = 0.78;
 const BOARD_TOP_Y = TABLE_TOP_Y + 0.05;
 const SQUARE = 0.172;
@@ -218,6 +221,7 @@ export function LoungeCanvas({
   onDeskClick,
   onTableClick,
   onSquareClick,
+  onJukeboxClick,
 }: LoungeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewRef = useRef(view);
@@ -229,6 +233,7 @@ export function LoungeCanvas({
   const onDeskRef = useRef(onDeskClick);
   const onTableRef = useRef(onTableClick);
   const onSquareRef = useRef(onSquareClick);
+  const onJukeRef = useRef(onJukeboxClick);
   const refreshBoardRef = useRef<(() => void) | null>(null);
   const refreshHighlightsRef = useRef<(() => void) | null>(null);
 
@@ -242,6 +247,7 @@ export function LoungeCanvas({
     onDeskRef.current = onDeskClick;
     onTableRef.current = onTableClick;
     onSquareRef.current = onSquareClick;
+    onJukeRef.current = onJukeboxClick;
   });
 
   useEffect(() => {
@@ -388,6 +394,16 @@ export function LoungeCanvas({
     });
     shipLamp.setPosition(SHIP_TABLE.x, 2.3, SHIP_TABLE.z);
     app.root.addChild(shipLamp);
+
+    const fourLamp = new pc.Entity("four-light");
+    fourLamp.addComponent("light", {
+      type: "point",
+      color: new pc.Color(1, 0.85, 0.55),
+      intensity: 1.05,
+      range: 5,
+    });
+    fourLamp.setPosition(FOUR_TABLE.x, 2.3, FOUR_TABLE.z);
+    app.root.addChild(fourLamp);
 
     const discoLight = new pc.Entity("disco-light");
     discoLight.addComponent("light", {
@@ -746,7 +762,7 @@ export function LoungeCanvas({
 
     // jukebox along the right wall
     const juke = new pc.Entity("jukebox");
-    juke.setPosition(6.15, 0, 0.35);
+    juke.setPosition(JUKE.x, 0, JUKE.z);
     juke.setEulerAngles(0, -90, 0);
     app.root.addChild(juke);
     addPrim(juke, "box", litMaterial("#2a1224", { gloss: 40 }), [0, 0.85, 0], [0.72, 1.7, 0.48]);
@@ -939,6 +955,62 @@ export function LoungeCanvas({
       [1.45, 1, 0.85],
       [90, 45, 0],
       "ship-label",
+    );
+
+    // ---- connect 4 table ----------------------------------------------
+    const fourRoot = new pc.Entity("table-4");
+    fourRoot.setPosition(FOUR_TABLE.x, 0, FOUR_TABLE.z);
+    app.root.addChild(fourRoot);
+    addPrim(fourRoot, "cylinder", woodDark, [0, 0.08, 0], [0.85, 0.16, 0.85]);
+    addPrim(fourRoot, "cylinder", woodDark, [0, 0.4, 0], [0.16, 0.72, 0.16]);
+    addPrim(fourRoot, "cylinder", goldMat, [0, 0.72, 0], [0.2, 0.04, 0.2]);
+    const fourTop = addPrim(
+      fourRoot,
+      "cylinder",
+      wood,
+      [0, TABLE_TOP_Y - 0.035, 0],
+      [2.05, 0.08, 2.05],
+    );
+    fourTop.render!.receiveShadows = true;
+    addPrim(fourRoot, "cylinder", goldMat, [0, TABLE_TOP_Y + 0.008, 0], [2.1, 0.015, 2.1]);
+    const fourFelt = litMaterial("#1e4d8c", { gloss: 28 });
+    addPrim(fourRoot, "box", fourFelt, [0, TABLE_TOP_Y + 0.04, 0], [1.05, 0.7, 0.16]);
+    const discRed = litMaterial("#c0392b", { gloss: 55 });
+    const discYellow = litMaterial("#f1c40f", { gloss: 55 });
+    const holeMat = litMaterial("#0d2a52", { gloss: 40 });
+    for (let col = 0; col < 7; col += 1) {
+      for (let row = 0; row < 6; row += 1) {
+        const x = (col - 3) * 0.13;
+        const y = TABLE_TOP_Y + 0.08 + row * 0.11;
+        const filled =
+          (row === 0 && col < 3) || (row === 1 && col === 1) || (row === 2 && col === 3);
+        const mat = filled
+          ? col % 2 === 0
+            ? discRed
+            : discYellow
+          : holeMat;
+        addPrim(fourRoot, "cylinder", mat, [x, y, 0.02], [0.09, 0.03, 0.09], [90, 0, 0]);
+      }
+    }
+    addLoungeChair(fourRoot, beanbagMats.orange, 0.1, -1.42, 0, 0.9);
+    addLoungeChair(fourRoot, beanbagMats.green, -0.08, 1.42, 180, 0.9);
+
+    const fourLabelMat = texturedMaterial(
+      textureFromCanvas(
+        device,
+        paintStandingSign("TABLE 4", "· CONNECT 4 ·", GROOVE.orange),
+        "four-label",
+      ),
+      { emissive: 1.15, cutout: true },
+    );
+    const fourLabel = addPrim(
+      app.root,
+      "plane",
+      fourLabelMat,
+      [FOUR_TABLE.x, 2.1, FOUR_TABLE.z],
+      [1.45, 1, 0.85],
+      [90, 45, 0],
+      "four-label",
     );
 
     // ---- checkers board ----------------------------------------------
@@ -1174,11 +1246,14 @@ export function LoungeCanvas({
       const checkersPoint = new pc.Vec3(TABLE.x, 0.85, TABLE.z);
       const scumPoint = new pc.Vec3(SCUM_TABLE.x, 0.85, SCUM_TABLE.z);
       const shipPoint = new pc.Vec3(SHIP_TABLE.x, 0.85, SHIP_TABLE.z);
+      const fourPoint = new pc.Vec3(FOUR_TABLE.x, 0.85, FOUR_TABLE.z);
+      const jukePoint = new pc.Vec3(JUKE.x, 1.1, JUKE.z);
       const deskDist = rayPointDistance(from, dir, deskPoint);
       const tables: Array<{ id: LoungeTableId; dist: number }> = [
         { id: "table-1", dist: rayPointDistance(from, dir, checkersPoint) },
         { id: "table-2", dist: rayPointDistance(from, dir, scumPoint) },
         { id: "table-3", dist: rayPointDistance(from, dir, shipPoint) },
+        { id: "table-4", dist: rayPointDistance(from, dir, fourPoint) },
       ];
       tables.sort((a, b) => a.dist - b.dist);
       const nearestTable = tables[0]!;
@@ -1186,6 +1261,7 @@ export function LoungeCanvas({
         return nearestTable.id;
       }
       if (deskDist < 1.55) return "desk" as const;
+      if (rayPointDistance(from, dir, jukePoint) < 1.35) return "jukebox" as const;
       return null;
     };
 
@@ -1287,9 +1363,15 @@ export function LoungeCanvas({
       }
       const hotspot = pickHotspot(event.clientX, event.clientY);
       if (hotspot === "desk") onDeskRef.current();
-      if (hotspot === "table-1" || hotspot === "table-2" || hotspot === "table-3") {
+      if (
+        hotspot === "table-1" ||
+        hotspot === "table-2" ||
+        hotspot === "table-3" ||
+        hotspot === "table-4"
+      ) {
         onTableRef.current(hotspot);
       }
+      if (hotspot === "jukebox") onJukeRef.current?.();
     };
 
     canvas.addEventListener("pointerdown", onPointerDown);
@@ -1323,7 +1405,9 @@ export function LoungeCanvas({
           ? SCUM_TABLE
           : focusNow === "table-3"
             ? SHIP_TABLE
-            : TABLE;
+            : focusNow === "table-4"
+              ? FOUR_TABLE
+              : TABLE;
       const lookX = viewNow === "lounge" ? rig.look.x : focusPos.x;
       const lookZ = viewNow === "lounge" ? rig.look.z : focusPos.z;
       const checkersGame = viewNow === "game" && focusNow === "table-1";
@@ -1373,6 +1457,12 @@ export function LoungeCanvas({
         SHIP_TABLE.x,
         2.08 + Math.sin(t * 1.4 + 1.4) * 0.05,
         SHIP_TABLE.z,
+      );
+      fourLabel.enabled = viewRef.current !== "game";
+      fourLabel.setPosition(
+        FOUR_TABLE.x,
+        2.08 + Math.sin(t * 1.4 + 2) * 0.05,
+        FOUR_TABLE.z,
       );
 
       trophy.enabled = showTrophyRef.current;

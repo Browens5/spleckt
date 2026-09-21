@@ -38,7 +38,7 @@ export type Fleet = {
 
 export type BattleshipState = {
   game: "battleship";
-  players: Array<{ id: string; handle: string; seat: number }>;
+  players: Array<{ id: string; handle: string; seat: number; bot?: boolean }>;
   viewers: Array<{ id: string; handle: string }>;
   turnSeat: number;
   phase: "placing" | "firing";
