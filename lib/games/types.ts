@@ -17,7 +17,7 @@ export const LOUNGE_TABLES: TableInfo[] = [
     number: 1,
     game: "checkers",
     gameName: "Checkers",
-    tagline: "Classic 8×8 draughts — jumps are mandatory, kings fly back.",
+    tagline: "Classic 8×8 draughts — jumps are optional, kings fly back.",
   },
 ];
 

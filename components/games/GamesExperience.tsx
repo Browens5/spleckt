@@ -10,9 +10,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  capturedCount,
   initialBoard,
   legalMoves,
   type Move,
+  type Seat,
 } from "@/lib/games/checkers";
 import {
   LOUNGE_TABLES,
@@ -96,6 +98,7 @@ export function GamesExperience() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [hostSeat, setHostSeat] = useState<Seat>(1);
 
   const savePlayer = useCallback(
     (handle: string) => {
@@ -186,7 +189,7 @@ export function GamesExperience() {
 
   // ---- actions ----------------------------------------------------------
   const startGame = useCallback(
-    async (identity: PlayerIdentity) => {
+    async (identity: PlayerIdentity, seat: Seat) => {
       setBusy(true);
       setError(null);
       try {
@@ -197,6 +200,7 @@ export function GamesExperience() {
             playerId: identity.id,
             handle: identity.handle,
             game: TABLE.game,
+            seat,
           }),
         });
         const data = await res.json();
@@ -336,6 +340,8 @@ export function GamesExperience() {
   // ---- HUD content -----------------------------------------------------
   const seat1 = state?.players.find((entry) => entry.seat === 1) ?? null;
   const seat2 = state?.players.find((entry) => entry.seat === 2) ?? null;
+  const score1 = state ? capturedCount(state.board, 1) : 0;
+  const score2 = state ? capturedCount(state.board, 2) : 0;
   const winner =
     state?.winnerSeat != null
       ? state.players.find((entry) => entry.seat === state.winnerSeat) ?? null
@@ -367,6 +373,8 @@ export function GamesExperience() {
           view={view}
           board={state ? state.board : DEMO_BOARD}
           highlights={highlights}
+          facingSeat={mySeat}
+          showTrophy={session?.status === "finished"}
           onDeskClick={() => {
             setHandleInput(player?.handle ?? "");
             setOverlay("signin");
@@ -466,11 +474,38 @@ export function GamesExperience() {
             <p className="games-modal__copy">{TABLE.tagline}</p>
             {player ? (
               <>
+                <div className="games-color-pick">
+                  <p>I&apos;ll play as</p>
+                  <div>
+                    <button
+                      type="button"
+                      className={
+                        hostSeat === 1
+                          ? "games-color games-color--red is-on"
+                          : "games-color games-color--red"
+                      }
+                      onClick={() => setHostSeat(1)}
+                    >
+                      Red
+                    </button>
+                    <button
+                      type="button"
+                      className={
+                        hostSeat === 2
+                          ? "games-color games-color--black is-on"
+                          : "games-color games-color--black"
+                      }
+                      onClick={() => setHostSeat(2)}
+                    >
+                      Black
+                    </button>
+                  </div>
+                </div>
                 <button
                   type="button"
                   className="games-btn games-btn--wide"
                   disabled={busy}
-                  onClick={() => void startGame(player)}
+                  onClick={() => void startGame(player, hostSeat)}
                 >
                   {busy ? "Setting the board…" : "Start a new game"}
                 </button>
@@ -536,6 +571,7 @@ export function GamesExperience() {
           <aside className="games-scoreboard">
             <p className="games-scoreboard__title">
               Table {TABLE.number} · {TABLE.gameName}
+              <span>captures</span>
             </p>
             <ul>
               <li
@@ -546,8 +582,11 @@ export function GamesExperience() {
                 }
               >
                 <i />
-                {seat1 ? seat1.handle : "…"}
-                {mySeat === 1 ? <em>you</em> : null}
+                <span>
+                  {seat1 ? seat1.handle : "…"}
+                  {mySeat === 1 ? <em>you</em> : null}
+                </span>
+                <b>{score1}</b>
               </li>
               <li
                 className={
@@ -557,8 +596,11 @@ export function GamesExperience() {
                 }
               >
                 <i />
-                {seat2 ? seat2.handle : "waiting for opponent…"}
-                {mySeat === 2 ? <em>you</em> : null}
+                <span>
+                  {seat2 ? seat2.handle : "waiting for opponent…"}
+                  {mySeat === 2 ? <em>you</em> : null}
+                </span>
+                <b>{score2}</b>
               </li>
             </ul>
             {state.viewers.length > 0 ? (
@@ -587,7 +629,13 @@ export function GamesExperience() {
 
           {session.status === "finished" ? (
             <div className="games-winner">
+              <div className="games-trophy" aria-hidden>
+                <span className="games-trophy__cup">🏆</span>
+              </div>
               <h2>{winner ? `${winner.handle} wins!` : "Game over"}</h2>
+              <p className="games-winner__score">
+                {seat1?.handle ?? "Red"} {score1} – {score2} {seat2?.handle ?? "Black"}
+              </p>
               <button type="button" className="games-btn" onClick={leaveTable}>
                 Back to the lounge
               </button>

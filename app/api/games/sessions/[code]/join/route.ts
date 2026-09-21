@@ -50,7 +50,12 @@ export async function POST(
     }
 
     if (state.players.length < 2) {
-      state.players.push({ id: playerId, handle, seat: 2 });
+      const taken = state.players[0]?.seat;
+      state.players.push({
+        id: playerId,
+        handle,
+        seat: taken === 1 ? 2 : 1,
+      });
       snapshot.status = "playing";
     } else {
       state.viewers.push({ id: playerId, handle });

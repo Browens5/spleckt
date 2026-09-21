@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, getDbClient } from "@/lib/db";
 import { gameSessions } from "@/lib/db/schema";
 import { createId } from "@/lib/ids";
-import { initialBoard } from "./checkers";
+import { initialBoard, type Seat } from "./checkers";
 import type { CheckersState, GameStatus, SessionSnapshot } from "./types";
 
 /** 5-character join codes from an unambiguous alphabet (no 0/O/1/I). */
@@ -42,9 +42,13 @@ function snapshotFromRow(row: SessionRow): SessionSnapshot {
   };
 }
 
-export async function createSession(hostId: string, hostHandle: string) {
+export async function createSession(
+  hostId: string,
+  hostHandle: string,
+  hostSeat: Seat = 1,
+) {
   const state = freshState();
-  state.players.push({ id: hostId, handle: hostHandle, seat: 1 });
+  state.players.push({ id: hostId, handle: hostHandle, seat: hostSeat });
 
   // Retry on the (unlikely) code collision.
   for (let attempt = 0; attempt < 5; attempt += 1) {
