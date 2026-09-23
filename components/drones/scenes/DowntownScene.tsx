@@ -8,7 +8,7 @@ import {
   makeConcreteTexture,
 } from "../textures";
 import { ANCHOR } from "../layout";
-import { Car, FACE_NEG_Z, FACE_POS_Z, Streetlight, Tree } from "../kit";
+import { DrivingCar, Streetlight, Tree } from "../kit";
 
 function Building({
   position,
@@ -110,7 +110,13 @@ function TrafficLight({
   );
 }
 
-export function DowntownScene() {
+export function DowntownScene({
+  reducedMotion = false,
+  origin = ANCHOR.downtown,
+}: {
+  reducedMotion?: boolean;
+  origin?: { x: number; z: number };
+}) {
   const facades = useMemo(() => getFacadeTextures(), []);
   const asphalt = useMemo(() => {
     const t = makeAsphaltTexture();
@@ -153,7 +159,7 @@ export function DowntownScene() {
   );
 
   return (
-    <group position={[ANCHOR.downtown.x, 0, ANCHOR.downtown.z]}>
+    <group position={[origin.x, 0, origin.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -4]} receiveShadow>
         <planeGeometry args={[8, 42]} />
         <meshStandardMaterial map={asphalt} roughness={0.95} />
@@ -223,13 +229,12 @@ export function DowntownScene() {
       <TrafficLight position={[-2.5, 0, 7.2]} />
       <TrafficLight position={[2.5, 0, 9.4]} rotation={Math.PI} />
 
-      {/* Right-hand traffic on a −Z street: right lane faces −Z, left faces +Z */}
-      <Car position={[1.15, 0, 5]} color="#3a6a90" rotation={FACE_NEG_Z} />
-      <Car position={[1.2, 0, -3]} color="#8a4040" rotation={FACE_NEG_Z} />
-      <Car position={[1.1, 0, -11]} color="#c4a050" rotation={FACE_NEG_Z} />
-      <Car position={[-1.15, 0, 2]} color="#3a7050" rotation={FACE_POS_Z} />
-      <Car position={[-1.1, 0, -7]} color="#5a4a80" rotation={FACE_POS_Z} />
-      <Car position={[-1.2, 0, -16]} color="#704030" rotation={FACE_POS_Z} />
+      <DrivingCar x={1.15} color="#3a6a90" zStart={8} zEnd={-18} speed={3.4} dir={-1} reducedMotion={reducedMotion} />
+      <DrivingCar x={1.2} color="#8a4040" zStart={2} zEnd={-18} speed={2.8} dir={-1} reducedMotion={reducedMotion} />
+      <DrivingCar x={1.1} color="#c4a050" zStart={-4} zEnd={-18} speed={3.1} dir={-1} reducedMotion={reducedMotion} />
+      <DrivingCar x={-1.15} color="#3a7050" zStart={-16} zEnd={8} speed={3.0} dir={1} reducedMotion={reducedMotion} />
+      <DrivingCar x={-1.1} color="#5a4a80" zStart={-10} zEnd={8} speed={2.6} dir={1} reducedMotion={reducedMotion} />
+      <DrivingCar x={-1.2} color="#704030" zStart={-18} zEnd={8} speed={3.3} dir={1} reducedMotion={reducedMotion} />
 
       <Tree position={[-3.4, 0, 4.5]} scale={0.7} />
       <Tree position={[3.5, 0, -6]} scale={0.75} />

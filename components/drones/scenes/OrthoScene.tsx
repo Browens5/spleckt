@@ -26,12 +26,12 @@ export function OrthoScene({
   return (
     <group position={[ANCHOR.ortho.x, 0, ANCHOR.ortho.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} receiveShadow>
-        <planeGeometry args={[24, 24]} />
+        <planeGeometry args={[36, 36]} />
         <meshStandardMaterial map={orthoMap} roughness={0.95} />
       </mesh>
 
       <ScanGrid
-        size={24}
+        size={36}
         color="#4fd0e8"
         position={[0, 0.07, 0]}
         progress={progress}
