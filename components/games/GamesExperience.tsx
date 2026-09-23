@@ -51,6 +51,21 @@ const PLAYER_KEY = "spleckt-games-player";
 const POLL_MS = 1200;
 const BOT_POLL_MS = 400;
 const DEMO_BOARD = initialBoard();
+const LOUNGE_TIPS = [
+  "Drag the room to look around.",
+  "Click a glowing table to sit down.",
+  "The jukebox spins a little jazz.",
+  "Share a five-character code with a friend.",
+  "Computers will take a beat before they play.",
+];
+const HOTSPOT_LABEL: Record<string, string> = {
+  desk: "Front desk · sign the book",
+  "table-1": "Table 1 · Checkers",
+  "table-2": "Table 2 · Scum",
+  "table-3": "Table 3 · Battleship",
+  "table-4": "Table 4 · Connect 4",
+  jukebox: "Jukebox · click for jazz",
+};
 
 type PlayerIdentity = {
   id: string;
@@ -121,6 +136,8 @@ export function GamesExperience() {
   const sessionSfxRef = useRef<SessionSnapshot | null>(null);
   const jazzOn = useSyncExternalStore(subscribeJazz, getJazzEnabled, () => false);
   const [pickedTable, setPickedTable] = useState<TableInfo>(LOUNGE_TABLES[0]!);
+  const [hotspot, setHotspot] = useState<string | null>(null);
+  const [tipIndex, setTipIndex] = useState(0);
 
   const savePlayer = useCallback(
     (handle: string) => {
@@ -502,6 +519,14 @@ export function GamesExperience() {
   }, []);
 
   useEffect(() => {
+    if (session || overlay !== "none") return;
+    const timer = window.setInterval(() => {
+      setTipIndex((index) => (index + 1) % LOUNGE_TIPS.length);
+    }, 4200);
+    return () => window.clearInterval(timer);
+  }, [session, overlay]);
+
+  useEffect(() => {
     if (!session) return;
     const prev = sessionSfxRef.current;
     sessionSfxRef.current = session;
@@ -625,6 +650,10 @@ export function GamesExperience() {
           showTrophy={Boolean(checkers) && session?.status === "finished"}
           connect4Board={connect4 ? connect4.board : null}
           connect4Last={connect4?.lastDrop?.index ?? null}
+          connect4Seat={connect4 ? (mySeat === 2 ? 2 : 1) : null}
+          connect4CanDrop={Boolean(connect4 && myTurn)}
+          jazzOn={jazzOn}
+          onHotspotHover={setHotspot}
           onDeskClick={() => {
             setHandleInput(player?.handle ?? "");
             setOverlay("signin");
@@ -682,11 +711,13 @@ export function GamesExperience() {
       </header>
 
       {!session && overlay === "none" ? (
-        <p className="games-hint">
-          {player
-            ? "Pick a table to start or join a game. Drag to look around. Click the jukebox for jazz."
-            : "Click the front desk to sign in, then pick a table. Drag to look around."}
+        <p className="games-hint" key={tipIndex}>
+          {player ? LOUNGE_TIPS[tipIndex] : "Click the front desk to sign in, then pick a table."}
         </p>
+      ) : null}
+
+      {!session && overlay === "none" && hotspot && HOTSPOT_LABEL[hotspot] ? (
+        <p className="games-hovercap">{HOTSPOT_LABEL[hotspot]}</p>
       ) : null}
 
       {/* ---- front desk sign-in ---- */}
@@ -737,7 +768,10 @@ export function GamesExperience() {
       {/* ---- table panel ---- */}
       {overlay === "table" && !session ? (
         <div className="games-modal-backdrop" onClick={() => setOverlay("none")}>
-          <div className="games-modal" onClick={(event) => event.stopPropagation()}>
+          <div
+            className={`games-modal games-modal--${pickedTable.game}`}
+            onClick={(event) => event.stopPropagation()}
+          >
             <p className="games-modal__kicker">TABLE {pickedTable.number}</p>
             <h2>{pickedTable.gameName}</h2>
             <p className="games-modal__copy">{pickedTable.tagline}</p>
@@ -890,7 +924,7 @@ export function GamesExperience() {
       {/* ---- in-game HUD ---- */}
       {session && state ? (
         <>
-          <div className="games-code-chip">
+          <div className={copied ? "games-code-chip is-copied" : "games-code-chip"}>
             <span>CODE</span>
             <strong>{session.code}</strong>
             <button type="button" onClick={() => void copyCode()}>
@@ -898,7 +932,13 @@ export function GamesExperience() {
             </button>
           </div>
 
-          <aside className={scum || battleship || connect4 ? "games-scoreboard games-scoreboard--wide" : "games-scoreboard"}>
+          <aside
+            className={
+              (scum || battleship || connect4
+                ? "games-scoreboard games-scoreboard--wide"
+                : "games-scoreboard") + (myTurn ? " is-live" : "")
+            }
+          >
             <p className="games-scoreboard__title">
               Table {activeTable.number} · {activeTable.gameName}
               {scum && (scum.round ?? 1) > 1 ? ` · Round ${scum.round}` : ""}
