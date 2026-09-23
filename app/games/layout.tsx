@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s · Spleckt Games",
   },
   description:
-    "A groovy isometric board game lounge. Sign in at the front desk, grab a table, and play multiplayer checkers with friends via a 5-character game code.",
+    "A groovy isometric board game studio. Sign in at the front desk, take a table, and play checkers, Scum, Battleship, or Connect 4 with friends — or a computer.",
 };
 
 export default function GamesRootLayout({

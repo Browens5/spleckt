@@ -48,6 +48,11 @@ type LoungeCanvasProps = {
   onColumnClick?: (col: number) => void;
   connect4Board?: number[] | null;
   connect4Last?: number | null;
+  /** Seat color for the Connect 4 hover ghost. */
+  connect4Seat?: 1 | 2 | null;
+  connect4CanDrop?: boolean;
+  jazzOn?: boolean;
+  onHotspotHover?: (id: LoungeTableId | "desk" | "jukebox" | null) => void;
   onJukeboxClick?: () => void;
 };
 
@@ -98,11 +103,11 @@ const VIEW_RIGS: Record<LoungeView, ViewRig> = {
     minHalfWidth: 5.2,
   },
   table: {
-    look: new pc.Vec3(TABLE.x, 0.82, TABLE.z),
-    orthoHeight: 1.45,
-    pitch: 86,
-    yaw: 0,
-    minHalfWidth: 1.5,
+    look: new pc.Vec3(TABLE.x, 1.15, TABLE.z),
+    orthoHeight: 2.05,
+    pitch: 36,
+    yaw: 24,
+    minHalfWidth: 1.85,
   },
   game: {
     look: new pc.Vec3(TABLE.x, 0.82, TABLE.z),
@@ -236,6 +241,10 @@ export function LoungeCanvas({
   onColumnClick,
   connect4Board = null,
   connect4Last = null,
+  connect4Seat = null,
+  connect4CanDrop = false,
+  jazzOn = false,
+  onHotspotHover,
   onJukeboxClick,
 }: LoungeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -252,6 +261,10 @@ export function LoungeCanvas({
   const onJukeRef = useRef(onJukeboxClick);
   const connect4BoardRef = useRef(connect4Board);
   const connect4LastRef = useRef(connect4Last);
+  const connect4SeatRef = useRef(connect4Seat);
+  const connect4CanDropRef = useRef(connect4CanDrop);
+  const jazzRef = useRef(jazzOn);
+  const onHoverRef = useRef(onHotspotHover);
   const refreshBoardRef = useRef<(() => void) | null>(null);
   const refreshHighlightsRef = useRef<(() => void) | null>(null);
   const refreshFourRef = useRef<(() => void) | null>(null);
@@ -270,6 +283,10 @@ export function LoungeCanvas({
     onJukeRef.current = onJukeboxClick;
     connect4BoardRef.current = connect4Board;
     connect4LastRef.current = connect4Last;
+    connect4SeatRef.current = connect4Seat;
+    connect4CanDropRef.current = connect4CanDrop;
+    jazzRef.current = jazzOn;
+    onHoverRef.current = onHotspotHover;
   });
 
   useEffect(() => {
@@ -332,9 +349,9 @@ export function LoungeCanvas({
 
     const camState = {
       look: VIEW_RIGS.lounge.look.clone(),
-      orthoHeight: VIEW_RIGS.lounge.orthoHeight,
-      pitch: VIEW_RIGS.lounge.pitch,
-      yaw: VIEW_RIGS.lounge.yaw,
+      orthoHeight: VIEW_RIGS.lounge.orthoHeight + 1.35,
+      pitch: VIEW_RIGS.lounge.pitch - 7,
+      yaw: VIEW_RIGS.lounge.yaw - 14,
     };
     const placeCamera = () => {
       const pitchRad = (camState.pitch * Math.PI) / 180;
@@ -527,6 +544,7 @@ export function LoungeCanvas({
       glowMaterial(GROOVE.green, 1.7),
       glowMaterial(GROOVE.blue, 1.7),
     ];
+    const bulbs: pc.Entity[] = [];
     const stringLight = (
       from: pc.Vec3,
       to: pc.Vec3,
@@ -548,6 +566,7 @@ export function LoungeCanvas({
           from.z + (to.z - from.z) * t,
         );
         app.root.addChild(bulb);
+        bulbs.push(bulb);
       }
     };
     stringLight(new pc.Vec3(-6.6, 3.5, -5.5), new pc.Vec3(0.4, 3.6, -5.5), 0.45, 12, 0);
@@ -583,7 +602,7 @@ export function LoungeCanvas({
     addPrim(deskRoot, "cylinder", woodDark, [-0.62, 1.12, 0.15], [0.05, 0.12, 0.05]);
     // service bell
     addPrim(deskRoot, "cylinder", goldMat, [0.7, 1.09, 0.2], [0.16, 0.04, 0.16]);
-    addPrim(deskRoot, "sphere", goldMat, [0.7, 1.14, 0.2], [0.14, 0.1, 0.14]);
+    const deskBell = addPrim(deskRoot, "sphere", goldMat, [0.7, 1.14, 0.2], [0.14, 0.1, 0.14]);
     // guestbook + pen
     addPrim(deskRoot, "box", creamMat, [0.18, 1.08, 0.18], [0.38, 0.025, 0.26]);
     addPrim(deskRoot, "box", litMaterial(GROOVE.orange), [0.18, 1.1, 0.18], [0.32, 0.02, 0.22]);
@@ -794,9 +813,11 @@ export function LoungeCanvas({
     juke.setEulerAngles(0, -90, 0);
     app.root.addChild(juke);
     addPrim(juke, "box", litMaterial("#2a1224", { gloss: 40 }), [0, 0.85, 0], [0.72, 1.7, 0.48]);
-    addPrim(juke, "box", glowMaterial(GROOVE.magenta, 1.2), [0, 1.55, 0.25], [0.58, 0.08, 0.04]);
-    addPrim(juke, "box", glowMaterial(GROOVE.gold, 1.2), [0, 1.42, 0.25], [0.58, 0.08, 0.04]);
-    addPrim(juke, "box", glowMaterial(GROOVE.teal, 1.2), [0, 1.29, 0.25], [0.58, 0.08, 0.04]);
+    const jukeGlow = [
+      addPrim(juke, "box", glowMaterial(GROOVE.magenta, 1.2), [0, 1.55, 0.25], [0.58, 0.08, 0.04]),
+      addPrim(juke, "box", glowMaterial(GROOVE.gold, 1.2), [0, 1.42, 0.25], [0.58, 0.08, 0.04]),
+      addPrim(juke, "box", glowMaterial(GROOVE.teal, 1.2), [0, 1.29, 0.25], [0.58, 0.08, 0.04]),
+    ];
     addPrim(juke, "box", woodDark, [0, 0.55, 0.26], [0.5, 0.55, 0.04]);
     addPrim(juke, "cylinder", goldMat, [0, 0.95, 0.26], [0.16, 0.04, 0.16], [90, 0, 0]);
 
@@ -1020,8 +1041,8 @@ export function LoungeCanvas({
     );
     const discRed = litMaterial("#c0392b", { gloss: 55 });
     const discYellow = litMaterial("#f1c40f", { gloss: 55 });
-    const discRedLast = glowMaterial("#ff7a6a", 1.15);
-    const discYellowLast = glowMaterial("#ffe08a", 1.15);
+    const discRedLast = litMaterial("#ff6a57", { gloss: 72 });
+    const discYellowLast = litMaterial("#ffe14a", { gloss: 72 });
     const holeMat = litMaterial("#0d2a52", { gloss: 40 });
     const fourDiscs: pc.Entity[] = [];
     for (let col = 0; col < C4_COLS; col += 1) {
@@ -1068,10 +1089,68 @@ export function LoungeCanvas({
         }
       }
     };
-    refreshFour();
-    refreshFourRef.current = refreshFour;
+    const dropGhost = addPrim(
+      fourRoot,
+      "cylinder",
+      discRed,
+      [0, C4_BASE_Y + C4_ROWS * C4_ROW_H, C4_DISC_Z],
+      [0.11, 0.02, 0.11],
+      [90, 0, 0],
+      "c4-ghost",
+    );
+    dropGhost.enabled = false;
+    const fourDrops: Array<{
+      entity: pc.Entity;
+      x: number;
+      z: number;
+      toY: number;
+      t: number;
+    }> = [];
+    let previousFour: number[] | null = null;
+    const paintFour = refreshFour;
+    const refreshFourAnimated = () => {
+      const before = previousFour;
+      paintFour();
+      const grid = connect4BoardRef.current;
+      if (grid && before && before.length === grid.length) {
+        for (let index = 0; index < grid.length; index += 1) {
+          if (before[index] || !grid[index]) continue;
+          const entity = fourDiscs[index];
+          if (!entity) continue;
+          const pos = entity.getLocalPosition();
+          fourDrops.push({ entity, x: pos.x, z: pos.z, toY: pos.y, t: 0 });
+          entity.setLocalPosition(pos.x, pos.y + 0.9, pos.z);
+        }
+      }
+      previousFour = grid ? grid.slice() : null;
+    };
+    refreshFourAnimated();
+    refreshFourRef.current = refreshFourAnimated;
     addLoungeChair(fourRoot, beanbagMats.orange, 1.48, 0.08, 90, 0.9);
     addLoungeChair(fourRoot, beanbagMats.green, -1.46, -0.06, -90, 0.9);
+
+    const floorRings: Array<{ id: string; entity: pc.Entity; radius: number }> = [];
+    const addFloorRing = (
+      id: string,
+      at: pc.Vec3,
+      color: string,
+      radius: number,
+    ) => {
+      const ring = addPrim(
+        app.root,
+        "cylinder",
+        glowMaterial(color, 1.15, 0.28),
+        [at.x, 0.018, at.z],
+        [radius, 0.01, radius],
+      );
+      floorRings.push({ id, entity: ring, radius });
+    };
+    addFloorRing("table-1", TABLE, GROOVE.orange, 2.15);
+    addFloorRing("table-2", SCUM_TABLE, GROOVE.magenta, 2.05);
+    addFloorRing("table-3", SHIP_TABLE, GROOVE.teal, 2.05);
+    addFloorRing("table-4", FOUR_TABLE, GROOVE.gold, 1.85);
+    addFloorRing("desk", DESK, GROOVE.orange, 1.7);
+    addFloorRing("jukebox", JUKE, GROOVE.magenta, 1.15);
 
     const fourLabelMat = texturedMaterial(
       textureFromCanvas(
@@ -1413,6 +1492,13 @@ export function LoungeCanvas({
       clampPan();
     };
 
+    let hoverId: LoungeTableId | "desk" | "jukebox" | null = null;
+    const setHover = (id: typeof hoverId) => {
+      if (hoverId === id) return;
+      hoverId = id;
+      onHoverRef.current?.(id);
+    };
+
     const onPointerMove = (event: PointerEvent) => {
       if (dragging && downAt) {
         applyDrag(event.clientX - downAt.x, event.clientY - downAt.y);
@@ -1421,6 +1507,8 @@ export function LoungeCanvas({
         return;
       }
       if (viewRef.current === "game" && focusRef.current === "table-1") {
+        setHover(null);
+        dropGhost.enabled = false;
         const index = pickBoardSquare(event.clientX, event.clientY);
         const marks = highlightsRef.current;
         const active =
@@ -1432,14 +1520,28 @@ export function LoungeCanvas({
         return;
       }
       if (viewRef.current === "game" && focusRef.current === "table-4") {
-        canvas.style.cursor = pickConnect4Column(event.clientX, event.clientY) != null
-          ? "pointer"
-          : "grab";
+        setHover(null);
+        const col = pickConnect4Column(event.clientX, event.clientY);
+        const canDrop = Boolean(connect4CanDropRef.current && col != null);
+        dropGhost.enabled = canDrop;
+        if (canDrop && col != null && dropGhost.render) {
+          const material = connect4SeatRef.current === 2 ? discYellow : discRed;
+          dropGhost.render.meshInstances.forEach((mesh) => {
+            mesh.material = material;
+          });
+          dropGhost.setLocalPosition(
+            (col - 3) * C4_COL_W,
+            C4_BASE_Y + (C4_ROWS + 0.15) * C4_ROW_H,
+            C4_DISC_Z + 0.02,
+          );
+        }
+        canvas.style.cursor = col != null ? "pointer" : "grab";
         return;
       }
-      canvas.style.cursor = pickHotspot(event.clientX, event.clientY)
-        ? "pointer"
-        : "grab";
+      dropGhost.enabled = false;
+      const hotspot = pickHotspot(event.clientX, event.clientY);
+      setHover(hotspot);
+      canvas.style.cursor = hotspot ? "pointer" : "grab";
     };
 
     const onPointerDown = (event: PointerEvent) => {
@@ -1522,18 +1624,28 @@ export function LoungeCanvas({
       const lookZ = viewNow === "lounge" ? rig.look.z : focusPos.z;
       const checkersGame = viewNow === "game" && focusNow === "table-1";
       const connect4Game = viewNow === "game" && focusNow === "table-4";
+      const previewFour = viewNow === "table" && focusNow === "table-4";
       const facingYaw = checkersGame && Number(facingSeatRef.current) === 2 ? 180 : 0;
+      const t = performance.now() * 0.001;
+      const idleYaw = viewNow === "lounge" && !dragging ? Math.sin(t * 0.16) * 2.2 : 0;
+      const idlePitch = viewNow === "lounge" && !dragging ? Math.sin(t * 0.11) * 0.65 : 0;
       const targetYaw = checkersGame
         ? facingYaw
-        : connect4Game
+        : connect4Game || previewFour
           ? 0
           : rig.yaw + (viewNow === "lounge" ? yawOrbit : 0);
       const targetPitch = connect4Game
         ? C4_GAME_PITCH
-        : rig.pitch + (viewNow === "lounge" ? pitchOrbit : 0);
-      const lookY = connect4Game ? C4_LOOK_Y : rig.look.y;
-      const targetOrtho = connect4Game ? C4_GAME_ORTHO : rig.orthoHeight;
-      const ease = Math.min(1, dt * 5);
+        : previewFour
+          ? 22
+          : rig.pitch + (viewNow === "lounge" ? pitchOrbit : 0) + idlePitch;
+      const lookY = connect4Game || previewFour ? C4_LOOK_Y : rig.look.y;
+      const targetOrtho = connect4Game
+        ? C4_GAME_ORTHO
+        : previewFour
+          ? 1.72
+          : rig.orthoHeight;
+      const ease = Math.min(1, dt * 3.2);
       const lookEase = dragging ? 1 : ease;
       camState.look.x += (lookX + panX - camState.look.x) * lookEase;
       camState.look.y += (lookY - camState.look.y) * ease;
@@ -1543,11 +1655,10 @@ export function LoungeCanvas({
       if (viewNow === "game") {
         camState.yaw = targetYaw;
       } else {
-        camState.yaw = lerpDegrees(camState.yaw, targetYaw, lookEase);
+        camState.yaw = lerpDegrees(camState.yaw, targetYaw + idleYaw, lookEase);
       }
       placeCamera();
 
-      const t = performance.now() * 0.001;
       disco.setEulerAngles(0, t * 30, 0);
       discoLight.setPosition(
         -1 + Math.sin(t * 0.7) * 1.6,
@@ -1583,6 +1694,36 @@ export function LoungeCanvas({
         2.08 + Math.sin(t * 1.4 + 2) * 0.05,
         FOUR_TABLE.z,
       );
+
+      if (viewNow === "game" && hoverId) setHover(null);
+
+      for (const ring of floorRings) {
+        const hot = hoverId === ring.id && viewNow !== "game";
+        const pulse = 1 + Math.sin(t * 2.2 + ring.radius) * (hot ? 0.07 : 0.03);
+        ring.entity.enabled = viewNow !== "game";
+        ring.entity.setLocalScale(ring.radius * (hot ? 1.14 : 1) * pulse, 0.01, ring.radius * (hot ? 1.14 : 1) * pulse);
+      }
+      bulbs.forEach((bulb, index) => {
+        const glow = 0.82 + (Math.sin(t * 2.6 + index * 0.65) * 0.5 + 0.5) * 0.4;
+        bulb.setLocalScale(0.07 * glow, 0.09 * glow, 0.07 * glow);
+      });
+      const bell = hoverId === "desk" ? 1.14 + Math.sin(t * 9) * 0.05 : 1;
+      deskBell.setLocalScale(0.14 * bell, 0.1 * bell, 0.14 * bell);
+      jukeGlow.forEach((strip, index) => {
+        const jazz = jazzRef.current ? 1 + Math.sin(t * 7 + index * 1.2) * 0.22 : 1;
+        strip.setLocalScale(0.58, 0.08 * jazz, 0.04);
+      });
+      for (let index = fourDrops.length - 1; index >= 0; index -= 1) {
+        const drop = fourDrops[index]!;
+        drop.t = Math.min(1, drop.t + dt * 2.4);
+        const eased = 1 - (1 - drop.t) ** 3;
+        const bounce = Math.sin(drop.t * Math.PI) * (1 - drop.t) * 0.05;
+        drop.entity.setLocalPosition(drop.x, drop.toY + 0.9 * (1 - eased) + bounce, drop.z);
+        if (drop.t >= 1) {
+          drop.entity.setLocalPosition(drop.x, drop.toY, drop.z);
+          fourDrops.splice(index, 1);
+        }
+      }
 
       trophy.enabled = showTrophyRef.current;
       if (trophy.enabled) {

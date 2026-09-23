@@ -53,7 +53,7 @@ export function ScumPlay({
 
   return (
     <div className="scum-table">
-      <div className="scum-trick">
+      <div className="scum-trick" key={last ? last.cards.join("-") : "lead"}>
         <p className="scum-trick__kicker">
           {last
             ? `${state.players.find((entry) => entry.seat === last.seat)?.handle ?? "Player"} played`
@@ -75,8 +75,8 @@ export function ScumPlay({
 
       {mySeat != null ? (
         <>
-          <div className="scum-hand">
-            {hand.map((card) => {
+            <div className="scum-hand">
+            {hand.map((card, index) => {
               const on = selected.includes(card);
               return (
                 <button
@@ -87,6 +87,7 @@ export function ScumPlay({
                     (isRedSuit(card) ? " is-red" : "") +
                     (on ? " is-on" : "")
                   }
+                  style={{ animationDelay: `${Math.min(index, 12) * 28}ms` }}
                   disabled={!myTurn || busy}
                   onClick={() => toggle(card)}
                   aria-pressed={on}
