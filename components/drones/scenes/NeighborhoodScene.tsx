@@ -9,7 +9,7 @@ import {
   makeSidingTexture,
 } from "../textures";
 import { ANCHOR } from "../layout";
-import { Car, FACE_NEG_X, FACE_POS_X, Streetlight, Tree } from "../kit";
+import { Car, DrivingCar, FACE_NEG_X, FACE_POS_X, Streetlight, Tree } from "../kit";
 
 function House({
   position,
@@ -184,6 +184,15 @@ export function NeighborhoodScene({
       <Streetlight position={[2.0, 0, -6]} rotation={Math.PI} />
       <Streetlight position={[2.0, 0, -16]} rotation={Math.PI} />
 
+      <DrivingCar
+        x={1.05}
+        color="#4a7088"
+        zStart={10}
+        zEnd={-20}
+        speed={2.4}
+        dir={-1}
+        reducedMotion={density === "low"}
+      />
       {/* Parked in driveways, facing the street */}
       <Car position={[-3.1, 0, left[0].z + 0.15]} color="#4a6080" rotation={FACE_POS_X} />
       {right[1] ? (

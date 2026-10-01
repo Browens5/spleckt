@@ -1,16 +1,10 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SCENES } from "./themes";
-
-const STAR_INTENSITY: Record<string, number> = {
-  downtown: 1.0,
-  construction: 0.35,
-  ortho: 0.55,
-  neighborhood: 0.45,
-};
+import { sunState } from "./daylight";
 
 const SKY_VERT = /* glsl */ `
   varying vec3 vWorldPosition;
@@ -35,14 +29,19 @@ const SKY_FRAG = /* glsl */ `
   void main() {
     vec3 dir = normalize(vWorldPosition - cameraPosition);
     float h = clamp(dir.y, -1.0, 1.0);
-    vec3 col = mix(uHorizon, uTop, smoothstep(-0.06, 0.55, h));
+    vec3 col = mix(uHorizon, uTop, smoothstep(-0.12, 0.62, h));
 
-    // Ambient sky lift so the zenith never crushes to pure black
-    col += vec3(0.012, 0.018, 0.028);
+    // Keep the dome readable as dusk, never a crushed black void
+    col += vec3(0.055, 0.06, 0.075);
 
-    // Horizon glow band
-    float glow = exp(-abs(h - 0.02) * 14.0) * 0.3;
+    // Wide horizon band
+    float glow = exp(-abs(h - 0.05) * 8.0) * 0.55;
     col += uHorizon * glow;
+
+    // Below-horizon wash so open views still have ground-colored sky
+    if (h < 0.02) {
+      col = mix(col, uHorizon * 1.35, smoothstep(0.02, -0.22, h) * 0.65);
+    }
 
     // Stars with subtle twinkle
     if (dir.y > 0.08) {
@@ -62,7 +61,34 @@ const SKY_FRAG = /* glsl */ `
   }
 `;
 
-export function SkyDome() {
+const SKY_KEYS = [
+  { t: 0, top: "#152238", horizon: "#1a3048", star: 1 },
+  { t: 0.2, top: "#24344e", horizon: "#c06838", star: 0.35 },
+  { t: 0.36, top: "#4a6088", horizon: "#e09050", star: 0.06 },
+  { t: 0.52, top: "#6ab0e0", horizon: "#f2d4a8", star: 0 },
+  { t: 0.7, top: "#4eb4f2", horizon: "#c8e8fc", star: 0 },
+  { t: 0.84, top: "#3a6a90", horizon: "#e0a070", star: 0.12 },
+  { t: 0.93, top: "#24344e", horizon: "#c06838", star: 0.45 },
+  { t: 1, top: "#152238", horizon: "#1a3048", star: 1 },
+] as const;
+
+function sampleSky(t: number, top: THREE.Color, horizon: THREE.Color) {
+  const x = Math.min(1, Math.max(0, t));
+  let i = 0;
+  while (i < SKY_KEYS.length - 2 && x > SKY_KEYS[i + 1].t) i += 1;
+  const a = SKY_KEYS[i];
+  const b = SKY_KEYS[i + 1];
+  const u = THREE.MathUtils.smoothstep(x, a.t, b.t);
+  top.set(a.top).lerp(new THREE.Color(b.top), u);
+  horizon.set(a.horizon).lerp(new THREE.Color(b.horizon), u);
+  return THREE.MathUtils.lerp(a.star, b.star, u);
+}
+
+export function SkyDome({
+  progress,
+}: {
+  progress?: MutableRefObject<number>;
+}) {
   const material = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({
@@ -78,27 +104,26 @@ export function SkyDome() {
     horizon: new THREE.Color(SCENES[0].fog),
   });
 
+  const mesh = useRef<THREE.Mesh>(null);
+
   useFrame((state) => {
     const mat = material.current;
     if (!mat) return;
-    const root = document.querySelector(".drones-experience");
-    const themeId = root?.getAttribute("data-scene") ?? "downtown";
-    const theme = SCENES.find((s) => s.id === themeId) ?? SCENES[0];
-    const t = target.current;
-    t.top.set(theme.sky);
-    t.horizon.set(theme.fog);
+    const t = progress?.current ?? sunState.factor;
+    const starTarget = sampleSky(t, target.current.top, target.current.horizon);
 
     const u = mat.uniforms;
-    (u.uTop.value as THREE.Color).lerp(t.top, 0.05);
-    (u.uHorizon.value as THREE.Color).lerp(t.horizon, 0.05);
-    const starTarget = STAR_INTENSITY[themeId] ?? 0.5;
-    u.uStar.value += (starTarget - (u.uStar.value as number)) * 0.05;
+    (u.uTop.value as THREE.Color).lerp(target.current.top, 0.08);
+    (u.uHorizon.value as THREE.Color).lerp(target.current.horizon, 0.08);
+    u.uStar.value += (starTarget - (u.uStar.value as number)) * 0.06;
     u.uTime.value = state.clock.elapsedTime;
+
+    if (mesh.current) mesh.current.position.copy(state.camera.position);
   });
 
   return (
-    <mesh renderOrder={-10} frustumCulled={false}>
-      <sphereGeometry args={[58, 24, 16]} />
+    <mesh ref={mesh} renderOrder={-10} frustumCulled={false}>
+      <sphereGeometry args={[240, 24, 16]} />
       <shaderMaterial
         ref={material}
         vertexShader={SKY_VERT}
@@ -218,9 +243,9 @@ export function Dust({ count = 260 }: { count?: number }) {
       return x - Math.floor(x);
     };
     for (let i = 0; i < count; i++) {
-      positions[i * 3] = (rand(i) - 0.5) * 30;
-      positions[i * 3 + 1] = rand(i + count) * 14 + 0.5;
-      positions[i * 3 + 2] = (rand(i + count * 2) - 0.5) * 46 - 8;
+      positions[i * 3] = (rand(i) - 0.5) * 28;
+      positions[i * 3 + 1] = rand(i + count) * 12 + 0.4;
+      positions[i * 3 + 2] = rand(i + count * 2) * -110 + 12;
     }
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     return geo;

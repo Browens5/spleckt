@@ -118,6 +118,7 @@ export function Drone({
   const right = useRef(new THREE.Vector3());
   const up = useRef(new THREE.Vector3());
   const smooth = useRef({ x: 0, y: 0 });
+  const yaw = useRef(Math.PI);
   const discTexture = useMemo(() => makePropDiscTexture(), []);
 
   useFrame((state, delta) => {
@@ -132,28 +133,45 @@ export function Drone({
     right.current.set(1, 0, 0).applyQuaternion(camera.quaternion);
     up.current.set(0, 1, 0).applyQuaternion(camera.quaternion);
 
+    const down = THREE.MathUtils.clamp(-forward.current.y, 0, 1);
+    const lookDown = THREE.MathUtils.smoothstep(down, 0.28, 0.92);
+    const t = progress.current;
+    const orthoOut =
+      THREE.MathUtils.smoothstep(t, 0.5, 0.7) *
+      (1 - THREE.MathUtils.smoothstep(t, 0.72, 0.8));
+
+    const fwdDist = THREE.MathUtils.lerp(4.05, 2.55, lookDown);
+    const scale = THREE.MathUtils.lerp(1.08, 0.32, Math.max(lookDown, orthoOut * 0.85));
+
     const time = state.clock.elapsedTime;
-    const bob = reducedMotion ? 0 : Math.sin(time * 1.6) * 0.06;
-    const sway = reducedMotion ? 0 : Math.sin(time * 0.9 + 1.7) * 0.02;
+    const bob = reducedMotion ? 0 : Math.sin(time * 1.6) * 0.045;
+    const sway = reducedMotion ? 0 : Math.sin(time * 0.9 + 1.7) * 0.015;
 
     offset.current
       .copy(camera.position)
-      .addScaledVector(forward.current, 4.2)
-      .addScaledVector(right.current, s.x * 0.7 + sway)
-      .addScaledVector(up.current, bob - s.y * 0.35 + 0.15);
+      .addScaledVector(forward.current, fwdDist)
+      .addScaledVector(right.current, s.x * 0.45 + sway)
+      .addScaledVector(up.current, bob - s.y * 0.2);
 
     worldPos.current.lerp(offset.current, Math.min(1, delta * 6));
     root.current.position.copy(worldPos.current);
-    root.current.quaternion.copy(camera.quaternion);
+    root.current.scale.setScalar(scale);
+
+    // Stay world-upright so a nadir camera sees the top of the airframe.
+    const horiz = Math.hypot(forward.current.x, forward.current.z);
+    if (horiz > 0.14) {
+      yaw.current = Math.atan2(forward.current.x, forward.current.z);
+    }
+    root.current.rotation.set(s.y * 0.07, yaw.current, -s.x * 0.1, "YXZ");
 
     body.current.rotation.z = THREE.MathUtils.lerp(
       body.current.rotation.z,
-      -s.x * 0.3,
+      -s.x * 0.1,
       Math.min(1, delta * 5),
     );
     body.current.rotation.x = THREE.MathUtils.lerp(
       body.current.rotation.x,
-      s.y * 0.2,
+      s.y * 0.06,
       Math.min(1, delta * 5),
     );
 
@@ -168,8 +186,6 @@ export function Drone({
     if (ledTail.current) {
       ledTail.current.emissiveIntensity = time % 1.4 < 0.08 ? 3.2 : 0.25;
     }
-
-    void progress.current;
   });
 
   // Wide T-mode: rotors sit well clear of each other and the hull.
@@ -178,7 +194,7 @@ export function Drone({
   const rotorZ = 0.52;
 
   return (
-    <group ref={root} scale={1.08}>
+    <group ref={root}>
       <group ref={body}>
         <mesh castShadow>
           <boxGeometry args={[0.26, 0.13, 0.56]} />

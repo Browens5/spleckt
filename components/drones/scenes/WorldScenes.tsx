@@ -7,7 +7,10 @@ import { DowntownScene } from "./DowntownScene";
 import { ConstructionScene } from "./ConstructionScene";
 import { OrthoScene } from "./OrthoScene";
 import { NeighborhoodScene } from "./NeighborhoodScene";
+import { Corridor } from "./Corridor";
 import { SCENES } from "../themes";
+import { sunState } from "../daylight";
+import { ANCHOR } from "../layout";
 import type { QualityTier } from "../quality";
 
 export function WorldScenes({
@@ -24,29 +27,31 @@ export function WorldScenes({
 
   useFrame(() => {
     const t = progress.current;
-    const idx = t < 0.25 ? 0 : t < 0.5 ? 1 : t < 0.75 ? 2 : 3;
-    const next = Math.min(3, idx + 1);
-    const local = (t - idx * 0.25) / 0.25;
-    const blend = Math.max(0, (local - 0.55) / 0.45);
+    const looping = t >= 0.88;
+    const idx = looping ? 3 : t < 0.25 ? 0 : t < 0.5 ? 1 : t < 0.75 ? 2 : 3;
+    const next = looping ? 0 : Math.min(3, idx + 1);
+    const local = looping ? (t - 0.88) / 0.12 : (t - idx * 0.25) / 0.25;
+    const blend = looping ? Math.min(1, local) : Math.max(0, (local - 0.72) / 0.28);
 
     if (fogRef.current) {
       fogA.current.set(SCENES[idx].fog);
       fogB.current.set(SCENES[next].fog);
       fogRef.current.color.copy(fogA.current).lerp(fogB.current, blend);
-      fogRef.current.near = 14;
-      fogRef.current.far = 58;
+      const day = sunState.factor;
+      fogRef.current.near = THREE.MathUtils.lerp(28, 40, day);
+      fogRef.current.far = THREE.MathUtils.lerp(110, 160, day);
     }
   });
 
   return (
     <group>
-      {/* Continuous ground so gaps never drop to a black void */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, -52]} receiveShadow>
-        <planeGeometry args={[48, 140]} />
-        <meshStandardMaterial color="#161c24" roughness={1} />
-      </mesh>
-      <DowntownScene />
-      <ConstructionScene />
+      <Corridor reducedMotion={quality.reducedMotion} />
+      <DowntownScene reducedMotion={quality.reducedMotion} />
+      <DowntownScene
+        origin={ANCHOR.downtownLoop}
+        reducedMotion={quality.reducedMotion}
+      />
+      <ConstructionScene reducedMotion={quality.reducedMotion} />
       <OrthoScene progress={progress} />
       <NeighborhoodScene density={quality.density} />
     </group>

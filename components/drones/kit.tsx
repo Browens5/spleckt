@@ -1,5 +1,10 @@
 "use client";
 
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import { sunState } from "./daylight";
+
 /** Shared scene props — cars face +X; streetlights arm toward +X. */
 
 export function Car({
@@ -49,6 +54,44 @@ export function Car({
   );
 }
 
+/** Loops a car along a Z corridor. `dir` +1 travels toward +Z. */
+export function DrivingCar({
+  x,
+  color,
+  zStart,
+  zEnd,
+  speed = 3.2,
+  dir = -1,
+  reducedMotion = false,
+}: {
+  x: number;
+  color: string;
+  zStart: number;
+  zEnd: number;
+  speed?: number;
+  dir?: 1 | -1;
+  reducedMotion?: boolean;
+}) {
+  const ref = useRef<THREE.Group>(null);
+  const lo = Math.min(zStart, zEnd);
+  const hi = Math.max(zStart, zEnd);
+  const yaw = dir < 0 ? FACE_NEG_Z : FACE_POS_Z;
+
+  useFrame((_, delta) => {
+    if (!ref.current || reducedMotion) return;
+    let z = ref.current.position.z + dir * speed * delta;
+    if (dir < 0 && z < lo) z = hi;
+    if (dir > 0 && z > hi) z = lo;
+    ref.current.position.z = z;
+  });
+
+  return (
+    <group ref={ref} position={[x, 0, zStart]}>
+      <Car position={[0, 0, 0]} color={color} rotation={yaw} />
+    </group>
+  );
+}
+
 /** Arm points +X. Rotate the group so the arm faces the road. */
 export function Streetlight({
   position,
@@ -58,6 +101,15 @@ export function Streetlight({
   position: [number, number, number];
   rotation?: number;
 }) {
+  const lamp = useRef<THREE.MeshStandardMaterial>(null);
+  const light = useRef<THREE.PointLight>(null);
+
+  useFrame(() => {
+    const night = 1 - sunState.factor;
+    if (lamp.current) lamp.current.emissiveIntensity = 0.15 + night * 1.05;
+    if (light.current) light.current.intensity = night * 0.4;
+  });
+
   return (
     <group position={position} rotation={[0, rotation, 0]}>
       <mesh castShadow position={[0, 1.4, 0]}>
@@ -71,12 +123,19 @@ export function Streetlight({
       <mesh position={[0.55, 2.55, 0]}>
         <boxGeometry args={[0.2, 0.08, 0.12]} />
         <meshStandardMaterial
+          ref={lamp}
           color="#f0e6c8"
           emissive="#f0d080"
           emissiveIntensity={1.1}
         />
       </mesh>
-      <pointLight position={[0.45, 2.35, 0]} intensity={0.38} distance={6} color="#ffd9a0" />
+      <pointLight
+        ref={light}
+        position={[0.45, 2.35, 0]}
+        intensity={0.38}
+        distance={6}
+        color="#ffd9a0"
+      />
     </group>
   );
 }
