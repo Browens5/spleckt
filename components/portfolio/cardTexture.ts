@@ -300,7 +300,7 @@ export async function paintProjectCard(
   roundRect(ctx, 18, 18, WIDTH - 36, HEIGHT - 36, 36);
   ctx.clip();
 
-  const imageTop = 86;
+  const imageTop = 18;
   const imageHeight = CARD_PHOTO.height;
   const image = project.imageUrl ? await loadImage(project.imageUrl) : null;
   if (image) {
@@ -356,9 +356,13 @@ export async function paintProjectCard(
   const hasLink = Boolean(project.linkUrl);
   const copyWidth = WIDTH - (hasLink ? 200 : 112);
 
+  ctx.save();
+  ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
+  ctx.shadowBlur = 8;
   ctx.fillStyle = CYAN;
   ctx.font = "700 30px Rajdhani, system-ui, sans-serif";
   ctx.fillText(String(displayIndex).padStart(2, "0"), 56, 72);
+  ctx.restore();
 
   const titleY = imageTop + imageHeight + 62;
   ctx.fillStyle = "#f7fcff";
