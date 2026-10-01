@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { DragEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { uploadFile } from "@/lib/upload-client";
 import type { PortfolioProfile, PortfolioProject } from "@/lib/portfolio/types";
 
@@ -13,6 +13,19 @@ type EditorProps = {
   onSaved: () => Promise<void> | void;
   onSelectProject: (id: string) => void;
 };
+
+function moveCard(order: string[], dragId: string, overId: string, placeAfter: boolean) {
+  const from = order.indexOf(dragId);
+  let to = order.indexOf(overId);
+  if (from < 0 || to < 0 || dragId === overId) return order;
+  if (from < to && !placeAfter) to -= 1;
+  if (from > to && placeAfter) to += 1;
+  if (from === to) return order;
+  const next = order.slice();
+  next.splice(from, 1);
+  next.splice(to, 0, dragId);
+  return next;
+}
 
 const emptyForm = {
   title: "",
@@ -40,8 +53,85 @@ export function PortfolioEditor({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [profileDraft, setProfileDraft] = useState(() => profileToDraft(profile));
+  const projectKey = projects.map((project) => project.id).join("\n");
+  const [orderKey, setOrderKey] = useState(projectKey);
+  const [orderOverride, setOrderOverride] = useState<string[] | null>(null);
+  if (orderKey !== projectKey) {
+    setOrderKey(projectKey);
+    setOrderOverride(null);
+  }
+  const order = useMemo(
+    () => orderOverride ?? (projectKey ? projectKey.split("\n") : []),
+    [orderOverride, projectKey],
+  );
+  const [dragId, setDragId] = useState<string | null>(null);
+  const orderRef = useRef(order);
+  const dragIdRef = useRef<string | null>(null);
+  const commitLock = useRef(false);
+
+  const orderedProjects = useMemo(() => {
+    const byId = new Map(projects.map((project) => [project.id, project]));
+    return order
+      .map((id) => byId.get(id))
+      .filter((project): project is PortfolioProject => Boolean(project));
+  }, [order, projects]);
 
   if (!open) return null;
+
+  function onDragStart(event: DragEvent<HTMLButtonElement>, id: string) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", id);
+    dragIdRef.current = id;
+    orderRef.current = order;
+    setDragId(id);
+  }
+
+  function onDragOver(event: DragEvent<HTMLButtonElement>, overId: string) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const active = dragIdRef.current;
+    if (!active || active === overId) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const placeAfter = event.clientY > rect.top + rect.height / 2;
+    setOrderOverride((current) => {
+      const base = current ?? (projectKey ? projectKey.split("\n") : []);
+      const next = moveCard(base, active, overId, placeAfter);
+      orderRef.current = next;
+      return next;
+    });
+  }
+
+  async function commitOrder() {
+    dragIdRef.current = null;
+    setDragId(null);
+    const next = orderRef.current;
+    const previous = projectKey ? projectKey.split("\n") : [];
+    if (next.join("\n") === previous.join("\n") || commitLock.current) return;
+    commitLock.current = true;
+    setSaving(true);
+    setError(null);
+    try {
+      const results = await Promise.all(
+        next.map((id, index) =>
+          fetch(`/api/portfolio/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sortOrder: index }),
+          }),
+        ),
+      );
+      if (results.some((res) => !res.ok)) {
+        throw new Error("Could not save card order");
+      }
+      await onSaved();
+    } catch (err) {
+      setOrderOverride(null);
+      setError(err instanceof Error ? err.message : "Could not save card order");
+    } finally {
+      commitLock.current = false;
+      setSaving(false);
+    }
+  }
 
   async function saveProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -170,24 +260,39 @@ export function PortfolioEditor({
 
       {tab === "projects" ? (
         <>
-          <ul className="portfolio-editor__list">
-            {projects.map((project) => (
-              <li key={project.id}>
+          <ul className="portfolio-editor__list" data-portfolio-scroll>
+            {orderedProjects.map((project) => (
+              <li
+                key={project.id}
+                className={dragId === project.id ? "is-dragging" : undefined}
+              >
                 <button
                   type="button"
+                  draggable={!saving}
                   className={project.id === selected?.id ? "is-active" : undefined}
+                  aria-grabbed={dragId === project.id}
                   onClick={() => onSelectProject(project.id)}
+                  onDragStart={(event) => onDragStart(event, project.id)}
+                  onDragOver={(event) => onDragOver(event, project.id)}
+                  onDrop={(event) => event.preventDefault()}
+                  onDragEnd={() => void commitOrder()}
                 >
-                  <strong>{project.title}</strong>
+                  <span className="portfolio-editor__grip" aria-hidden>
+                    ⋮⋮
+                  </span>
                   <span>
-                    {project.category}
-                    {project.year ? ` · ${project.year}` : ""}
-                    {project.isPublished ? "" : " · draft"}
+                    <strong>{project.title}</strong>
+                    <span>
+                      {project.category}
+                      {project.year ? ` · ${project.year}` : ""}
+                      {project.isPublished ? "" : " · draft"}
+                    </span>
                   </span>
                 </button>
               </li>
             ))}
           </ul>
+          <p className="portfolio-editor__hint">Drag a card up or down to change its order.</p>
 
           <form className="portfolio-editor__form" onSubmit={saveProject} key={selected?.id ?? "new"}>
             <p className="portfolio-editor__label">
