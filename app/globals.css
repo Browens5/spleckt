@@ -6036,11 +6036,63 @@ textarea {
   align-items: center;
 }
 
-.portfolio-editor__preview {
+.portfolio-framer {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.portfolio-framer__stage {
+  position: relative;
   width: 100%;
-  height: 120px;
-  object-fit: cover;
+  overflow: hidden;
+  background: #02070c;
   border: 1px solid var(--pf-cyan-dim);
+  cursor: grab;
+  touch-action: none;
+}
+
+.portfolio-framer__stage:active {
+  cursor: grabbing;
+}
+
+.portfolio-framer__stage img {
+  position: absolute;
+  max-width: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.portfolio-framer__modes {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.portfolio-framer__modes button {
+  appearance: none;
+  border: 1px solid var(--pf-cyan-dim);
+  background: transparent;
+  color: var(--pf-text);
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.portfolio-framer__modes button.is-active {
+  border-color: var(--pf-cyan);
+  background: rgba(60, 231, 255, 0.16);
+}
+
+.portfolio-framer label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--pf-muted);
+  font-size: 0.85rem;
+}
+
+.portfolio-framer p {
+  margin: 0;
+  color: var(--pf-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .portfolio-editor__actions {

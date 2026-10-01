@@ -1,3 +1,4 @@
+import { clampFrame } from "./imageFrame";
 import type { PortfolioProfile, PortfolioProject } from "./types";
 
 /** Same-origin so PlayCanvas card textures are not blocked by R2 CORS. */
@@ -14,6 +15,10 @@ type ProjectRow = {
   description: string;
   imageKey: string | null;
   imageName: string | null;
+  imageFit?: string | null;
+  imageZoom?: number | null;
+  imageX?: number | null;
+  imageY?: number | null;
   linkUrl: string | null;
   sortOrder: number;
   isPublished: boolean;
@@ -55,6 +60,12 @@ export function parseSkills(value: string | string[] | null | undefined) {
 }
 
 export function mapProject(row: ProjectRow): PortfolioProject {
+  const frame = clampFrame({
+    fit: row.imageFit === "contain" ? "contain" : "cover",
+    zoom: row.imageZoom ?? 1,
+    x: row.imageX ?? 0,
+    y: row.imageY ?? 0,
+  });
   return {
     id: row.id,
     title: row.title,
@@ -64,6 +75,10 @@ export function mapProject(row: ProjectRow): PortfolioProject {
     imageKey: row.imageKey,
     imageName: row.imageName,
     imageUrl: portfolioImageUrl(row.imageKey),
+    imageFit: frame.fit,
+    imageZoom: frame.zoom,
+    imageX: frame.x,
+    imageY: frame.y,
     linkUrl: row.linkUrl,
     sortOrder: row.sortOrder,
     isPublished: row.isPublished,

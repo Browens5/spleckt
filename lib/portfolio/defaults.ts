@@ -38,7 +38,16 @@ export const DEFAULT_PHONE = "208.380.6882";
 export const DEFAULT_LINKEDIN_URL = "https://www.linkedin.com/in/brianowens-engineer";
 
 export const DEFAULT_PROJECTS: Array<
-  Omit<PortfolioProject, "imageUrl" | "createdAt" | "updatedAt">
+  Omit<
+    PortfolioProject,
+    | "imageUrl"
+    | "imageFit"
+    | "imageZoom"
+    | "imageX"
+    | "imageY"
+    | "createdAt"
+    | "updatedAt"
+  >
 > = [
   {
     id: "pp_field",

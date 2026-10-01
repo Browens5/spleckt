@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -230,6 +230,10 @@ export const portfolioProjects = sqliteTable("portfolio_projects", {
   imageKey: text("image_key"),
   imageName: text("image_name"),
   contentType: text("content_type"),
+  imageFit: text("image_fit").notNull().default("cover"),
+  imageZoom: real("image_zoom").notNull().default(1),
+  imageX: real("image_x").notNull().default(0),
+  imageY: real("image_y").notNull().default(0),
   linkUrl: text("link_url"),
   sortOrder: integer("sort_order").notNull().default(0),
   isPublished: integer("is_published", { mode: "boolean" }).notNull().default(true),

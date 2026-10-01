@@ -2,7 +2,13 @@
 
 import { DragEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { uploadFile } from "@/lib/upload-client";
+import {
+  DEFAULT_IMAGE_FRAME,
+  type ImageFrame,
+  clampFrame,
+} from "@/lib/portfolio/imageFrame";
 import type { PortfolioProfile, PortfolioProject } from "@/lib/portfolio/types";
+import { ImageFramer } from "./ImageFramer";
 
 type EditorProps = {
   open: boolean;
@@ -65,6 +71,15 @@ export function PortfolioEditor({
     [orderOverride, projectKey],
   );
   const [dragId, setDragId] = useState<string | null>(null);
+  const frameCardId = selected?.id ?? null;
+  const [frameOwner, setFrameOwner] = useState<string | null>(frameCardId);
+  const [frame, setFrame] = useState<ImageFrame>(() => frameFromProject(selected));
+  const [pickedUrl, setPickedUrl] = useState<string | null>(null);
+  if (frameOwner !== frameCardId) {
+    setFrameOwner(frameCardId);
+    setFrame(frameFromProject(selected));
+    setPickedUrl(null);
+  }
   const orderRef = useRef(order);
   const dragIdRef = useRef<string | null>(null);
   const commitLock = useRef(false);
@@ -158,6 +173,10 @@ export function PortfolioEditor({
         description: String(form.get("description") ?? ""),
         linkUrl: String(form.get("linkUrl") ?? "") || null,
         isPublished: form.get("isPublished") === "on",
+        imageFit: frame.fit,
+        imageZoom: frame.zoom,
+        imageX: frame.x,
+        imageY: frame.y,
         ...(imageKey
           ? { imageKey, imageName, contentType }
           : {}),
@@ -333,15 +352,27 @@ export function PortfolioEditor({
             </label>
             <label>
               Card image
-              <input name="image" type="file" accept="image/*" />
+              <input
+                name="image"
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  const url = URL.createObjectURL(file);
+                  setPickedUrl((current) => {
+                    if (current) URL.revokeObjectURL(current);
+                    return url;
+                  });
+                  setFrame(DEFAULT_IMAGE_FRAME);
+                }}
+              />
             </label>
-            {selected?.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                className="portfolio-editor__preview"
-                src={selected.imageUrl}
-                alt=""
-                crossOrigin="anonymous"
+            {pickedUrl || selected?.imageUrl ? (
+              <ImageFramer
+                src={pickedUrl || selected?.imageUrl || ""}
+                frame={frame}
+                onChange={setFrame}
               />
             ) : null}
             <label className="portfolio-editor__check">
@@ -457,6 +488,16 @@ export function PortfolioEditor({
       )}
     </aside>
   );
+}
+
+function frameFromProject(project: PortfolioProject | null): ImageFrame {
+  if (!project) return DEFAULT_IMAGE_FRAME;
+  return clampFrame({
+    fit: project.imageFit,
+    zoom: project.imageZoom,
+    x: project.imageX,
+    y: project.imageY,
+  });
 }
 
 function profileToDraft(profile: PortfolioProfile) {
