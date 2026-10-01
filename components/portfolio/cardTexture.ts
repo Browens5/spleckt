@@ -1,3 +1,4 @@
+import { CARD_PHOTO, clampFrame, framedImageRect } from "@/lib/portfolio/imageFrame";
 import type { PortfolioProject } from "@/lib/portfolio/types";
 
 export const CARD_TEXTURE = { width: 768, height: 1152 };
@@ -300,22 +301,34 @@ export async function paintProjectCard(
   ctx.clip();
 
   const imageTop = 86;
-  const imageHeight = 640;
+  const imageHeight = CARD_PHOTO.height;
   const image = project.imageUrl ? await loadImage(project.imageUrl) : null;
   if (image) {
-    const scale = Math.max(
-      (WIDTH - 36) / image.width,
-      imageHeight / image.height,
+    const frame = clampFrame({
+      fit: project.imageFit,
+      zoom: project.imageZoom,
+      x: project.imageX,
+      y: project.imageY,
+    });
+    const placed = framedImageRect(
+      image.width,
+      image.height,
+      CARD_PHOTO.width,
+      imageHeight,
+      frame,
     );
-    const dw = image.width * scale;
-    const dh = image.height * scale;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(18, imageTop, CARD_PHOTO.width, imageHeight);
+    ctx.clip();
     ctx.drawImage(
       image,
-      18 + (WIDTH - 36 - dw) / 2,
-      imageTop + (imageHeight - dh) / 2,
-      dw,
-      dh,
+      18 + placed.x,
+      imageTop + placed.y,
+      placed.width,
+      placed.height,
     );
+    ctx.restore();
     const fade = ctx.createLinearGradient(0, imageTop + imageHeight * 0.55, 0, imageTop + imageHeight);
     fade.addColorStop(0, "rgba(4, 12, 20, 0)");
     fade.addColorStop(1, "rgba(4, 12, 20, 0.92)");

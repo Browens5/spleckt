@@ -18,6 +18,10 @@ const updateSchema = z.object({
   imageName: z.string().max(240).nullable().optional(),
   contentType: z.string().max(120).nullable().optional(),
   linkUrl: z.string().max(500).nullable().optional(),
+  imageFit: z.enum(["cover", "contain"]).optional(),
+  imageZoom: z.number().min(1).max(3).optional(),
+  imageX: z.number().min(-1).max(1).optional(),
+  imageY: z.number().min(-1).max(1).optional(),
   sortOrder: z.number().int().optional(),
   isPublished: z.boolean().optional(),
 });
@@ -47,6 +51,10 @@ export async function PATCH(
   if (data.year !== undefined) patch.year = data.year;
   if (data.description !== undefined) patch.description = data.description;
   if (data.linkUrl !== undefined) patch.linkUrl = data.linkUrl;
+  if (data.imageFit !== undefined) patch.imageFit = data.imageFit;
+  if (data.imageZoom !== undefined) patch.imageZoom = data.imageZoom;
+  if (data.imageX !== undefined) patch.imageX = data.imageX;
+  if (data.imageY !== undefined) patch.imageY = data.imageY;
   if (data.sortOrder !== undefined) patch.sortOrder = data.sortOrder;
   if (data.isPublished !== undefined) patch.isPublished = data.isPublished;
   if (data.imageKey !== undefined) {

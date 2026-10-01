@@ -144,6 +144,10 @@ const statements = [
     image_key TEXT,
     image_name TEXT,
     content_type TEXT,
+    image_fit TEXT NOT NULL DEFAULT 'cover',
+    image_zoom REAL NOT NULL DEFAULT 1,
+    image_x REAL NOT NULL DEFAULT 0,
+    image_y REAL NOT NULL DEFAULT 0,
     link_url TEXT,
     sort_order INTEGER NOT NULL DEFAULT 0,
     is_published INTEGER NOT NULL DEFAULT 1,
@@ -178,6 +182,20 @@ export async function ensureSchema() {
   const client = getDbClient();
   for (const sql of statements) {
     await client.execute(sql);
+  }
+
+  const portfolioColumns = [
+    `ALTER TABLE portfolio_projects ADD COLUMN image_fit TEXT NOT NULL DEFAULT 'cover'`,
+    `ALTER TABLE portfolio_projects ADD COLUMN image_zoom REAL NOT NULL DEFAULT 1`,
+    `ALTER TABLE portfolio_projects ADD COLUMN image_x REAL NOT NULL DEFAULT 0`,
+    `ALTER TABLE portfolio_projects ADD COLUMN image_y REAL NOT NULL DEFAULT 0`,
+  ];
+  for (const sql of portfolioColumns) {
+    try {
+      await client.execute(sql);
+    } catch {
+      // Column already exists.
+    }
   }
 
   // Add training_modules.category on existing databases (CREATE IF NOT EXISTS won't alter).

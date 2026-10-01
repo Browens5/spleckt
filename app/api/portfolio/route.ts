@@ -21,6 +21,10 @@ const createSchema = z.object({
   imageName: z.string().max(240).optional(),
   contentType: z.string().max(120).optional(),
   linkUrl: z.string().max(500).optional().nullable(),
+  imageFit: z.enum(["cover", "contain"]).optional(),
+  imageZoom: z.number().min(1).max(3).optional(),
+  imageX: z.number().min(-1).max(1).optional(),
+  imageY: z.number().min(-1).max(1).optional(),
   sortOrder: z.number().int().optional(),
   isPublished: z.boolean().optional(),
 });
@@ -87,6 +91,10 @@ export async function POST(request: NextRequest) {
       imageName: data.imageName,
       contentType: data.contentType,
       linkUrl: data.linkUrl ?? null,
+      imageFit: data.imageFit ?? "cover",
+      imageZoom: data.imageZoom ?? 1,
+      imageX: data.imageX ?? 0,
+      imageY: data.imageY ?? 0,
       sortOrder: data.sortOrder ?? Date.now(),
       isPublished: data.isPublished ?? true,
     })

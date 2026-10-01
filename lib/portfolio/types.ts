@@ -7,6 +7,10 @@ export type PortfolioProject = {
   imageUrl: string | null;
   imageKey: string | null;
   imageName: string | null;
+  imageFit: "cover" | "contain";
+  imageZoom: number;
+  imageX: number;
+  imageY: number;
   linkUrl: string | null;
   sortOrder: number;
   isPublished: boolean;
