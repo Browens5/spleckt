@@ -14,8 +14,12 @@ export const DEFAULT_IMAGE_FRAME: ImageFrame = {
   y: 0,
 };
 
-/** Photo area painted on a portfolio card, in texture pixels. */
-export const CARD_PHOTO = { width: 732, height: 640 };
+/**
+ * Photo area painted on a portfolio card, in texture pixels.
+ * Width matches the inner card face. Height runs from the top inner edge
+ * down to the title block.
+ */
+export const CARD_PHOTO = { width: 732, height: 708 };
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
