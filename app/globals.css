@@ -5957,14 +5957,40 @@ textarea {
   overflow: auto;
 }
 
+.portfolio-editor__list li.is-dragging button {
+  opacity: 0.45;
+}
+
 .portfolio-editor__list button {
   width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem;
+  align-items: center;
   text-align: left;
   border: 1px solid transparent;
   background: rgba(60, 231, 255, 0.04);
   color: inherit;
   padding: 0.55rem 0.65rem;
-  cursor: pointer;
+  cursor: grab;
+}
+
+.portfolio-editor__list button:active {
+  cursor: grabbing;
+}
+
+.portfolio-editor__grip {
+  color: var(--pf-cyan);
+  font-size: 0.95rem;
+  letter-spacing: -0.14em;
+  line-height: 1;
+}
+
+.portfolio-editor__hint {
+  margin: -0.35rem 0 0.85rem;
+  color: var(--pf-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
 }
 
 .portfolio-editor__list button.is-active,
